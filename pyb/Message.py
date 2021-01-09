@@ -354,3 +354,117 @@ def parseUBXMessage(msg):
                            X1(pl[5]))
         else:
             print("No id for", id, "in class 01-NAV")
+
+def binaryParseUBXMessage(msg):
+    # ba = msg.split(" ")
+    ba = msg
+    # print(ba[6:14])
+    confirm = ba[0] == 181 and ba[1] == 98
+    if not confirm:
+        pass
+        print("Data corrupted: bit code")
+
+    # print(ba)
+
+    classs = U1(ba[2])
+    id = U1(ba[3])
+    length = U2(ba[4:6])  # little endian for length, only defines length of payload
+    # also note is number of bytes in pl not bits
+
+    cid = [classs, id]
+    # print(cid)
+
+    pl = ba[6:-2]
+    crc = (ba[-2], ba[-1])
+
+    corrupted = verifyChecksum(pl, crc)
+
+    # print(id)
+    # print(len(pl))
+    # crc = int(ba[-2] + ba[-1], 16)
+
+    if length != (len(ba) - 6 - 2):
+        pass
+        # print("Data corrupted: CRC")
+
+    # ids in decimal here, comments above classes are in hex
+    if classs == 1:
+        if id == 1:
+            return ECEF(pl[0:4],
+                        pl[4:8],
+                        pl[8:12],
+                        pl[12:16],
+                        pl[16:])
+        elif id == 2:
+            return LLH(pl[0:4],
+                       pl[4:8],
+                       pl[8:12],
+                       pl[12:16],
+                       pl[16:20],
+                       pl[20:24],
+                       pl[24:])
+        elif id == 3:
+            # print("not long enough?", pl[12:], len(pl), length)
+            return Status(pl[0:4],
+                          pl[4],
+                          pl[5],
+                          pl[6],
+                          pl[7],
+                          pl[8:12],
+                          pl[12:])
+        elif id == 6:
+            # print(ba)
+            return Solution(pl[0:4],
+                            pl[4:8],
+                            pl[8:10],
+                            pl[10],
+                            pl[12:16],
+                            pl[16:20],
+                            pl[20:24],
+                            pl[24:28],
+                            pl[28:32],
+                            pl[32:36],
+                            pl[36:40],
+                            pl[40:44],
+                            pl[44:46],
+                            pl[47])
+        elif id == 19:
+            return HPECEF(pl[4:8],
+                          pl[8:12],
+                          pl[12:16],
+                          pl[16:20],
+                          pl[20],
+                          pl[21],
+                          pl[22],
+                          pl[24:],
+                          pl[23])
+        elif id == 20:
+            return HPLLH(pl[4:8],
+                         pl[8:12],
+                         pl[12:16],
+                         pl[16:20],
+                         pl[20:24],
+                         pl[24],
+                         pl[25],
+                         pl[26],
+                         pl[27],
+                         pl[28:32],
+                         pl[32:],
+                         pl[3])
+        elif id == 33:
+            # print("pvt..?")
+            return TimeUTC(pl[0:4],
+                           pl[4:8],
+                           pl[8:12],
+                           pl[12:14],
+                           pl[14],
+                           pl[15],
+                           pl[16],
+                           pl[17],
+                           pl[18],
+                           pl[19])
+        elif id == 53:
+            return SatInfo(pl[0:4],
+                           pl[5])
+        else:
+            print("No id for", id, "in class 01-NAV")

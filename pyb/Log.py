@@ -1,3 +1,17 @@
+from Formats import *
+
+
+#       ---------------------
+#      | Log type |   Code   |
+#      |----------|-----------
+#      |  Error   |   0x00   |
+#      |  BinLLH  |   0x01   |
+#      |  BinECEF |   0x02   |
+#      |  LLH     |   0x11   |
+#      |  ECEF    |   0x12   |
+#       ---------------------
+
+
 class DateTime:
     year = None
     month = None
@@ -27,7 +41,7 @@ class DateTime:
 
     def getYear(self):
         ys = str(self.year)
-        return '0' * (4-len(ys)) + ys
+        return '0' * (4 - len(ys)) + ys
 
     def getMonth(self):
         mons = str(self.month)
@@ -54,22 +68,40 @@ class DateTime:
         return '0' * (2 - len(ns)) + ns
 
     def getDateTimeString(self):
-        return self.getDateString()+" "+self.getTimeString()
+        return self.getDateString() + " " + self.getTimeString()
 
     def getTimeString(self):
         return self.getHour() + ":" + self.getMin() + ":" + self.getSec() + "." + self.getNano()
 
     def getDateString(self):
-        return self.getYear()+"-"+self.getMonth()+"-"+self.getDay()
+        return self.getYear() + "-" + self.getMonth() + "-" + self.getDay()
+
+
+class BinaryDateTime:
+    class DateTime:
+        year = None
+        month = None
+        day = None
+        hour = None
+        min = None
+        sec = None
+
+        def __init__(self, pvtMsg):
+            self.year = u2toBytes(pvtMsg.year)
+            self.month = u1toBytes(pvtMsg.month)
+            self.day = u1toBytes(pvtMsg.day)
+            self.hour = u1toBytes(pvtMsg.hour)
+            self.min = u1toBytes(pvtMsg.min)
+            self.sec = u1toBytes(pvtMsg.sec)
 
 
 class DataLog:
     date = None
     svs = None
-    pOut = None
+    pOut = None  # possible / probability of outlier?
 
     def getLogString(self):
-        return ""
+        pass
 
 
 class LLHLog(DataLog):
@@ -142,6 +174,58 @@ class ECEFLog(DataLog):
             self.pOut
         )
 
+
+class BinaryLLHLog(DataLog):
+    type = b'\x01'
+    dateTime = None
+    lat = None
+    lon = None
+    h = None
+    hmsl = None
+    hacc = None
+    vacc = None
+    hp = None
+    sats = None
+
+    def __init__(self, binaryDateTime, llhObj, sVs):
+        self.dateTime = binaryDateTime
+        self.hp = b'1' if llhObj.lonHp is not None and llhObj.latHp is not None else b'0'
+        self.lat = i4toBytes(llhObj.lat)
+        self.lon = i4toBytes(llhObj.lon)
+        self.h = i4toBytes(llhObj.height)
+        self.hmsl = i4toBytes(llhObj.hMSL)
+        self.hAcc = u4toBytes(llhObj.hAcc)
+        self.vAcc = u4toBytes(llhObj.vAcc)
+        self.svs = u1toBytes(sVs)
+
+    def getLogString(self):
+        log = bytearray()
+        log.extend(self.dateTime.year)
+        log.extend(self.dateTime.month)
+        log.extend(self.dateTime.day)
+        log.extend(self.dateTime.hour)
+        log.extend(self.dateTime.minute)
+        log.extend(self.dateTime.second)
+
+        payload = bytearray()
+        payload.extend(self.hp)
+        payload.extend(self.lat)
+        payload.extend(self.lon)
+        payload.extend(self.h)
+        payload.extend(self.hmsl)
+        payload.extend(self.hAcc)
+        payload.extend(self.vAcc)
+        payload.extend(self.sats)
+
+        crca, crcb = ubxChecksum(payload)
+
+        log.extend(payload)
+        log.extend(crca)
+        log.extend(crcb)
+
+        return log
+
+
 # log format:
 # yyyy mm dd hh mm ss LLH LP/HP Lat Lon Height hmsl hacc vacc sats p_outlier
 # yyyy mm dd hh mm ss ECEF LP/HP x y z pacc sats pout
@@ -152,5 +236,15 @@ class ErrorLog:
     def __init__(self, date, errorMsg):
         self.date = date
         self.errorMsg = errorMsg
+
+
 # error log format:
 # yyyy mm dd hh mm ss error
+
+def unparse(bs):
+    clazs = bs[0]
+    dateTime = bs[1:8]
+    pl = bs[8:-2]
+    checksum = (bs[-2], bs[-1])
+    corrupted = verifyChecksum(pl, checksum)
+    # switch on clazs to parse pl with dateTime - unparse dateTime seperately

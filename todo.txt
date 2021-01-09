@@ -1,0 +1,6 @@
+[D] solder headers to uart 2
+[D] test xbee comms between two pyboards
+[D] write xbee class for radio transmission
+[N] send prcs to radio to rover - will it apply? test using ucentre - will apply if rtcm string passed to radio on either link - uart2 for control?
+[N] send data to pi through uart - send to ftp server on wifi
+[N] use ftp data to build graph / map

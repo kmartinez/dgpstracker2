@@ -1,0 +1,4 @@
+0-generic error
+1-invalid solution
+2-invalid time
+3-watchdog reset?
