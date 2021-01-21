@@ -2,9 +2,9 @@ from Message import *
 from Log import *
 from LCD import *
 import lcd160cr
-import pym
+import pyb
 # from machine import WDT
-from pym import UART
+from pyb import UART
 
 # global byte_buf
 # global nextbyte
@@ -219,20 +219,21 @@ def readAverageLLH():
     # read x times
     # median average over whole list
     # gon compute mean for comparison too
-    DATA_BUF_SIZ=25
-    databuff=[]
+    DATA_BUF_SIZ = 25
+    databuff = []
     while len(databuff) < DATA_BUF_SIZ:
         readBytes()
         status = readIn()
         print(status)
         databuff.append(lastLLH)
     databuff.sort()
-    median=databuff[len(databuff) / 2]
+    median = databuff[len(databuff) / 2]
     return median
 
 
-def getDistance(x,y,z):
-    return (x**2 + y**2 + z**2)**.5
+def getDistance(x, y, z):
+    return (x ** 2 + y ** 2 + z ** 2) ** .5
+
 
 while True:
     print("---")
@@ -264,8 +265,7 @@ while True:
         elif curHour in loggedHours:
             print("Already logged this hour")
 
-
     llhStatus()
-    print("Distance:",getDistance(x,y,z))
+    print("Distance:", getDistance(x, y, z))
 
     # pym.delay(20)

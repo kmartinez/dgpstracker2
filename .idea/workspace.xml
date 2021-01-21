@@ -19,22 +19,8 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0b06a91-6cdb-4266-914a-67a1f49ad604" name="Default Changelist" comment="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development">
-      <change afterPath="$PROJECT_DIR$/pym/kalmans.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/radioexp/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/radioexp/radioin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kirk/boot.py" beforeDir="false" afterPath="$PROJECT_DIR$/kirk/boot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/Formats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Formats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/LCD.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/LCD.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/Log.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Log.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/Message.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Message.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/Outlier.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Outlier.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/Radio.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Radio.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/boot.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/boot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/l.log" beforeDir="false" afterPath="$PROJECT_DIR$/pym/l.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyb/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tracker.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tracker.csv" afterDir="false" />
+    <list default="true" id="b0b06a91-6cdb-4266-914a-67a1f49ad604" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/pym/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,7 +115,14 @@
       <option name="project" value="LOCAL" />
       <updated>1610225402306</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Added ECEF distance calculation in preparation for accuracy tests">
+      <created>1611231483672</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1611231483672</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -146,9 +139,14 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development" />
-    <option name="LAST_COMMIT_MESSAGE" value="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development" />
+    <MESSAGE value="Added ECEF distance calculation in preparation for accuracy tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added ECEF distance calculation in preparation for accuracy tests" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="512" y="57" key="CommitChangelistDialog2" timestamp="1611231482559">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="512" y="57" key="CommitChangelistDialog2/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1611231482559" />
     <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1605971018797">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
