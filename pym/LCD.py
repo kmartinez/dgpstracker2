@@ -1,8 +1,8 @@
 # import lcd160cr
-# import pyb
+# import pym
 
 # Use following to test for broken hardware - will spam random sqs on screen
-import pyb
+import pym
 import lcd160cr
 
 lcd = None

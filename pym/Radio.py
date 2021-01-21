@@ -1,4 +1,4 @@
-from pyb import UART
+from pym import UART
 
 
 class RadioConn:
@@ -10,12 +10,13 @@ class RadioConn:
     radioConn = None
 
     def __init__(self, sourceAddr, uartAddr=0, baudrate=9600, bits=8, parity=None, stop=1, read_buf_len=512,
-                 uartConn=None):
+                 timeout=0, uartConn=None):
         self.source = sourceAddr
         if uartConn is not None:
             self.radioConn = uartConn
         else:
-            self.radioConn = UART(baudrate, uartAddr, bits=bits, parity=parity, stop=stop, read_buf_len=read_buf_len)
+            self.radioConn = UART(baudrate, uartAddr, bits=bits, parity=parity, stop=stop, read_buf_len=read_buf_len,
+                                  timeout=timeout)
 
     def read(self, noBits=None):
         if noBits is None:
@@ -28,7 +29,7 @@ class RadioConn:
         packet = self.getPacket(dest, options, payload)
         self.radioConn.write(packet)
 
-    def getPacket(self, dest, options, payload):
+    def getPacket(self, dest, payload, options=b'\x00'):
         packet = bytearray(self.startDelim)
         if len(payload < 16):
             packet.append(0)
@@ -49,7 +50,12 @@ class RadioConn:
         elif type(dest) == bytes:
             payloadPack.extend(dest & 255)
         payloadPack.extend(options)
-        payloadPack.extend(payload)
+
+        if type(payload) is not bytes:
+            payloadPack.append(payload)
+        else:
+            payloadPack.extend(payload)
+
         payloadPack.append(radioChecksum(payloadPack))
         # append to send packet
         packet.extend(payloadPack)

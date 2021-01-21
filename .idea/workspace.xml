@@ -19,32 +19,22 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0b06a91-6cdb-4266-914a-67a1f49ad604" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/error codes.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/homecoords.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kirk/README.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kirk/boot.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kirk/common.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kirk/gps.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kirk/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kirk/pybcdc.inf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/log format binary.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/msg format.PNG" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pyb/Outlier.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pyb/Radio.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pyb/l.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/radio.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/todo.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tracker.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Formats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyb/Formats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LCD.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyb/LCD.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Log.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyb/Log.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Message.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyb/Message.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/boot.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyb/boot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/l.log" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyb/main.py" afterDir="false" />
+    <list default="true" id="b0b06a91-6cdb-4266-914a-67a1f49ad604" name="Default Changelist" comment="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development">
+      <change afterPath="$PROJECT_DIR$/pym/kalmans.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/radioexp/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/radioexp/radioin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kirk/boot.py" beforeDir="false" afterPath="$PROJECT_DIR$/kirk/boot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/Formats.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Formats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/LCD.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/LCD.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/Log.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Log.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/Message.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Message.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/Outlier.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Outlier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/Radio.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/Radio.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/boot.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/boot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/l.log" beforeDir="false" afterPath="$PROJECT_DIR$/pym/l.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyb/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/pym/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tracker.csv" beforeDir="false" afterPath="$PROJECT_DIR$/tracker.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,8 +61,9 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="F:/" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.kalmans">
     <configuration name="Outlier" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyboard backup" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -94,8 +85,30 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="kalmans" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyboard backup" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pym" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pym/kalmans.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.kalmans" />
         <item itemvalue="Python.Outlier" />
       </list>
     </recent_temporary>
@@ -109,6 +122,14 @@
       <option name="presentableId" value="Default" />
       <updated>1605968471369</updated>
     </task>
+    <task id="LOCAL-00001" summary="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development">
+      <created>1610225402306</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1610225402306</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -123,26 +144,38 @@
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development" />
+    <option name="LAST_COMMIT_MESSAGE" value="reformatted code to neaten file structure&#10;added Radio.py to process radio messages (experimental)&#10;temporarily overridden main.py in both boards to test radio conversation&#10;added extra files to aid with development" />
+  </component>
   <component name="WindowStateProjectService">
     <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1605971018797">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="740" y="275" key="FileChooserDialogImpl/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1605971018797" />
-    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1610123650973">
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1610991309715">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="282" key="GridCell.Tab.0.bottom/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610123650973" />
-    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1610123650973">
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610991309715" />
+    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1610991309715">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="282" key="GridCell.Tab.0.center/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610123650973" />
-    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1610123650973">
+    <state width="1899" height="282" key="GridCell.Tab.0.center/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610991309715" />
+    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1610991309715">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="282" key="GridCell.Tab.0.left/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610123650973" />
-    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1610123650973">
+    <state width="1899" height="282" key="GridCell.Tab.0.left/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610991309715" />
+    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1610991309715">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="282" key="GridCell.Tab.0.right/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610123650973" />
+    <state width="1899" height="282" key="GridCell.Tab.0.right/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610991309715" />
+    <state x="461" y="165" key="SettingsEditor" timestamp="1610291933555">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="461" y="165" key="SettingsEditor/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610291933555" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1610225448324">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1610225448324" />
   </component>
 </project>

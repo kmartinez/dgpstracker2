@@ -2,9 +2,9 @@ from Message import *
 from Log import *
 from LCD import *
 import lcd160cr
-import pyb
+import pym
 # from machine import WDT
-from pyb import UART
+from pym import UART
 
 # global byte_buf
 # global nextbyte
@@ -64,7 +64,7 @@ def readBytes():
         print(payload)
         print(crc)
         print("End error")
-        pyb.delay(10000)
+        pym.delay(10000)
     nextpack = None
 
 
@@ -85,6 +85,7 @@ def readIn():
         z = msg.ecefZ
         pacc = msg.pAcc
         read_status = "HPECEF msg, x=" + str(msg.ecefX)
+
     elif isinstance(msg, HPLLH):
         lastLLH = msg
         lat = msg.lat
@@ -137,7 +138,7 @@ def readIn():
         lastTime = msg
         read_status = "TimeUTC message, hour=" + str(msg.hour)
         # print("found time message "+str(msg.hour))
-        # pyb.delay(2000)
+        # pym.delay(2000)
 
     return read_status
 
@@ -148,7 +149,7 @@ def printStatus():
 
 gpsIn = UART(6, 9600)
 gpsIn.init(9600, bits=8, parity=None, stop=1, read_buf_len=512, timeout=2000)
-time = pyb.Timer(8, freq=1)
+time = pym.Timer(8, freq=1)
 # time.callback(printStatus)
 
 BUF_SIZ = 4
@@ -213,6 +214,7 @@ def writeLog():
     logFile.write("\n")
     logFile.close()
 
+
 def readAverageLLH():
     # read x times
     # median average over whole list
@@ -229,6 +231,8 @@ def readAverageLLH():
     return median
 
 
+def getDistance(x,y,z):
+    return (x**2 + y**2 + z**2)**.5
 
 while True:
     print("---")
@@ -243,7 +247,7 @@ while True:
         # pass
     if (len(pack_buf)) > BUF_SIZ:
         # if too many messages, discard current buffer to prefer newer messages
-        print(pack_buf)
+        # print(pack_buf)
         pack_buf = []
 
     if lastTime is not None and lastLLH is not None:
@@ -262,5 +266,6 @@ while True:
 
 
     llhStatus()
+    print("Distance:",getDistance(x,y,z))
 
-    # pyb.delay(20)
+    # pym.delay(20)
