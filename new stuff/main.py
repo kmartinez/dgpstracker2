@@ -26,7 +26,7 @@ TIME_CONF_LIMIT = 24 # number of hours before time-resync
 timeConfidence = 0 # update time on 0 ==> on reset or start time is set
 
 print("Starting...")
-initLCD()
+LCD.initLCDAPI()
 PAGE = 0 # used for LCD display
 
 msg_buf = {}
@@ -508,7 +508,6 @@ def initialTimer():
                 nextLogTime += MSG_PERIOD
                 diff = hour - nextLogTime
             clock.wakeup(abs(diff), initialReading)
-
 
 
 clock = pyb.RTC()
