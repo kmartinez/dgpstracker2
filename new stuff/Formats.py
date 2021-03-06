@@ -29,17 +29,23 @@ def getConversionFactor(unit="unit"):
 
 
 def decode(bytearr, format):
-    if type(bytearr) is int:
-        return bytearr
-    # print("is", bytearr)
-    return struct.unpack(format, bytearr)[0]
+    try:
+        if type(bytearr) is int:
+            return bytearr
+        # print("is", bytearr)
+        return struct.unpack(format, bytearr)[0]
+    except:
+        print("Number decoding error")
 
 
 def encode(val, format):
-    if type(val) is bytearray:
-        return val
-    # print("is", bytearr)
-    return struct.pack(format, val)
+    try:
+        if type(val) is bytearray:
+            return val
+        # print("is", bytearr)
+        return struct.pack(format, val)
+    except:
+        print("Number encoding error")
 
 
 def U1(bytearr):
@@ -135,3 +141,11 @@ def verifyChecksum(payload, checksum):
         payload = (payload[0], payload[1])
 
     return ubxChecksum(payload) == checksum
+
+def padBytes(byte_string, N):
+    if N == 0:
+        return byte_string
+
+    elen = len(byte_string) % N
+    if elen:
+        byte_string += byte_string(N - elen)
