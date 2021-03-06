@@ -1,7 +1,3 @@
-# import lcd160cr
-# import pyb
-
-# Use following to test for broken hardware - will spam random sqs on screen
 import pyb
 from lcd160cr import *
 
@@ -30,7 +26,7 @@ def resetPen():
     lcd.set_font(1, 0)
     lcd.set_scroll(False)
     lcd.set_text_color(lcd.rgb(255, 255, 255), lcd.rgb(0, 0, 0))
-    lcd.set_pen(rgb(255,255,255), rgb(0,0,0))
+    lcd.set_pen(rgb(255, 255, 255), rgb(0, 0, 0))
 
 
 def initLCD():
@@ -206,7 +202,7 @@ def triggerSVIN():
 
 def initLCDAPI(log_freq=0, log_start=0, keep_raw=False, keep_med=False, keep_best=False, baseStation=True, svin_dur=0,
                svin_acc=0, svintrigger=lambda: print()):
-    global pages, powered, lcd
+    global pages, powered, lcd, svinpage, locpage
     initLCD()
     # lcd.save_to_flash()
     setupPowerButton()
@@ -214,20 +210,24 @@ def initLCDAPI(log_freq=0, log_start=0, keep_raw=False, keep_med=False, keep_bes
     if baseStation:
         print(baseStation, "==> added")
         pages.append(getSVINSettingsScreen(svin_dur, svin_acc, svintrigger))
+        svinpage = len(pages)
+        pages.append(getSVINMonitorScreen())
 
+    locpage = len(pages)
+    pages.append(getLocMonitorScreen())
 
 
 pages = []
 page = 0
 powered = 1
-UPDATE_TIME = 1000
-updateIn = UPDATE_TIME
+UPDATE_TIME = 500 # ms before LCD updates on-screen info
+updateIn = 0 # force draw on startup
 
 
 def updateLCD(delay):
-    global pages, page, updateIn, UPDATE_TIME
+    global pages, page, updateIn, UPDATE_TIME, reading
     page_ = pages[page]
-    if powered == 0:
+    if powered == 0 or reading:
         return
     elif updateIn <= 0:
         updateIn = UPDATE_TIME
@@ -291,6 +291,8 @@ def rightPage():
 
 
 lbutton, rbutton = (None, None)
+
+
 def getLRButtons():
     global lbutton, rbutton
     if lbutton is not None and rbutton is not None:
@@ -309,12 +311,22 @@ def getLRButtons():
 def getBusyScreen():
     global lcd
     title = TextLine("WARNING", 19, 10, size=0, font=3)
-    line1 = TextLine("Reading", 19, 30, size=0, font=3)
+    line1 = TextLine("Logging", 19, 30, size=0, font=3)
     line2 = TextLine("in", 19, 50, size=0, font=3)
     line3 = TextLine("progress", 19, 70, size=0, font=3)
     busyscreen = Screen(lcd, widgets=[title, line1, line2, line3])
     return busyscreen
 
+
+reading = False
+def makeLCDBusy():
+    global reading
+    reading = True
+    forceDrawPage(getBusyScreen())
+
+def makeLCDFree():
+    global reading
+    reading = False
 
 def getLRTriangles():
     rtriangle = bytearray()
@@ -339,29 +351,39 @@ def checkTouches():
             touch = touches[0]
             touch.callback()
 
+def getPrintableDate():
+    year, month, day, weekday, hours, minutes, seconds, subseconds = pyb.RTC().datetime()
+    return str(day) + "/" + str(month) + "/" + str(year)
+
+def getPrintableTime():
+    year, month, day, weekday, hours, minutes, seconds, subseconds = pyb.RTC().datetime()
+    return str(hours)+":"+str(minutes)+":"+str(seconds)+"."+str(subseconds)
 
 def getSettingsScreen(log_freq, log_start, keep_raw, keep_med, keep_best):
     global lcd
     title = TextLine("SETTINGS", 10, 10, size=0, font=3)
-    log_freq_line = TextLine("Log freq: " + str(log_freq), 10, 32, size=0, font=3)
-    log_start_line = TextLine("Log start: " + str(log_start), 10, 44, size=0, font=3)
-    keep_raw_line = TextLine("Keep Raw", 10, 56, size=0, font=3,
+    date_line = TextLine(getPrintableDate(), 10, 25, size=0, font=2, fg=rgb(10, 100, 200), update=getPrintableDate)
+    time_line = TextLine(getPrintableTime(), 10, 33, size=0, font=2, fg=rgb(10, 100, 200), update=getPrintableTime)
+    log_freq_line = TextLine("Log every: " + "{0:.2f}h".format(log_freq * 1e-3 / 60**2), 10, 46, size=0, font=3)
+    log_start_line = TextLine("Log start: " + str(log_start), 10, 58, size=0, font=3)
+    keep_raw_line = TextLine("Keep Raw", 10, 70, size=0, font=3,
                              fg=rgb(0 if keep_raw else 255, 255 if keep_raw else 0, 0))
-    keep_med_line = TextLine("Keep Median", 10, 68, size=0, font=3,
+    keep_med_line = TextLine("Keep Median", 10, 82, size=0, font=3,
                              fg=rgb(0 if keep_med else 255, 255 if keep_med else 0, 0))
-    keep_best_line = TextLine("Keep Best", 10, 80, size=0, font=3,
+    keep_best_line = TextLine("Keep Best", 10, 94, size=0, font=3,
                               fg=rgb(0 if keep_best else 255, 255 if keep_best else 0, 0))
     lbutton, rbutton = getLRButtons()
-    widgets = [title, log_freq_line, log_start_line, keep_raw_line, keep_med_line, keep_best_line, lbutton, rbutton]
+    widgets = [lbutton, rbutton, title, log_freq_line, log_start_line, keep_raw_line, keep_med_line, keep_best_line, date_line, time_line]
+
     if not keep_raw:
-        strike1 = Line((8, 62), (112, 61), col=rgb(255, 0, 0))
-        widgets.append(strike1)
-    if not keep_med:
-        strike2 = Line((8, 74), (112, 73), col=rgb(255, 0, 0))
+        strike2 = Line((8, 75), (112, 75), col=rgb(255, 0, 0))
         widgets.append(strike2)
-    if not keep_best:
-        strike3 = Line((8, 86), (112, 85), col=rgb(255, 0, 0))
+    if not keep_med:
+        strike3 = Line((8, 87), (112, 87), col=rgb(255, 0, 0))
         widgets.append(strike3)
+    if not keep_best:
+        strike1 = Line((8, 99), (112, 99), col=rgb(255, 0, 0))
+        widgets.append(strike1)
     screen = Screen(lcd, widgets=widgets)
     return screen
 
@@ -375,21 +397,90 @@ def getSVINSettingsScreen(svin_dur, svin_acc, svintrigger):
     triggerBox = RectButton(llims=(10, 64), ulims=(128, 96), filled=False, outlineColour=rgb(255, 279, 102),
                             callback=svintrigger, detail=[triggerLine])
     lbutton, rbutton = getLRButtons()
-    screen = Screen(lcd, widgets=[title, duration_line, acc_line, triggerBox, lbutton, rbutton])
+    screen = Screen(lcd, widgets=[lbutton, rbutton, title, duration_line, acc_line, triggerBox])
     return screen
 
-def getSVINMonitor():
-    pass
+
+monitoring = True
+def startMonitoring():
+    global monitoring, powered
+    monitoring = True and powered == 1 # don't monitor when LCD unpowered
+
+def stopMonitoring():
+    global monitoring
+    monitoring = False
+
+
+svindata = None
+svinpage = -1
+def getSVINMonitorScreen():
+    global lcd, svindata
+    title = TextLine("SVIN MONITOR", 10, 10, size=0, font=3)
+    lbutton, rbutton = getLRButtons()
+    if svindata is not None:
+        x_line = TextLine("X: " + str(svindata.getXPos()), 10, 32, size=0, font=3)
+        y_line = TextLine("Y: " + str(svindata.getYPos()), 10, 44, size=0, font=3)
+        z_line = TextLine("Z: " + str(svindata.getZPos()), 10, 56, size=0, font=3)
+        acc_line = TextLine("Acc.: " + str(svindata.getPAcc()), 10, 68, size=0, font=3)
+        duration_line = TextLine("Duration: " + str(svindata.getDuration()), 10, 80, size=0, font=3)
+        screen = Screen(lcd, widgets=[lbutton, rbutton, title, x_line, y_line, z_line, acc_line, duration_line])
+    else:
+        warning_line = TextLine("NO DATA", 20, 60, size=0, font=3, fg=rgb(255, 85, 0))
+        screen = Screen(lcd, widgets=[lbutton, rbutton, title, warning_line])
+
+    return screen
+
 
 def updateSVINMonitorData(svinmsg):
-    pass
+    global svindata, svinpage
+    svindata = svinmsg
+    noPreviousData = svindata is None
+    print(svindata, "not none?")
+    # print(svs, satellites)
+    svindata = svinmsg
+    if noPreviousData:
+        remakeScreen(svinpage, getSVINMonitorScreen())  # remakes Screen obj with new data - changes "NO DATA" to monitor
 
-def updateLocMonitorData(locmsg):
-    pass
+locdata = None
+satellites = 0
+locpage = -1
+def getLocMonitorScreen():
+    global lcd, locdata, satellites
+    title = TextLine("LOC MONITOR", 10, 10, size=0, font=3)
+    lbutton, rbutton = getLRButtons()
+    if locdata is not None:
+        print(locdata,"should not be none")
+        col = rgb(255, 85, 0) if locdata.invalidFix else rgb(255,255,255)
+        x_line = TextLine("X: " + str(locdata.getXPos()), 10, 32, size=0, font=2, fg=col, update=lambda:"X: " + str(locdata.getXPos()))
+        y_line = TextLine("Y: " + str(locdata.getYPos()), 10, 44, size=0, font=2, fg=col, update=lambda:"Y: " + str(locdata.getYPos()))
+        z_line = TextLine("Z: " + str(locdata.getZPos()), 10, 56, size=0, font=2, fg=col, update=lambda:"Z: " + str(locdata.getZPos()))
+        acc_line = TextLine("Acc.: " + str(locdata.getPAcc())+"m", 10, 68, size=0, font=2, fg=col, update=lambda:"Acc.: " + str(locdata.getPAcc())+"m")
+        satellites_line = TextLine("Satellites: " + str(satellites), 10, 80, size=0, font=2, fg=col, update=lambda:"Satellites: " + str(satellites))
+        screen = Screen(lcd,
+                        widgets=[lbutton, rbutton, title, x_line, y_line, z_line, acc_line, satellites_line])
+    else:
+        print("but for some reason it is")
+        warning_line = TextLine("NO DATA", 20, 60, size=0, font=3, fg=rgb(255, 85, 0))
+        screen = Screen(lcd, widgets=[lbutton, rbutton, title, warning_line])
+    return screen
 
-def getLocMonitor():
-    pass
 
+def updateLocMonitorData(locmsg, svs):
+    global locdata, locpage, satellites
+    noPreviousData = locdata
+    satellites = svs
+    print(svs, "not none? --- --- ")
+    # print(svs, satellites)
+    locdata = locmsg
+    if noPreviousData:
+        remakeScreen(locpage, getLocMonitorScreen()) # remakes Screen obj with new data - changes "NO DATA" to monitor
+
+
+def remakeScreen(pageno, newscreen):
+    global pages
+    pages[pageno] = newscreen
+
+pers_touch = False
 class Screen:
     widgets = None
     penFg = None
@@ -404,14 +495,24 @@ class Screen:
         self.penBg = penBg
         self.widgets = widgets
 
-    # I'm assuming here that it could be multitouch, although I
-    # don't know if the lcd16cr is...
+    # I'm assuming here that it could be multitouch, although the LCD160CR isn't
+    # single on-press response, no persistent touch
     def getTouches(self):
+        global pers_touch
+        # means if you hold down on the screen it registers as one touch
         touches = []
         for w in self.widgets:
             if w.is_touched():
                 touches.append(w)
-        return touches
+
+        # if touched last update and still touched then cancel touch registration
+        if pers_touch and len(touches) > 0:
+            return []
+        else:
+            pers_touch = len(touches) > 0
+            return touches
+
+        # if touched, return
 
     def drawWidgets(self):
         lcd.set_pen(self.penFg, self.penBg)
@@ -455,7 +556,8 @@ class RectButton(Widget):
 
     detail = []
 
-    def __init__(self, llims=(0, 0), ulims=(0, 0), size=(0,0), fillColour=rgb(0, 0, 0), outlineColour=rgb(255, 255, 255),
+    def __init__(self, llims=(0, 0), ulims=(0, 0), size=(0, 0), fillColour=rgb(0, 0, 0),
+                 outlineColour=rgb(255, 255, 255),
                  filled=False,
                  detail=None, callback=(lambda: print("RectButton pressed"))):
 
@@ -478,9 +580,11 @@ class RectButton(Widget):
     def draw(self):
         lcd.set_pen(self.outlineCol, self.fillCol)
         if self.filled:
-            lcd.rect_interior(self.x_l_lim, self.y_l_lim, abs(self.x_u_lim - self.x_l_lim), abs(self.y_u_lim - self.y_l_lim))
+            lcd.rect_interior(self.x_l_lim, self.y_l_lim, abs(self.x_u_lim - self.x_l_lim),
+                              abs(self.y_u_lim - self.y_l_lim))
         else:
-            lcd.rect_outline(self.x_l_lim, self.y_l_lim, abs(self.x_u_lim - self.x_l_lim), abs(self.y_u_lim - self.y_l_lim))
+            lcd.rect_outline(self.x_l_lim, self.y_l_lim, abs(self.x_u_lim - self.x_l_lim),
+                             abs(self.y_u_lim - self.y_l_lim))
 
         if self.detail is not None:
             # print(self.detail)
@@ -511,8 +615,9 @@ class TextLine(Widget):
     ypos = 0
     size = 0
     font = 0
+    update = None
 
-    def __init__(self, text, xpos, ypos, fg=rgb(255, 255, 255), bg=rgb(0, 0, 0), size=1, font=1):
+    def __init__(self, text, xpos, ypos, fg=rgb(255, 255, 255), bg=rgb(0, 0, 0), size=1, font=1, update=None):
         self.xpos = xpos
         self.ypos = ypos
         self.text = text
@@ -520,21 +625,25 @@ class TextLine(Widget):
         self.bgcol = bg
         self.font = font
         self.size = size
+        self.update = update
 
     def draw(self):
+        if self.update is not None:
+            self.updateText(self.update())
         lcd.set_pos(self.xpos, self.ypos)
         lcd.set_font(self.font, self.size)
         lcd.set_text_color(self.fgcol, self.bgcol)
         lcd.write(self.text)
 
     def updateText(self, updated):
-        self.text = updated
+        print("Updating display text to", updated)
+        self.text = str(updated)
 
     def appendText(self, append):
-        self.text += append
+        self.text += str(append)
 
     def prependText(self, prepend):
-        self.text = prepend + self.text
+        self.text = str(prepend) + self.text
 
 
 class Line(Widget):
