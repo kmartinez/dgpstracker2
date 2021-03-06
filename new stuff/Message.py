@@ -64,9 +64,10 @@ class ECEF(Message):
 
     def getPAcc(self):
         if type(self.pAcc) is not tuple:
-            return self.pAcc
+            return self.pAcc * 1e-4
         else:
-            return self.pAcc[1](self.pAcc[0])
+            return self.pAcc[1](self.pAcc[0]) * 1e-4
+
 
 # 01 02
 class LLH(Message):
@@ -103,9 +104,11 @@ class Status(Message):
 
     def __init__(self, tow, fix, flags, fixstat, flags2, ttff, msss):
         self.iTOW = tow
-        self.fixStat = fixstat[0]
-        self.flags = flags[0]
-
+        self.fixStat = fixstat if type(fixstat) is not tuple else fixstat[1](fixstat[0])
+        self.flags = flags if type(flags) is not tuple else flags[1](flags[0])
+        print(flags, self.flags,"\n",
+              flags2, self.flags2,"\n",
+              fixstat, self.fixStat,"\n")
         # translate flags to variables
         self.towValid = self.flags & 8 == 8
         self.wknValid = self.flags & 4 == 4
@@ -115,7 +118,7 @@ class Status(Message):
         self.solInvalid = self.fixStat & 2 == 2
 
         self.ttff = ttff
-        self.flags2 = flags2[0]
+        self.flags2 = flags2 if type(flags2) is not tuple else flags2[1](flags2[0])
         self.msss = msss
 
         try:
@@ -123,7 +126,6 @@ class Status(Message):
         except:
             print(fix)
             self.gpsFix = "E - Reserved " + str(flags) + " " + str(fixstat)
-
 
 # 01 06
 class Solution(Message):
@@ -325,7 +327,7 @@ class TimeUTC(Message):
         if notLazy(self.valid):
             return self.valid & 4
         else:
-            return self.valid[0] & 4
+            return self.valid[1](self.valid[0]) & 4
 
 
 # 01 3B
@@ -356,9 +358,88 @@ class SVIN(Message):
         self.valid = valid
         self.active = active
 
+    def getX(self):
+        if type(self.meanX) is not tuple:
+            return self.meanX
+        else:
+            return self.meanX[1](self.meanX[0])
+
+    def getY(self):
+        if type(self.meanY) is not tuple:
+            return self.meanY
+        else:
+            return self.meanY[1](self.meanY[0])
+
+    def getZ(self):
+        if type(self.meanZ) is not tuple:
+            return self.meanZ
+        else:
+            return self.meanZ[1](self.meanZ[0])
+
+    def getPAcc(self):
+        if type(self.meanAcc) is not tuple:
+            return self.meanAcc
+        else:
+            return self.meanAcc[1](self.meanAcc[0])
+
+    def getXHP(self):
+        if type(self.meanXHp) is not tuple:
+            return self.meanXHp
+        else:
+            return self.meanXHp[1](self.meanXHp[0])
+
+    def getYHP(self):
+        if type(self.meanYHp) is not tuple:
+            return self.meanYHp
+        else:
+            return self.meanYHp[1](self.meanYHp[0])
+
+    def getZHP(self):
+        if type(self.meanZHp) is not tuple:
+            return self.meanZHp
+        else:
+            return self.meanZHp[1](self.meanZHp[0])
+
+    def getXPos(self):
+        return self.getX() + self.getXHP() * 1e-2
+
+    def getYPos(self):
+        return self.getY() + self.getYHP() * 1e-2
+
+    def getZPos(self):
+        return self.getZ() + self.getZHP() * 1e-2
+
+    def get3DPos(self):
+        return self.getXPos(), self.getYPos(), self.getZPos()
+
+    def getDuration(self):
+        if type(self.dur) is not tuple:
+            return self.dur
+        else:
+            return self.dur[1](self.dur[0])
+
+    def getObs(self):
+        if type(self.obs) is not tuple:
+            return self.obs
+        else:
+            return self.obs[1](self.obs[0])
+
+    def getValid(self):
+        if type(self.valid) is not tuple:
+            return self.valid
+        else:
+            return self.valid[1](self.valid[0])
+
+    def getActive(self):
+        if type(self.active) is not tuple:
+            return self.active
+        else:
+            return self.active[1](self.active[0])
+
 
 def notLazy(x):
     return type(x) is not tuple
+
 
 # U1 Unsigned char
 # I1 Signed char, 2c
@@ -436,13 +517,13 @@ def parseUBXMessage(msg):
             # print("not long enough?", pl[12:], len(pl), length)
             return Status(U4(pl[0:4]),
                           U1(pl[4]),
-                          X1(pl[5]),
-                          X1(pl[6]),
-                          X1(pl[7]),
+                          U1(pl[5]),
+                          U1(pl[6]),
+                          U1(pl[7]),
                           U4(pl[8:12]),
                           U4(pl[12:]))
         elif id == 6:
-            print(I4(pl[12:16]), I4(pl[16:20]), I4(pl[20:24]))
+            # print(I4(pl[12:16]), I4(pl[16:20]), I4(pl[20:24]))
             return Solution(U4(pl[0:4]),
                             I4(pl[4:8]),
                             I2(pl[8:10]),
@@ -458,7 +539,7 @@ def parseUBXMessage(msg):
                             U2(pl[44:46]),
                             U1(pl[47]))
         elif id == 19:
-            print(I4(pl[8:12]), I4(pl[12:16]), I4(pl[16:20]))
+            # print(I4(pl[8:12]), I4(pl[12:16]), I4(pl[16:20]))
             return HPECEF(U4(pl[4:8]),
                           I4(pl[8:12]),
                           I4(pl[12:16]),
@@ -467,7 +548,7 @@ def parseUBXMessage(msg):
                           I1(pl[21]),
                           I1(pl[22]),
                           U4(pl[24:]),
-                          X1(pl[23]))
+                          U1(pl[23]))
         elif id == 20:
             return HPLLH(U4(pl[4:8]),
                          I4(pl[8:12]),
@@ -480,7 +561,7 @@ def parseUBXMessage(msg):
                          I1(pl[27]),
                          U4(pl[28:32]),
                          U4(pl[32:]),
-                         X1(pl[3]))
+                         U1(pl[3]))
         elif id == 33:
             # print("pvt..?")
             return TimeUTC(U4(pl[0:4]),
@@ -492,13 +573,13 @@ def parseUBXMessage(msg):
                            U1(pl[16]),
                            U1(pl[17]),
                            U1(pl[18]),
-                           X1(pl[19]),
+                           U1(pl[19]),
                            )
         elif id == 53:
             return SatInfo(U4(pl[0:4]),
-                           X1(pl[5]))
+                           U1(pl[5]))
         elif id == 0x3B:
-            print("ITS A SURVEY YAAAY")
+            print("!!! Survey message !!!")
             return SVIN(U4(pl[8:12]),
                         I4(pl[12:16]),
                         I4(pl[16:20]),
@@ -522,10 +603,9 @@ def binaryParseUBXMessage(msg):
     # ba = msg.split(" ")
     ba = msg
     # print(ba[6:14])
-    confirm = ba[0] == 181 and ba[1] == 98
+    confirm = ba[0] == 0xb5 and ba[1] == 0x62
     if not confirm:
-        pass
-        print("Data corrupted: bit code")
+        print("Data corrupted: preamble")
 
     # print(ba)
 
@@ -535,7 +615,7 @@ def binaryParseUBXMessage(msg):
     # also note is number of bytes in pl not bits
 
     cid = [classs, id]
-    # print(cid)
+    # print("\n",cid,"\n")
 
     pl = ba[6:-2]
     crc = (ba[-2], ba[-1])
@@ -547,19 +627,18 @@ def binaryParseUBXMessage(msg):
     # crc = int(ba[-2] + ba[-1], 16)
 
     if length != (len(ba) - 6 - 2):
-        pass
-        # print("Data corrupted: CRC")
+        print("Data corrupted: Length")
+        # log - don't halt since might be sat msg
 
     # ids in decimal here, comments above classes are in hex
     if classs == 1:
-        if id == 1:
-            print(pl[4:8], pl[8:12], pl[12:16])
+        if id == 0x01:
             return ECEF((pl[0:4], U4),
                         (pl[4:8], I4),
                         (pl[8:12], I4),
                         (pl[12:16], I4),
                         (pl[16:], U4))
-        elif id == 2:
+        elif id == 0x02:
             return LLH((pl[0:4], U4),
                        (pl[4:8], I4),
                        (pl[8:12], I4),
@@ -567,21 +646,21 @@ def binaryParseUBXMessage(msg):
                        (pl[16:20], I4),
                        (pl[20:24], U4),
                        (pl[24:], U4))
-        elif id == 3:
+        elif id == 0x03:
             # print("not long enough?", pl[12:], len(pl), length)
             return Status((pl[0:4], U4),
-                          (pl[4], U1),
-                          (pl[5], X1),
-                          (pl[6], X1),
-                          (pl[7], X1),
+                          (pl[4:5], U1),
+                          (pl[5:6], U1),
+                          (pl[6:7], U1),
+                          (pl[7:8], U1),
                           (pl[8:12], U4),
                           (pl[12:], U4))
-        elif id == 6:
+        elif id == 0x06:
             # print(ba)
             return Solution((pl[0:4], U4),
                             (pl[4:8], I4),
                             (pl[8:10], I2),
-                            (pl[10], U1),
+                            (pl[10:11], U1),
                             (pl[12:16], I4),
                             (pl[16:20], I4),
                             (pl[20:24], I4),
@@ -591,18 +670,19 @@ def binaryParseUBXMessage(msg):
                             (pl[36:40], I4),
                             (pl[40:44], U4),
                             (pl[44:46], U2),
-                            (pl[47], U1))
-        elif id == 19:
+                            (pl[47:48], U1))
+        elif id == 0x13:
+            print(pl[20:21], pl[20])
             return HPECEF((pl[4:8], U4),
                           (pl[8:12], I4),
                           (pl[12:16], I4),
                           (pl[16:20], I4),
-                          (pl[20], I1),
-                          (pl[21], I1),
-                          (pl[22], I1),
+                          (pl[20:21], I1),
+                          (pl[21:22], I1),
+                          (pl[22:23], I1),
                           (pl[24:], U4),
-                          (pl[23], X1))
-        elif id == 20:
+                          (pl[23:24], U1))
+        elif id == 0x14:
             return HPLLH((pl[4:8], U4),
                          (pl[8:12], I4),
                          (pl[12:16], I4),
@@ -614,34 +694,34 @@ def binaryParseUBXMessage(msg):
                          (pl[27], I1),
                          (pl[28:32], U4),
                          (pl[32:], U4),
-                         (pl[3], X1))
-        elif id == 33:
+                         (pl[3], U1))
+        elif id == 0x21:
             # print("pvt..?")
             return TimeUTC((pl[0:4], U4),
                            (pl[4:8], U4),
                            (pl[8:12], I4),
                            (pl[12:14], U2),
-                           (pl[14], U1),
-                           (pl[15], U1),
-                           (pl[16], U1),
-                           (pl[17], U1),
-                           (pl[18], U1),
-                           (pl[19], X1))
-        elif id == 53:
+                           (pl[14:15], U1),
+                           (pl[15:16], U1),
+                           (pl[16:17], U1),
+                           (pl[17:18], U1),
+                           (pl[18:19], U1),
+                           (pl[19:20], U1))
+        elif id == 0x35:
             return SatInfo((pl[0:4], U4),
-                           (pl[5], X1))
+                           (pl[5:6], U1))
         elif id == 0x3B:
             print("ITS A SURVEY YAAY")
             return SVIN((pl[8:12], U4),
                         (pl[12:16], I4),
                         (pl[16:20], I4),
                         (pl[20:24], I4),
-                        (pl[24], I1),
-                        (pl[25], I1),
-                        (pl[26], I1),
+                        (pl[24:25], I1),
+                        (pl[25:26], I1),
+                        (pl[26:27], I1),
                         (pl[28:32], U4),
                         (pl[32:36], U4),
-                        (pl[36], U1),
-                        (pl[37], U1))
+                        (pl[36:37], U1),
+                        (pl[37:38], U1))
         else:
             print("No id for", id, "in class 01-NAV")
