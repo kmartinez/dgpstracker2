@@ -1,309 +1,267 @@
+import pyb
 from Formats import *
-
-
-#       ---------------------
-#      | Log type |   Code   |
-#      |----------|-----------
-#      |  Error   |   0x00   |
-#      |  BinLLH  |   0x01   |
-#      |  BinECEF |   0x02   |
-#      |  LLH     |   0x11   |
-#      |  ECEF    |   0x12   |
-#       ---------------------
-
-
-class DateTime:
-    year = None
-    month = None
-    day = None
-    hour = None
-    min = None
-    sec = None
-    nano = None
-
-    def __init__(self, pvtMsg):
-        self.year = pvtMsg.year
-        self.month = pvtMsg.month
-        self.day = pvtMsg.day
-        self.hour = pvtMsg.hour
-        self.min = pvtMsg.min
-        self.sec = pvtMsg.sec
-        self.nano = pvtMsg.nano
-
-    # def __init__(self, year, month, day, hour, min, sec, nano):
-    #     self.year = year
-    #     self.month = month
-    #     self.day = day
-    #     self.hour = hour
-    #     self.min = min
-    #     self.sec = sec
-    #     self.nano = nano
-
-    def getYear(self):
-        ys = str(self.year)
-        return '0' * (4 - len(ys)) + ys
-
-    def getMonth(self):
-        mons = str(self.month)
-        return '0' * (2 - len(mons)) + mons
-
-    def getDay(self):
-        ds = str(self.day)
-        return '0' * (2 - len(ds)) + ds
-
-    def getHour(self):
-        hs = str(self.hour)
-        return '0' * (2 - len(hs)) + hs
-
-    def getMin(self):
-        ms = str(self.min)
-        return '0' * (2 - len(ms)) + ms
-
-    def getSec(self):
-        ss = str(self.sec)
-        return '0' * (2 - len(ss)) + ss
-
-    def getNano(self):
-        ns = str(self.nano)
-        return '0' * (2 - len(ns)) + ns
-
-    def getDateTimeString(self):
-        return self.getDateString() + " " + self.getTimeString()
-
-    def getTimeString(self):
-        return self.getHour() + ":" + self.getMin() + ":" + self.getSec() + "." + self.getNano()
-
-    def getDateString(self):
-        return self.getYear() + "-" + self.getMonth() + "-" + self.getDay()
-
-
-class BinaryDateTime:
-    class DateTime:
-        year = None
-        month = None
-        day = None
-        hour = None
-        min = None
-        sec = None
-
-        def __init__(self, pvtMsg):
-            self.year = u2toBytes(pvtMsg.year)
-            self.month = u1toBytes(pvtMsg.month)
-            self.day = u1toBytes(pvtMsg.day)
-            self.hour = u1toBytes(pvtMsg.hour)
-            self.min = u1toBytes(pvtMsg.min)
-            self.sec = u1toBytes(pvtMsg.sec)
+from LCD import getPrintableDate, getPrintableTime
 
 
 class DataLog:
-    date = None
-    svs = None
-    pOut = None  # possible / probability of outlier?
+    payload = bytearray()
+    logType = bytearray()
 
     def getLogString(self):
-        pass
+        ck_a, ck_b = ubxChecksum(self.payload)
 
+        pack = bytearray(b'\xb5b')  # start delim
+        pack.extend(curTimeInBytes()) # uses RTC of pyboard, might not match RT if unsynced/drifted
+        pack.extend(self.logType)  # log type
+        pack.extend(u2toBytes(len(self.payload)))  # pack length - should be 24 but just in case, calc dynamically
+        pack.extend(self.payload)
+        pack.extend(u1toBytes(ck_a))
+        pack.extend(u1toBytes(ck_b))
+        return pack
 
-class LLHLog(DataLog):
-    hp = None
-    lat = None
-    lon = None
-    h = None
-    hmsl = None
-    hAcc = None
-    vAcc = None
-
-    def __init__(self, dateTime, llhObj, sVs, pOut):
-        self.date = dateTime
-        self.hp = "hp" if llhObj.lonHp is not None or llhObj.latHp is not None else "lp"
-        self.lat = llhObj.lat
-        self.lon = llhObj.lon
-        self.h = llhObj.height
-        self.hmsl = llhObj.hMSL
-        self.hAcc = llhObj.hAcc
-        self.vAcc = llhObj.vAcc
-        self.svs = sVs
-        self.pOut = pOut
-
-    def getLogString(self):
-        return "[{0}] llh {2} {3} {4} {5} {6} {7} {8} {9}".format(
-            self.date.getDateTimeString(),
-            self.hp,
-            self.lat,
-            self.lon,
-            self.h,
-            self.hmsl,
-            self.hAcc,
-            self.vAcc,
-            self.svs,
-            self.pOut
-        )
+    def writeLog(self):
+        logfile = open("log.bin", "ab")
+        logfile.write(self.getLogString())
+        logfile.flush()
+        logfile.close()
 
 
 class ECEFLog(DataLog):
-    x = None
-    y = None
-    z = None
-    pAcc = None
-
-    def __init__(self, date, hp, x, y, z, pAcc, sVs, pOut):
-        self.date = date
-        self.hp = hp
-        self.x = x
-        self.y = y
-        self.z = z
-        self.pAcc = pAcc
-        self.svs = sVs
-        self.pOut = pOut
-
-    def getLogString(self):
-        return "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}".format(
-            self.date.getYear(),
-            self.date.getMonth(),
-            self.date.getDay(),
-            self.date.getHour(),
-            self.date.getMin(),
-            self.date.getSec(),
-            "ecef",
-            self.hp,
-            self.x,
-            self.y,
-            self.z,
-            self.pAcc,
-            self.svs,
-            self.pOut
-        )
+    def __init__(self, ecefMsg, smoothType, satMsg):
+        pl = bytearray()
+        pl.extend(ecefMsg.ecefX[0])
+        pl.extend(ecefMsg.ecefY[0])
+        pl.extend(ecefMsg.ecefZ[0])
+        pl.extend(ecefMsg.ecefXHp[0])
+        pl.extend(ecefMsg.ecefYHp[0])
+        pl.extend(ecefMsg.ecefZHp[0])
+        pl.extend(ecefMsg.pAcc[0])
+        pl.extend(satMsg.numSvs[0])
+        self.logType = (bwAnd(b'\x1F', smoothType))
+        self.payload = pl
 
 
-class BinaryLLHLog(DataLog):
-    type = b'\x01'
-    dateTime = None
-    lat = None
-    lon = None
-    h = None
-    hmsl = None
-    hacc = None
-    vacc = None
-    hp = None
-    sats = None
-
-    def __init__(self, binaryDateTime, llhObj, sVs):
-        self.dateTime = binaryDateTime
-        self.hp = b'1' if llhObj.lonHp is not None and llhObj.latHp is not None else b'0'
-        self.lat = i4toBytes(llhObj.lat)
-        self.lon = i4toBytes(llhObj.lon)
-        self.h = i4toBytes(llhObj.height)
-        self.hmsl = i4toBytes(llhObj.hMSL)
-        self.hAcc = u4toBytes(llhObj.hAcc)
-        self.vAcc = u4toBytes(llhObj.vAcc)
-        self.svs = u1toBytes(sVs)
+class EventLog:
+    class_id = bytearray()
+    payload = bytearray()
 
     def getLogString(self):
-        log = bytearray()
-        log.extend(self.dateTime.year)
-        log.extend(self.dateTime.month)
-        log.extend(self.dateTime.day)
-        log.extend(self.dateTime.hour)
-        log.extend(self.dateTime.minute)
-        log.extend(self.dateTime.second)
+        ck_a, ck_b = ubxChecksum(self.payload)
+        pack = bytearray(b'\xb5b')  # start delim
+        pack.extend(curTimeInBytes()) # uses RTC of pyboard, might not match RT if unsynced/drifted
+        pack.extend(self.class_id)  # log type
+        pack.extend(u2toBytes(len(self.payload)))  # pack length - should be 24 but just in case, calc dynamically
+        pack.extend(self.payload)
+        pack.extend(u1toBytes(ck_a))
+        pack.extend(u1toBytes(ck_b))
+        return pack
 
-        payload = bytearray()
-        payload.extend(self.hp)
-        payload.extend(self.lat)
-        payload.extend(self.lon)
-        payload.extend(self.h)
-        payload.extend(self.hmsl)
-        payload.extend(self.hAcc)
-        payload.extend(self.vAcc)
-        payload.extend(self.sats)
+    def writeLog(self):
+        file = open("eventLog.bin", "ab")
+        file.write(self.getLogString())
+        file.flush()
+        file.close()
 
-        crca, crcb = ubxChecksum(payload)
+class StartupEvent(EventLog):
+    class_id = b'\x00'
 
-        log.extend(payload)
-        log.extend(crca)
-        log.extend(crcb)
+class CalibrateEvent(EventLog):
+    class_id = b'\x03'
 
-        return log
+class TimeUpdateEvent(EventLog):
+    class_id = b'\x01'
 
+class TimeWakeupSyncEvent(EventLog):
+    class_id = b'\x02'
 
-class BinaryECEFLog(DataLog):
-    tow = None
-    x = None
-    xhp = None
-    y = None
-    yhp = None
-    z = None
-    zhp = None
-    pAcc = None
-    svs = None
-    datatype = None
+class LocationEvent(EventLog):
 
-    def setECEFData(self, ecefLog):
-        self.x = ecefLog.ecefX
-        self.y = ecefLog.ecefY
-        self.z = ecefLog.ecefZ
-        self.xhp = ecefLog.ecefXHp
-        self.yhp = ecefLog.ecefYHp
-        self.zhp = ecefLog.ecefZHp
-        self.pAcc = ecefLog.pAcc
+    def __init__(self, eventType):
+        self.class_id = bwAnd(eventType, b'\x1F')
 
-    def setSvs(self, satsMsg):
-        self.svs = satsMsg.getNumSvs()
-
-    # 0x00 = raw, 0x01 = median filtered, 0x02 = best accuracy
-    def setDataType(self, dtype):
-        self.datatype = dtype
-
-    def getLogString(self):
-        log = bytearray()
-        year, month, day, weekday, hour, minute, second, nano = pyb.RTC().datetime()
-        log.extend(u2fromBytes(year))
-        log.extend(u1fromBytes(month))
-        log.extend(u1fromBytes(day))
-        log.extend(u1fromBytes(hour))
-        log.extend(u1fromBytes(minute))
-        log.extend(u1fromBytes(second))
-        log.extend(i4fromBytes(nano))
-        log.append(self.datatype)
-
-        payload = bytearray()
-        payload.extend(self.x)
-        payload.extend(self.y)
-        payload.extend(self.z)
-        payload.extend(self.xhp)
-        payload.extend(self.yhp)
-        payload.extend(self.zhp)
-        payload.extend(self.pAcc)
-        payload.extend(self.svs)
-
-        crca, crcb = ubxChecksum(payload)
-
-        log.extend(payload)
-        log.extend(crca)
-        log.extend(crcb)
-
-        return log
+class LCDEvent(EventLog):
+    def __init__(self, eventType):
+        self.class_id = bwAnd(eventType, b'\x2F')
 
 
-# log format:
-# yyyy mm dd hh mm ss LLH LP/HP Lat Lon Height hmsl hacc vacc sats p_outlier
-# yyyy mm dd hh mm ss ECEF LP/HP x y z pacc sats pout
-class ErrorLog:
-    date = None
-    errorMsg = None
+class LengthForceError(EventLog):
+    class_id = b'\xE0'
 
-    def __init__(self, date, errorMsg):
-        self.date = date
-        self.errorMsg = errorMsg
+    def __init__(self, parseClass, parseID, byteLength, newLength):
+        pl = bytearray()
+        pl.extend(u2toBytes(parseClass))
+        pl.extend(u2toBytes(parseID))
+        pl.extend(u2toBytes(byteLength))
+        pl.extend(u2toBytes(newLength))
+        self.payload = pl
 
 
-# error log format:
-# yyyy mm dd hh mm ss error
+class LengthMismatchError(EventLog):
+    class_id = b'\xE1'
 
-def unparse(bs):
-    clazs = bs[0]
-    dateTime = bs[1:8]
-    pl = bs[8:-2]
-    checksum = (bs[-2], bs[-1])
-    corrupted = verifyChecksum(pl, checksum)
-    # switch on clazs to parse pl with dateTime - unparse dateTime seperately
+    def __init__(self, parseClass, parseID, byteLength, parseLength):
+        pl = bytearray()
+        pl.extend(u2toBytes(parseClass))
+        pl.extend(u2toBytes(parseID))
+        pl.extend(u2toBytes(byteLength))
+        pl.extend(u2toBytes(parseLength))
+        self.payload = pl
+
+
+class NoMessageError(EventLog):
+    class_id = b'\xE2'
+
+    def __init__(self, parseClass, parseID):
+        pl = bytearray(b'\xb5b')
+        pl.extend(u1toBytes(parseClass))
+        pl.extend(u1toBytes(parseID))
+        self.payload = pl
+
+
+class EncodingError(EventLog):
+    class_id = b'\xF2'
+
+    def __init__(self, encode, number, format):
+        if not encode:
+            self.logType = b'\xF3'
+        pl = bytearray()
+        pl.extend(u4toBytes(number))
+        pl.extend(u2toBytes(format))
+        self.payload = pl
+
+
+class NoSpaceError(EventLog):
+    class_id = b'\xFE'
+
+
+class GenericMemoryError(EventLog):
+    class_id = b'\xFF'
+
+
+def bwAnd(b1, b2):
+    r = b''
+    for i in range(min(len(b1), len(b2))):
+        r += bytes([b1[i] & b2[i]])
+    return r
+
+def bwOr(b1, b2):
+    r = b''
+    for i in range(min(len(b1), len(b2))):
+        r += bytes([b1[i] | b2[i]])
+    return r
+
+def getTime(bytes):
+    year = U2(bytes[0:2])
+    month = U1(bytes[2])
+    day = U1(bytes[3])
+    hour = U1(bytes[4])
+    minute = U1(bytes[5])
+    second = U1(bytes[6])
+    return year, month, day, hour, minute, second
+
+def curTimeInBytes():
+    year, month, day, weekday, hours, minutes, seconds, subseconds = pyb.RTC().datetime()
+    return u2toBytes(year) + u1toBytes(month) + u1toBytes(day) + u1toBytes(hours) + u1toBytes(minutes) + u1toBytes(seconds)
+
+
+def unparseLogs(filename):
+    inf = open(filename, "rb")
+    lines = inf.readlines()
+    inf.close()
+    logs = lines.split(b'\xb5b')  # uses same preamble as ubx logs for simplicity
+    f = open("readablelogs.txt", "w")
+    for line in logs:
+        # skip empty lines
+        if len(line) == 0:
+            continue
+        type = line[0]
+        year, month, day, hour, minute, second = list(map(str, getTime(line[1:9])))
+        logdata = line[9:]
+        readable = year + "/" + month + "/" + day + "/" + " " + hour + ":" + minute + ":" + second + " - "
+        if type == 0x00:
+            readable += "Device startup"
+        elif type == 0x02:
+            readable += "RTC time updated"
+        elif type == 0x02:
+            readable += "Wakeup events synced to RTC"
+        elif type == 0x10:
+            readable += "ECEF Location logged"
+        elif type == 0x11:
+            # raw location log
+            x = str( I4(logdata[0:4]) + .1 * I1(logdata[12:13]) )
+            y = str( I4(logdata[4:8]) + .1 * I1(logdata[13:14]) )
+            z = str( I4(logdata[8:12]) + .1 * I1(logdata[14:15]) )
+            pacc = str( I4(logdata[15:19]) * .01)
+            svs = str( U1(logdata[19:20]) )
+            readable += "Raw location: [" + x + ", " + y + ", " + z + "]: " + pacc+"cm, svs="+svs
+        elif type == 0x12:
+            x = str(I4(logdata[0:4]) + .1 * I1(logdata[12:13]))
+            y = str(I4(logdata[4:8]) + .1 * I1(logdata[13:14]))
+            z = str(I4(logdata[8:12]) + .1 * I1(logdata[14:15]))
+            pacc = str(I4(logdata[15:19]) * .01)
+            svs = str(U1(logdata[19:20]))
+            readable += "Median-smoothed location: [" + x + ", " + y + ", " + z + "]: " + pacc + "cm, svs=" + svs
+        elif type == 0x13:
+            x = str(I4(logdata[0:4]) + .1 * I1(logdata[12:13]))
+            y = str(I4(logdata[4:8]) + .1 * I1(logdata[13:14]))
+            z = str(I4(logdata[8:12]) + .1 * I1(logdata[14:15]))
+            pacc = str(I4(logdata[15:19]) * .01)
+            svs = str(U1(logdata[19:20]))
+            readable += "Best-accuracy location: [" + x + ", " + y + ", " + z + "]: " + pacc + "cm, svs=" + svs
+        elif type == 0x1E:
+            readable += "Location logs transmitted"
+        elif type == 0x1F:
+            readable += "Location logs cleared"
+        elif type == 0x21:
+            readable += "LCD on"
+        elif type == 0x22:
+            readable += "LCD off"
+        elif type == 0x23:
+            readable += "LCD locked"
+        elif type == 0x24:
+            readable += "LCD unlocked"
+        elif type == 0xE0:
+            # len forcibly changed by code
+            ubxClass = U1(logdata[:1])
+            ubxID = U1(logdata[1:2])
+            byteLength = U2(logdata[2:4])
+            newLength = U2(logdata[4:6])
+            readable += "Length forcibly changed for " + str([ubxClass, ubxID]) + ": " + str(byteLength) + " -> " + str(
+                newLength)
+        elif type == 0xE1:
+            # len mismatch with parsed len
+            ubxClass = U1(logdata[:1])
+            ubxID = U1(logdata[1:2])
+            byteLength = U2(logdata[2:4])
+            parseLength = U2(logdata[4:6])
+            readable += "Length mismatch on " + str([ubxClass, ubxID]) + ": " + str(byteLength) + "(b) vs " + str(
+                parseLength) + "(p)"
+        elif type == 0xE2:
+            # no parse data for incoming message
+            ubxClass = U1(logdata[:1])
+            ubxID = U1(logdata[1:2])
+            readable += "No programmed message for class="+str(ubxClass)+", id="+str(ubxID)
+        elif type == 0xF0:
+            readable += "UART port uncalibrated"
+        elif type == 0xF1:
+            # unacceptable packet length on uart stream (>100 and not sat)
+            badLength = U2(logdata[:2])
+            readable += "Unacceptable packet length read from UART stream: "+str(badLength)
+        elif type == 0xF2:
+            # number ENcoding error
+            badNumber = I4(logdata[:4])
+            format = U2(logdata[4:6])
+            readable += "Number encoding error: "+str(badNumber) + ": "+str(format)
+            pass
+        elif type == 0xF3:
+            # number DEcoding error
+            badNumber = I4(logdata[:4])
+            format = U2(logdata[4:6])
+            readable += "Number decoding error: " + str(badNumber) + ": " + str(format)
+            pass
+        elif type == 0xFE:
+            readable += "Not enough space in storage to keep logs"
+        elif type == 0xFF:
+            readable += "Unknown error"
+        # write to file - no check for file space :/
+        f.write(readable + "\n")
