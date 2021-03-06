@@ -1,0 +1,34 @@
+datetime -
+
+0x0_ -> general
+0x00 - startup
+0x01 - time update
+0x02 - time wakeup sync
+
+0x1_ -> location data
+0x10
+0x11 [x,y,z,xhp,yhp,zhp,acc,sats] - raw location
+0x12 [x,y,z,xhp,yhp,zhp,acc,sats] - median smoothed
+0x13 [x,y,z,xhp,yhp,zhp,acc,sats] - best acc over 50 readings
+0x1E - location logs transmitted
+0x1F - location logs cleared
+
+0x2_ -> LCD
+0x20 - LCD on
+0x21 - LCD off
+0x22 - LCD locked
+0x23 - LCD unlocked
+
+0xE_ -> soft errors
+0xE0 [class, id, lengthbytes, newlength] - length forcefully changed
+0xE1 [class, id, lengthbytes, lengthparse] - length doesn't match bytes in parsing
+0xE2 [class, id] - no parse for message
+0xE3 [class, id] - message ignored
+
+0xF_ -> errors
+0xF0 - uncalibrated
+0xF1 [length] - incorrect packet length when reading bytes
+0xF2 [number (4 bytes), format (2 bytes)] - number encoding error
+0xF3 [number (4 bytes), format (2 bytes)] - number decoding error
+0xFE - not enough space for log
+0xFF - generic mem error
