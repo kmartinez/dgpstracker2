@@ -23,9 +23,14 @@ GPS_UART_PORT = 6
 GPS_BAUDRATE = 38400
 GPS_TIMEOUT = 1001 # ms
 GPS_BUF_SIZ = 512 # bytes
+
 IS_BASE_STATION = False
 SVIN_DUR = 600 # 5 min
 SVIN_ACC = 10000 # 10m
+RADIO_UART_PORT = 3
+RADIO_BAUDRATE = 38400
+RADIO_TIMEOUT = 1000
+RADIO_BUF_SIZ = 1024
 
 # gpsIn = UART(6, 38400)
 # gpsIn.init(38400, bits=8, parity=None, stop=1, read_buf_len=512,
@@ -57,7 +62,7 @@ TIMEUTC_ENABLED = True
 LOG_RAW = False
 LOG_MEDIAN = True
 LOG_BEST = True
-UPDATE_DELAY = 125 # works best if harmonises with 1000ms i.e. 250, 500, 125, etc.
+UPDATE_DELAY = 1 # works best if harmonises with 1000ms i.e. 250, 500, 125, etc.
 
 NO_READINGS = 5  # number of positions used in one reading
 NO_MSGS = 4  # ROVER: number of messages per epoch (HPECEF, SAT, STATUS) = 3 --> NOTE that TIMUTC is used then discarded once time is updated
@@ -68,7 +73,7 @@ MAX_CALIBRATE_FAILURES = 50 # number of UART timeouts until calibration attepts 
 # MSG_PERIOD = 8 * 60 * 60  # (in seconds) every eight hours - min. 1 minute (50 readings taken with a delay of 1s
 # between them)
 MSG_PERIOD = 120  # two-minute debug mode
-# MSG_PERIOD = 28800  # two-minute debug mode
+# MSG_PERIOD = 28800  # normal default
 if MSG_PERIOD < 60:
     MSG_PERIOD = 60
 MSG_PERIOD *= 1000  # convert from s to ms
@@ -137,7 +142,8 @@ def loadTimeParams(data):
         MAX_TRANSMIT_ATTEMPTS = data['transmit_attempts']
 
 def loadUARTParams(data):
-    global GPS_UART_PORT, GPS_BAUDRATE, GPS_TIMEOUT, CALIBRATION_TTL, GPS_BUF_SIZ, gpsIn, DEVICE_ID, MAX_CALIBRATE_FAILURES
+    global GPS_UART_PORT, GPS_BAUDRATE, GPS_TIMEOUT, CALIBRATION_TTL, GPS_BUF_SIZ, gpsIn, DEVICE_ID, \
+        MAX_CALIBRATE_FAILURES, RADIO_UART_PORT, RADIO_BAUDRATE, RADIO_TIMEOUT, RADIO_BUF_SIZ
     if 'device_id' in data:
         DEVICE_ID = data['device_id']
     if 'gps_uart' in data:
@@ -152,6 +158,14 @@ def loadUARTParams(data):
         CALIBRATION_TTL = data['calibration_ttl']
     if 'max_calibration_fail' in data:
         CALIBRATION_TTL = data['max_calibration_fail']
+    if 'radio_uart' in data:
+        RADIO_UART_PORT = data['radio_uart']
+    if 'radio_baudrate' in data:
+        RADIO_BAUDRATE = data['radio_baudrate']
+    if 'radio_timeout' in data:
+        RADIO_TIMEOUT = data['radio_timeout']
+    if 'radio_buffer_size' in data:
+        RADIO_BUF_SIZ = data['radio_buffer_size']
     gpsIn = UART(GPS_UART_PORT, GPS_BAUDRATE)
     gpsIn.init(GPS_BAUDRATE, bits=8, parity=None, stop=1, read_buf_len=GPS_BUF_SIZ,
                timeout=GPS_TIMEOUT)  # timeout should overlap epochs -> 1s atm
@@ -392,7 +406,8 @@ def getReadings(i=0):
     msg_count = 0
     LCD.makeLCDFree()
     reading = False
-    # pyb.stop() # put in sleep mode when all done ?
+    # if LCD.powered == 0:
+    #     pyb.stop() # put board into low-power mode until ext. interrupt
 
 def forceReading():
     global clock
@@ -432,6 +447,7 @@ t_attempts = 0
 def transmitLogs():
     global TRANSMIT_AFTER, MAX_TRANSMIT_ATTEMPTS, t_attempts
     # don't run if don't want to transmit for some reason
+    LCD.makeLCDBusy()
     if MAX_TRANSMIT_ATTEMPTS <= 0:
         return
     elif t_attempts >= TRANSMIT_AFTER:
@@ -452,6 +468,8 @@ def transmitLogs():
         t_attempts = 0
     else:
         t_attempts += 1
+
+    LCD.makeLCDFree()
     # original intent was to transmit once per day, so could accumulate value
     # based on period and number of logs taken
     # implementation could be abstracted to UART or SPI output -> currently no plan to use real satellite link
@@ -639,48 +657,66 @@ def initialTimer(i=0):
         LCD.makeLCDBusy()
         clock.wakeup(None)
         time = clock.datetime()
-        hour = time[4]
+        hour = time[4] + time[5]/60 # should enable us to tell number of minutes along the hour
         diff = (hour - MSG_START_TIME) * 60 * 60
+        # next reading would be in MSG_PERIOD amt of time anyway
         if diff == 0 or diff % MSG_PERIOD == 0:
             clock.wakeup(MSG_PERIOD*1000, initialReading)
             print("Wakeup in", MSG_PERIOD*1000)
+        # start time is in the future, next reading = time until start time
         elif diff < 0:
             clock.wakeup(abs(diff)*1000, initialReading)
             print("Wakeup in", abs(diff)*1000)
+        # start time is in the past, calculate when next reading would be
         elif diff > 0:
             nextLogTime = MSG_START_TIME
             period_h = MSG_PERIOD / 60 ** 2
+            # repeatedly increment until next log time in future
             while diff > 0:
                 nextLogTime += period_h
                 diff = hour - nextLogTime
+            # calc difference to next log time
             clock.wakeup(MSG_PERIOD*1000 if diff == 0 else abs(diff)*60*60*1000, initialReading)
             print("Wakeup in", abs(diff)*1000)
     else:
         print("No time confidence")
     LCD.makeLCDFree()
 
+def checkForIncoming():
+    while radio.any() > 0:
+        incoming = radio.read(100)
+        Log.RawLog(incoming).writeLog()
+    if LCD.powered == 0:
+        pyb.stop()
+
 
 print("Starting...")
-getParamsFromConfig()
-Log.initLogs(DEVICE_ID)
+getParamsFromConfig() # loads fields from JSON file
+Log.initLogs(DEVICE_ID) # defines ID used when logging files
 LCD.initLCDAPI(MSG_PERIOD, MSG_START_TIME, LOG_RAW, LOG_MEDIAN, LOG_BEST, IS_BASE_STATION, readCallback=forceReading, svintoggle=toggleSVIN, svin_dur=SVIN_DUR, svin_acc=SVIN_ACC)
 # LCD.initLCDAPI(MSG_PERIOD, MSG_START_TIME, LOG_RAW, LOG_MEDIAN, LOG_BEST, False, readCallback=forceReading)
 clock = pyb.RTC()
-if not IS_BASE_STATION:
+if IS_BASE_STATION:
+    radio = UART(RADIO_UART_PORT, RADIO_BAUDRATE)
+    radio.init(RADIO_BAUDRATE, bits=8, parity=None, stop=1, read_buf_len=RADIO_BUF_SIZ,
+               timeout=RADIO_TIMEOUT)
+    clock.wakeup(1000, checkForIncoming)
+else:
     clock.wakeup(10000, initialTimer) # start checking every 10 seconds if time is accurate, then start reading
-                                        # properly
+                                      # properly
 # main loop
-svs = 0
+svs = 0 # number of satellites observed, used in LCD updates
 Log.StartupEvent().writeLog()
 while True:
     if not reading and LCD.powered == 1 or surveying:  # don't update LCD if taking a reading or if it's unpowered
-        # LCD power check is done in LCD.updateLCD(..) but put here too to stop pyb.delay() from triggering = redundancy
+        # LCD power check is done in LCD.updateLCD(..) but put here too to stop pyb.delay() from triggering => redundancy
         monitoring = LCD.monitoring
         if monitoring or surveying:
-            # get a locaiton message from buffer
             msg_buf = {}  # reset to stop memory leaks - shouldn't interfere with periodic reading as won't be reachable during
             try:
+                # fill buffer with bytes from UART
                 readBytes()
+                # get a location message from ^ buffer
                 msg, code = getMessageFromBuffer()
             except:
                 msg = None
@@ -696,6 +732,6 @@ while True:
             elif code == SATINF_CODE:
                 svs = msg.getNumSvs()
         print("Updating LCD")
-        updateLCD()
+        LCD.updateLCD(UPDATE_DELAY)
         pyb.delay(UPDATE_DELAY)
-    pyb.wfi()  # put in low-power mode to reduce power consumption
+    pyb.wfi()  # put in low-power mode to reduce power consumption - max 1ms unless interrupt
