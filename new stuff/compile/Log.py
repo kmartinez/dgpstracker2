@@ -63,7 +63,7 @@ class ECEFLog(DataLog):
 class EventLog:
     class_id = bytearray()
     payload = bytearray()
-    acceptable_ids = [b'\x00', b'\x02', b'\x1e', b'\x1f', b'\x20', b'\x21', b'\xe2', b'\xe3', b'\xf1', b'\xf2', b'\xf3',
+    acceptable_ids = [b'\x00', b'\x01', b'\x02', b'\x1e', b'\x1f', b'\x20', b'\x21', b'\xe2', b'\xf1', b'\xf2', b'\xf3',
                       b'\xf4', b'\xf5', b'\xfe', b'\xff']
 
     def getLogString(self):
