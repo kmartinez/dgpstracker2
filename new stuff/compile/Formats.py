@@ -10,25 +10,6 @@
 import struct
 import Log
 
-conversions = {
-    "mm": .001,
-    "cm": .01,
-    "deg": .0000001,
-    "ecefhp": .1,
-    "llhhp": .01,
-    "unit": 1,
-    "ms": .001
-}
-
-
-def getConversionFactor(unit="unit"):
-    global conversions
-    try:
-        return conversions[unit]
-    except:
-        return 1
-
-
 def decode(bytearr, format):
     try:
         if type(bytearr) is int:

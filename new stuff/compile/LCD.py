@@ -1,6 +1,5 @@
 import pyb
 from lcd160cr import *
-from Message import *
 from Formats import *
 
 lcd = None
@@ -8,17 +7,6 @@ lcd = None
 
 def rgb(r, g, b):
     return LCD160CR.rgb(r, g, b)
-
-
-def drawSquares():
-    # lcd = LCD160CR('X')
-    from random import randint
-    for i in range(1000):
-        fg = rgb(randint(128, 255), randint(128, 255), randint(128, 255))
-        bg = rgb(randint(0, 128), randint(0, 128), randint(0, 128))
-        lcd.set_pen(fg, bg)
-        lcd.rect(randint(0, lcd.w), randint(0, lcd.h), randint(10, 40), randint(10, 40))
-
 
 def resetPen():
     lcd.set_pos(0, 0)
@@ -54,20 +42,6 @@ def clearScreen():
     lcd.erase()
 
 
-def showArgs(**kwargs):
-    clearScreen()
-    lcd.set_pos(0, 0)
-    for key, value in kwargs.items():
-        writeLine("%s: %s" % (key, value))
-
-
-def resetLCD():
-    whiteText()
-    changePenColour(rgb(255, 255, 255))
-    clearScreen()
-    resetPenPos()
-
-
 def changeTextColour(fg, bg=rgb(0, 0, 0)):
     lcd.set_text_color(fg, bg)
     return fg, bg
@@ -77,10 +51,6 @@ def changeTextColourRGBNoBG(r, g, b):
     return changeTextColour(rgb(r, g, b), rgb(0, 0, 0))
 
 
-def whiteText():
-    changeTextColourRGBNoBG(255, 255, 255)
-
-
 def changePenColour(line, fill=rgb(0, 0, 0)):
     lcd.set_pen(line, fill)
     return line, fill
@@ -88,80 +58,6 @@ def changePenColour(line, fill=rgb(0, 0, 0)):
 
 def resetPenPos():
     lcd.set_pos(0, 0)
-
-
-def showLLHStatus(fixOK, diffSol, tow, towValid, fixType, solValid, lat, lathp, lon, lonhp, h, hmsl, vAcc, hAcc,
-                  datetime):
-    resetLCD()
-    if not towValid:
-        changeTextColourRGBNoBG(255, 0, 0)
-    writeLine("TOW:" + str(tow))
-
-    whiteText()
-
-    if not fixOK:
-        changeTextColourRGBNoBG(255, 0, 0)
-    writeLine("fix:" + str(fixType))
-
-    if diffSol:
-        writeToScreen("-Diff")
-
-    whiteText()
-
-    if not solValid:
-        changeTextColourRGBNoBG(255, 0, 0)
-
-    writeLine("lat:" + str(lat))
-    writeLine("lathp:" + str(lathp))
-    writeLine("lon:" + str(lon))
-    writeLine("lon:" + str(lonhp))
-    writeLine("height:" + str(h))
-    writeLine("hmsl:" + str(hmsl))
-    writeLine("hAcc:" + str(hAcc))
-    writeLine("vAcc:" + str(vAcc))
-    writeLine("----------------")
-    writeLine("date: " + str(datetime.getDateString()))
-    writeLine("time: " + str(datetime.getTimeString()))
-
-
-def showStatus(xPos, yPos, zPos, pAcc, lat, lon, lathp, lonhp, h, sats, fix):
-    resetLCD()
-    writeLine("xPos:" + str(xPos))
-    writeLine("yPos:" + str(yPos))
-    writeLine("zPos:" + str(zPos))
-    writeLine("pAcc:" + str(pAcc))
-    writeLine("lat:" + str(lat))
-    writeLine("lathp:" + str(lathp))
-    writeLine("lon:" + str(lon))
-    writeLine("lonhp:" + str(lonhp))
-    writeLine("height:" + str(h))
-    writeLine("sats:" + str(sats))
-    writeLine("fix:" + str(fix))
-
-
-def showSVINStatus(svinmsg):
-    if svinmsg is None:
-        svinmsg = SVIN(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-    resetLCD()
-    if svinmsg.active == 1:
-        changeTextColourRGBNoBG(0, 255, 0)
-        writeLine("Status: In progress")
-    else:
-        changeTextColourRGBNoBG(255, 0, 0)
-        writeLine("Status: Inactive")
-
-    writeLine("Observation time: " + str(svinmsg.dur))
-    if svinmsg.valid == 1:
-        changeTextColourRGBNoBG(0, 255, 0)
-    else:
-        changeTextColourRGBNoBG(255, 0, 0)
-
-    writeLine("X: " + str((svinmsg.meanX + .01 * svinmsg.meanXHp) * .01))
-    writeLine("Y: " + str((svinmsg.meanY + .01 * svinmsg.meanYHp) * .01))
-    writeLine("Z: " + str((svinmsg.meanZ + .01 * svinmsg.meanZHp) * .01))
-    writeLine("Mean Acc: " + str(svinmsg.meanAcc * .0001))
-    writeLine("Positions used: " + str(svinmsg.obs))
 
 
 def initLCDAPI(log_freq=0, log_start=0, keep_raw=False, keep_med=False, keep_best=False, baseStation=True, svin_dur=0,
@@ -210,7 +106,7 @@ def updateLCD(delay):
 
 def forceUpdateLCD():
     global updateIn, pages, page
-    updateIn = 0
+    updateIn = 0 # force update immediately after draw
     page_ = pages[page]
     checkPower()
     if powered == 0 or reading:
@@ -253,6 +149,7 @@ def checkPower():
         Log.LCDEvent(b'\x20').writeLog()
     else:
         Log.LCDEvent(b'\x21').writeLog()
+        # pyb.stop()
     powerchange = False
 
 
@@ -611,7 +508,7 @@ class RectButton(Widget):
 
     detail = []
 
-    def __init__(self, llims=(0, 0), ulims=(0, 0), size=(0, 0), fillColour=rgb(0, 0, 0),
+    def __init__(self, llims=(0, 0), ulims=(0, 0), fillColour=rgb(0, 0, 0),
                  outlineColour=rgb(255, 255, 255),
                  filled=False,
                  detail=None, callback=(lambda: print("RectButton pressed"))):
@@ -620,15 +517,11 @@ class RectButton(Widget):
             detail = [bytearray()]
         self.detail = detail
 
-        # print(callback)
-        # callback()
-
         self.fillCol = fillColour
         self.outlineCol = outlineColour
         self.filled = filled
         super(RectButton, self).__init__(llims=llims, ulims=ulims, callback=callback)
-        # print(self.x_u_lim, self.x_l_lim)
-        # print(self.y_u_lim, self.y_l_lim)
+
         self.name = "RectButton at [" + str((self.x_l_lim, self.y_l_lim)) + ", " + str(
             (self.x_u_lim, self.y_u_lim)) + "]"
 
@@ -716,6 +609,3 @@ class Line(Widget):
     def draw(self):
         lcd.set_pen(self.col, rgb(0, 0, 0))
         lcd.line(self.x_u_lim, self.y_u_lim, self.x_l_lim, self.y_l_lim)
-
-    def is_touched(self):
-        return False
