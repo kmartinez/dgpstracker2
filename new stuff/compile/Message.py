@@ -66,7 +66,7 @@ class ECEF(Message):
         if type(self.pAcc) is not tuple:
             return self.pAcc * 1e-4
         else:
-            return self.pAcc[1](self.pAcc[0]) * 1e-4
+            return self.pAcc[1](self.pAcc[0]) * 1e-2
 
 
 # 01 02
