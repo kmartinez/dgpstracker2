@@ -1,8 +1,10 @@
 import pyb
 import Formats
+import os
 
 DEVICE_ID = 0
-PRECISION = 0 # 0=day,1=hour
+PRECISION = 0  # 0=day,1=hour
+
 
 class RawLog:
     data = bytearray()
@@ -14,10 +16,9 @@ class RawLog:
         return self.data
 
     def writeLog(self):
-        logfile = open(getdtstring() + "log.bin", "ab")
-        logfile.write(self.getLogString())
-        logfile.flush()
-        logfile.close()
+        fn = "datalog.bin"
+        writeDataToFile(fn, self.getLogString())
+
 
 class DataLog:
     payload = bytearray()
@@ -38,10 +39,8 @@ class DataLog:
         return pack
 
     def writeLog(self):
-        logfile = open(getdtstring() + "log.bin", "ab")
-        logfile.write(self.getLogString())
-        logfile.flush()
-        logfile.close()
+        fn = getdtstring() + "log.bin"
+        writeDataToFile(fn, self.getLogString())
 
 
 class ECEFLog(DataLog):
@@ -63,6 +62,7 @@ class ECEFLog(DataLog):
 class EventLog:
     class_id = bytearray()
     payload = bytearray()
+    # used to filter out latency issues caused by over-using I/O with minor, unimportant events
     acceptable_ids = [b'\x00', b'\x01', b'\x02', b'\x1e', b'\x1f', b'\x20', b'\x21', b'\xe2', b'\xf1', b'\xf2', b'\xf3',
                       b'\xf4', b'\xf5', b'\xfe', b'\xff']
 
@@ -86,11 +86,20 @@ class EventLog:
     def writeLog(self):
         if self.class_id not in self.acceptable_ids:
             return bytearray()
-        file = open(getdtstring() + "eventLog.bin", "ab")
-        file.write(self.getLogString())
-        file.flush()
-        file.close()
-        pass
+        fn = getdtstring() + "eventLog.bin"
+        writeDataToFile(fn, self.getLogString())
+
+
+waiting_logs = {}
+
+
+def writeDataToFile(filename, data):
+    if filename not in waiting_logs:
+        waiting_logs[filename] = 0
+    file = open(filename, "ab")
+    file.write(data)
+    file.flush()
+    file.close()
 
 
 class StartupEvent(EventLog):
@@ -120,7 +129,8 @@ class TimeWakeupSyncEvent(EventLog):
 class LocationEvent(EventLog):
 
     def __init__(self, eventType):
-        self.class_id = bwAnd(eventType, b'\x1F')
+        self.class_id = b'\x10'
+        self.payload = eventType
 
 
 class LCDEvent(EventLog):
@@ -154,6 +164,9 @@ class LengthMismatchError(EventLog):
 
 class UnacceptableLengthError(EventLog):
     class_id = b'\xF1'
+
+    def __init__(self, lengthbytes):
+        self.payload.extend(lengthbytes)
 
 
 class NoMessageError(EventLog):
@@ -221,6 +234,9 @@ def bwOr(b1, b2):
 
 
 def getTime(bytes):
+    if bytes is None or bytes == b'':
+        return 0, 0, 0, 0, 0, 0
+
     year = Formats.U2(bytes[0:2])
     month = Formats.U1(bytes[2])
     day = Formats.U1(bytes[3])
@@ -235,47 +251,89 @@ def curTimeInBytes():
     return Formats.u2toBytes(year) + Formats.u1toBytes(month) + Formats.u1toBytes(day) + Formats.u1toBytes(hours) + \
            Formats.u1toBytes(minutes) + Formats.u1toBytes(seconds)
 
+
 def getdtstring():
     time = pyb.RTC().datetime()
     return "{0}-{1}-{2}-".format(time[2], time[1], time[0])
 
 
-waiting_logs = {}
 def unparseLogs():
-    try:
-        dtstring = getdtstring()
-        unparseLog(dtstring+"log.bin")
-        unparseLog(dtstring+"eventlog.bin")
-        # list files that haven't been erased yet
-        if dtstring not in waiting_logs:
-            waiting_logs[dtstring] = 0
-    except Exception as e:
-        print("Error while decoding logs? Might not exist", e)
+    # try:
+    filesToDecode = list(filter(lambda i: ".bin" in i, os.listdir()))
+    for fn in filesToDecode:
+        # check the extension of files
+        print(fn)
+        unparseLog(fn)
+    # except Exception as e:
+    #     print("Error while decoding logs?", e)
+
+
+def calibrateFile(file):
+    start_bit_one = False
+    start_bit_two = False
+    curr = b'\x00'
+    while not (start_bit_one and start_bit_two) and curr is not None and curr != b'':
+        curr = file.read(1)
+        if curr == b'\xb5':
+            start_bit_one = True
+        elif curr == b'\x62':
+            start_bit_two = True
+        else:
+            start_bit_one = False
+            start_bit_two = False
+
+
+def getLine(file):
+    print("------")
+    calibrateFile(file)
+    date = file.read(7)
+    did = file.read(1)
+    type = file.read(1)
+    lbytes = file.read(2)
+    print(date, did, type, lbytes)
+    if lbytes == b'':
+        # eof reached
+        return None
+
+    length = Formats.U2(lbytes)
+    if length > 50:
+        return b''
+
+    data = file.read(length)
+    print(data)
+    crc = file.read(2)
+    if crc is None or crc == b'':
+        return None
+
+    return date, did, type, data
 
 
 def unparseLog(filename):
     inf = open(filename, "rb")
-    lines = inf.read()
-    inf.close()
-    if len(lines) == 0:
-        return
-    # SHOULD only be on line, since no \n written... but just in case
-    logs = lines.split(b'\xb5b')  # uses same preamble as ubx logs for simplicity
-    f = open("readablelogs.txt", "w")
-    for line in logs:
-        print(line)
+    line = b''
+    fev = open(filename.split(".")[0] + "_parsed_events.txt", "w")
+    fcsv = open(filename.split(".")[0] + "_parsed_data.csv", "w")
+    dups = set()
+    while line is not None:
+        line = getLine(inf)
+        if line is None or len(line) == 0:
+            continue
+        # SHOULD only be on line, since no \n written... but just in case
+        # print(line)
         # skip empty lines
         if len(line) == 0:
             continue
-        year, month, day, hour, minute, second = list(map(str, getTime(line[:7])))
-        did = line[7]
-        type = Formats.U1(line[8:9])
-        length = Formats.U2(line[9:11])
-        logdata = line[11:]
+        year, month, day, hour, minute, second = list(map(str, getTime(line[0])))
+        did = Formats.U1(line[1])
+        type = Formats.U1(line[2])
+        logdata = line[3]
         readable = "[{0}] - {1}/{2}/{3} {4}:{5}:{6} - ".format(did, day, month, year, hour, minute, second)
-        # print(type, length, readable, logdata)
+        csv = "{0},{1}/{2}/{3} {4}:{5}:{6},".format(did, day, month, year, hour, minute, second)
+        print(type, readable, logdata)
         if type == 0x00:
             readable += "Device startup"
+        elif type == 0x01:
+            readable += "RTC synchronised"
         elif type == 0x02:
             readable += "RTC time updated"
         elif type == 0x02:
@@ -283,40 +341,55 @@ def unparseLog(filename):
         elif readable == 0x03:
             readable += "Calibration succeeded"
         elif type == 0x10:
-            readable += "ECEF Location logged"
+            eType = logdata[0]
+            if eType == 0x11:
+                eType = "unfiltered"
+            elif eType == 0x12:
+                eType = "median"
+            elif eType == 0x13:
+                eType = "best-acc"
+            else:
+                eType = "unknown"
+            readable += "ECEF Location logged [{0}]".format(eType)
         elif type == 0x11:
             # raw location log
-            x = str(Formats.I4(logdata[0:4]) + .1 * Formats.I1(logdata[12:13]))
-            y = str(Formats.I4(logdata[4:8]) + .1 * Formats.I1(logdata[13:14]))
-            z = str(Formats.I4(logdata[8:12]) + .1 * Formats.I1(logdata[14:15]))
-            pacc = str(Formats.I4(logdata[15:19]) * .01)
-            svs = str(Formats.U1(logdata[19:20]))
-            readable += "Raw location: [" + x + ", " + y + ", " + z + "]: " + pacc + "cm, svs=" + svs
+            x = Formats.I4(logdata[0:4]) + 1e-2 * Formats.I1(logdata[12:13])
+            y = Formats.I4(logdata[4:8]) + 1e-2 * Formats.I1(logdata[13:14])
+            z = Formats.I4(logdata[8:12]) + 1e-2 * Formats.I1(logdata[14:15])
+            pacc = Formats.I4(logdata[15:19]) * .01
+            svs = Formats.U1(logdata[19:20])
+            readable += "Raw location, accuracy: " + str(pacc)
+            csv += "raw,{0:.2f},{1:.2f},{2:.2f},{3:.2f},{4:.2f}".format(x, y, z, pacc, svs)
+            print(readable)
         elif type == 0x12:
-            x = str(Formats.I4(logdata[0:4]) + .1 * Formats.I1(logdata[12:13]))
-            y = str(Formats.I4(logdata[4:8]) + .1 * Formats.I1(logdata[13:14]))
-            z = str(Formats.I4(logdata[8:12]) + .1 * Formats.I1(logdata[14:15]))
-            pacc = str(Formats.I4(logdata[15:19]) * .01)
-            svs = str(Formats.U1(logdata[19:20]))
-            readable += "Median-smoothed location: [" + x + ", " + y + ", " + z + "]: " + pacc + "cm, svs=" + svs
+            x = Formats.I4(logdata[0:4]) + 1e-2 * Formats.I1(logdata[12:13])
+            y = Formats.I4(logdata[4:8]) + 1e-2 * Formats.I1(logdata[13:14])
+            z = Formats.I4(logdata[8:12]) + 1e-2 * Formats.I1(logdata[14:15])
+            pacc = Formats.I4(logdata[15:19]) * .01
+            svs = Formats.U1(logdata[19:20])
+            readable += "Median-filtered location, accuracy: " + str(pacc)+"cm"
+            csv += "med,{0:.2f},{1:.2f},{2:.2f},{3:.2f},{4:.2f}".format(x, y, z, pacc, svs)
+            print(readable)
         elif type == 0x13:
-            x = str(Formats.I4(logdata[0:4]) + .1 * Formats.I1(logdata[12:13]))
-            y = str(Formats.I4(logdata[4:8]) + .1 * Formats.I1(logdata[13:14]))
-            z = str(Formats.I4(logdata[8:12]) + .1 * Formats.I1(logdata[14:15]))
-            pacc = str(Formats.I4(logdata[15:19]) * .01)
-            svs = str(Formats.U1(logdata[19:20]))
-            readable += "Best-accuracy location: [" + x + ", " + y + ", " + z + "]: " + pacc + "cm, svs=" + svs
+            x = Formats.I4(logdata[0:4]) + 1e-2 * Formats.I1(logdata[12:13])
+            y = Formats.I4(logdata[4:8]) + 1e-2 * Formats.I1(logdata[13:14])
+            z = Formats.I4(logdata[8:12]) + 1e-2 * Formats.I1(logdata[14:15])
+            pacc = Formats.I4(logdata[15:19]) * .01
+            svs = Formats.U1(logdata[19:20])
+            readable += "Best-accuracy-filtered location, accuracy: " + str(pacc)+"cm"
+            csv += "ba,{0:.2f},{1:.2f},{2:.2f},{3:.2f},{4:.2f}".format(x, y, z, pacc, svs)
+            print(readable)
         elif type == 0x1E:
             readable += "Location logs transmitted"
         elif type == 0x1F:
             readable += "Location logs cleared"
-        elif type == 0x21:
+        elif type == 0x20:
             readable += "LCD on"
-        elif type == 0x22:
+        elif type == 0x21:
             readable += "LCD off"
-        elif type == 0x23:
+        elif type == 0x22:
             readable += "LCD locked"
-        elif type == 0x24:
+        elif type == 0x23:
             readable += "LCD unlocked"
         elif type == 0xE0:
             # len forcibly changed by code
@@ -324,7 +397,7 @@ def unparseLog(filename):
             ubxID = Formats.U1(logdata[1:2])
             byteLength = Formats.U2(logdata[2:4])
             newLength = Formats.U2(logdata[4:6])
-            readable += "Length forcibly changed for " + str([ubxClass, ubxID]) + ": " + str(
+            readable += "Length force for " + str([ubxClass, ubxID]) + ": " + str(
                 byteLength) + " -> " + str(
                 newLength)
         elif type == 0xE1:
@@ -339,33 +412,48 @@ def unparseLog(filename):
             # no parse data for incoming message
             ubxClass = Formats.U1(logdata[:1])
             ubxID = Formats.U1(logdata[1:2])
-            readable += "No programmed message for class=" + str(ubxClass) + ", id=" + str(ubxID)
+            readable += "No class=" + str(ubxClass) + ", id=" + str(ubxID)
         elif type == 0xF0:
             readable += "UART port uncalibrated"
         elif type == 0xF1:
             # unacceptable packet length on uart stream (>100 and not sat)
-            badLength = Formats.U2(logdata[:2])
-            readable += "Unacceptable packet length read from UART stream: " + str(badLength)
+            print(line)
+            try:
+                badLength = Formats.U2(logdata[:2])
+            except:
+                badLength = "<uknown>"
+            readable += "Bad UART len: " + str(badLength)
         elif type == 0xF2:
             # number ENcoding error
-            badNumber = Formats.I4(logdata[:4])
-            format = Formats.U2(logdata[4:6])
+            badNumber = (logdata[:4])
+            format = (logdata[4:6])
             readable += "Number encoding error: " + str(badNumber) + ": " + str(format)
         elif type == 0xF3:
             # number DEcoding error
-            badNumber = Formats.I4(logdata[:4])
-            format = Formats.U2(logdata[4:6])
+            badNumber = (logdata[:4])
+            format = (logdata[4:6])
             readable += "Number decoding error: " + str(badNumber) + ": " + str(format)
         elif type == 0xF4:
-            readable += "Calibration failed due to repeated timeouts"
+            readable += "Calibration t-o"
         elif type == 0xF5:
-            readable += "Reading failed due to repeated timeouts"
+            readable += "Reading t-o"
         elif type == 0xFE:
-            readable += "Not enough space in storage to keep logs"
+            readable += "No storage space"
         elif type == 0xFF:
-            readable += "Unknown error" + str(logdata)
-        # write to file - no check for file space :/
-        f.write(readable + "\n")
-        print("------")
-    f.flush()
-    f.close()
+            readable += str(logdata)
+        else:
+            readable += "UE: " + str(type)
+        if hash(readable) not in dups:
+            # write to file - no check for file space :/
+            fev.write(readable + "\n")
+            dups.add(hash(readable))
+        # csv line complete
+        if csv[-1] != "," and hash(csv) not in dups:
+            fcsv.write(csv+"\n")
+            dups.add(hash(csv))
+        # print(readable)
+        # print("------")
+    fcsv.flush()
+    fcsv.close()
+    fev.flush()
+    fev.close()
