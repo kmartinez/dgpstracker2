@@ -14,23 +14,20 @@ def decode(bytearr, format):
     try:
         if type(bytearr) is int:
             return bytearr
-        # print("is", bytearr)
         return struct.unpack(format, bytearr)[0]
-    except:
-        print("Number decoding error", bytearr, format)
+    except Exception as e:
+        print("Number decoding error (", bytearr,") with format ",  format)
         Log.DecodingError(bytearr, format).writeLog()
 
 
 def encode(val, format):
-    # try:
-    if type(val) is bytearray or type(val) is bytes:
-        return val
-    # print("is", bytearr)
-    return struct.pack(format, val)
-    # except Exception as e:
-    #     print("Number encoding error 2", val, format)
-    #     Log.EncodingError(str(val), format).writeLog()
-    #     print(e.with_traceback())
+    try:
+        if type(val) is bytearray or type(val) is bytes:
+            return val
+        return struct.pack(format, val)
+    except Exception as e:
+        print("Number encoding error", val, format)
+        Log.EncodingError(str(val), format).writeLog()
 
 
 def U1(bytearr):
