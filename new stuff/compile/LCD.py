@@ -76,12 +76,13 @@ def initLCDAPI(log_freq=0, log_start=0, keep_raw=False, keep_med=False, keep_bes
 
     locpage = len(pages)
     pages.append(getLocMonitorScreen(forceRead))
+    checkPower()
 
 
 pages = []
 page = 0
-powered = 1
-UPDATE_TIME = 2000  # minimum ms before LCD updates on-screen info - is affected by gps timeout
+powered = 0
+UPDATE_TIME = 1000  # minimum ms before LCD updates on-screen info - is affected by gps timeout
 updateIn = 0  # force update on startup
 
 
@@ -89,6 +90,7 @@ def updateLCD(delay):
     global pages, page, updateIn, UPDATE_TIME, reading
     page_ = pages[page]
     checkPower()
+    print("checking lcd update:", page, powered, reading, updateIn)
     if powered == 0 or reading:
         return
     elif updateIn <= 0:
@@ -121,7 +123,7 @@ def setupPowerButton():
     b.callback(togglePower)
 
 
-powerchange=False
+powerchange = True
 def togglePower():
     global powered, powerchange
     print("--------")
@@ -133,19 +135,29 @@ def togglePower():
     print(powered, powerchange)
     print("--------")
 
+def powerOn():
+    global powered, powerchange
+    powered = 1
+    lcd.set_power(powered)
+    powerchange = True
+
+def powerOff():
+    global powered, powerchange
+    powered = 0
+    lcd.set_power(powered)
+    powerchange = True
+
 def checkPower():
     global powered, powerchange
-    print(powered, powerchange)
     if not powerchange:
         return
 
     # lcd.set_power(powered)
-    print(powered)
     if powered == 1:
         lcd.set_orient(LANDSCAPE_UPSIDEDOWN)
         # draw busy page if started during busy period
         if reading:
-            makeLCDBusy()
+            makeLCDBusy("getReadings")
         Log.LCDEvent(b'\x20').writeLog()
     else:
         Log.LCDEvent(b'\x21').writeLog()
@@ -176,7 +188,7 @@ def leftPage():
     page -= 1
     if page < 0:
         page = len(pages) - 1
-    forceDrawPage(pages[page])
+    forceUpdateLCD()
 
 
 def rightPage():
@@ -188,7 +200,7 @@ def rightPage():
     page += 1
     if page >= len(pages):
         page = 0
-    forceDrawPage(pages[page])
+    forceUpdateLCD()
 
 
 lbutton, rbutton = (None, None)
@@ -209,30 +221,33 @@ def getLRButtons():
     return lbutton, rbutton
 
 
-def getBusyScreen():
+def getBusyScreen(operation):
     global lcd
     title = TextLine("WARNING", 19, 10, size=0, font=3)
     line1 = TextLine("Operation", 19, 30, size=0, font=3)
     line2 = TextLine("in", 19, 50, size=0, font=3)
     line3 = TextLine("progress", 19, 70, size=0, font=3)
-    busyscreen = Screen(lcd, widgets=[title, line1, line2, line3])
+    operation = TextLine("("+operation+")", 19, 90, size=0, font=3)
+    busyscreen = Screen(lcd, widgets=[title, line1, line2, line3, operation])
     return busyscreen
 
 
 reading = False
 
 
-def makeLCDBusy():
+def makeLCDBusy(operation="unknown"):
     global reading
+    operation = "unknown" if operation is None else operation
     Log.LCDEvent(b'\x22').writeLog()
     reading = True
-    forceDrawPage(getBusyScreen())
+    forceDrawPage(getBusyScreen(operation))
 
 
 def makeLCDFree():
     global reading
     Log.LCDEvent(b'\x23').writeLog()
     reading = False
+    forceUpdateLCD()
 
 
 def getLRTriangles():
@@ -266,15 +281,15 @@ def getPrintableDate():
 
 def getPrintableTime():
     year, month, day, weekday, hours, minutes, seconds, subseconds = pyb.RTC().datetime()
-    return str(hours) + ":" + str(minutes) + ":" + str(seconds) + "." + str(subseconds)
+    return "{0:02d}:{1:02d}:{2:02d}.{3}".format(hours, minutes, seconds, subseconds)
 
 
 def getSettingsScreen(log_freq, log_start, keep_raw, keep_med, keep_best):
     global lcd
     title = TextLine("SETTINGS", 10, 10, size=0, font=3)
-    date_line = TextLine(getPrintableDate(), 10, 25, size=0, font=2, fg=rgb(10, 100, 200), update=getPrintableDate)
-    time_line = TextLine(getPrintableTime(), 10, 33, size=0, font=2, fg=rgb(10, 100, 200), update=getPrintableTime)
-    log_freq_line = TextLine("Log every: " + "{0:.2f}h".format(log_freq / 60 ** 2), 10, 46, size=0, font=3)
+    date_line = TextLine(getPrintableDate(), 10, 25, size=0, font=2, fg=rgb(140,200,255), update=getPrintableDate)
+    time_line = TextLine(getPrintableTime(), 10, 33, size=0, font=2, fg=rgb(140,200,255), update=getPrintableTime)
+    log_freq_line = TextLine("Log every: " + "{0:.2f}h".format(log_freq / 3600), 10, 46, size=0, font=3)
     log_start_line = TextLine("Log start: " + str(log_start), 10, 58, size=0, font=3)
     keep_raw_line = TextLine("Keep Raw", 10, 70, size=0, font=3,
                              fg=rgb(0 if keep_raw else 255, 255 if keep_raw else 0, 0))
@@ -336,6 +351,7 @@ def getSVINMonitorScreen():
     title = TextLine("SVIN MONITOR", 10, 10, size=0, font=3)
     lbutton, rbutton = getLRButtons()
     if svindata is not None:
+        nosvin = False
         x_line = TextLine("", 10, 32, size=0, font=2,
                           update=lambda: "X: {0:.2f}".format(svindata.getXPos()))
         y_line = TextLine("", 10, 44, size=0, font=2,
@@ -345,13 +361,14 @@ def getSVINMonitorScreen():
         acc_line = TextLine("", 10, 68, size=0, font=2,
                             update=lambda: "Accuracy: {0:.2f}m".format(svindata.getPAcc()))
         duration_line = TextLine("", 10, 80, size=0, font=2,
-                                 update=lambda: "Duration: {0:.2f}s".format(svindata.getXPos()))
+                                 update=lambda: "Duration: {0:.0f}s".format(svindata.getDuration()))
         # obs_line = TextLine("Observations: " + str(svindata.getObs()), 10, 95, size=0, font=2,
         #                     update=lambda: "Observations: " + str(svindata.getObs()))
         active_line = TextLine("", 25, 100, size=0, font=3,
                                update=lambda: "Active" if svindata.getActive()!=0 or surveying else "Inactive", fg=rgb(10,255,85) if svindata.getActive()!=0 or surveying else rgb(255,85,10))
         screen = Screen(lcd, widgets=[lbutton, rbutton, title, x_line, y_line, z_line, acc_line, duration_line, active_line])
     else:
+        nosvin = True
         warning_line = TextLine("NO DATA", 35, 50, size=0, font=3, fg=rgb(255, 50, 0))
         warning_line2 = TextLine("Go to SVIN", 20, 80, size=0, font=3, fg=rgb(255, 85, 0))
         warning_line3 = TextLine("SETTINGS", 25, 100, size=0, font=3, fg=rgb(255, 85, 0))
@@ -359,10 +376,10 @@ def getSVINMonitorScreen():
 
     return screen
 
-
+nosvin=True
 def updateSVINMonitorData(svinmsg, issurveying):
-    global svindata, svinpage, surveying
-    noPreviousData = svindata is None
+    global svindata, svinpage, surveying, nosvin
+    noPreviousData = svindata is None or nosvin
     surveying = issurveying
     svindata = svinmsg
     svindata = svinmsg
@@ -378,12 +395,13 @@ locpage = -1
 
 
 def parseLogs():
-    makeLCDBusy()
+    makeLCDBusy("parsing logs")
     Log.unparseLogs()
     makeLCDFree()
 
+noloc=True
 def getLocMonitorScreen(readCallback):
-    global lcd, locdata, satellites
+    global lcd, locdata, satellites, noloc
     title = TextLine("LOC MONITOR", 10, 10, size=0, font=3)
     lbutton, rbutton = getLRButtons()
     parse_line = TextLine("Parse", 13, 106, size=0, font=2)
@@ -393,6 +411,7 @@ def getLocMonitorScreen(readCallback):
     trigger_button = RectButton(llims=(58, 98), ulims=(128, 118), filled=False, outlineColour=rgb(255, 279, 102),
                                 callback=readCallback, detail=[trigger_line])
     if locdata is not None:
+        noloc=False
         col = rgb(255, 85, 0) if locdata.invalidFix else rgb(255, 255, 255)
         x_line = TextLine("", 10, 32, size=0, font=2, fg=col,
                           update=lambda: "X: {0:.2f}".format(locdata.getXPos()))
@@ -401,21 +420,22 @@ def getLocMonitorScreen(readCallback):
         z_line = TextLine("", 10, 56, size=0, font=2, fg=col,
                           update=lambda: "Z: {0:.2f}".format(locdata.getZPos()))
         acc_line = TextLine("", 10, 68, size=0, font=2, fg=col,
-                            update=lambda: "Acc.: {0:.2f}m".format(locdata.getPAcc()))
+                            update=lambda: "Acc.: {0:.2f}cm".format(locdata.getPAcc()))
         satellites_line = TextLine("", 10, 80, size=0, font=2, fg=col,
-                                   update=lambda: "Satellites: {0}".format(satellites))
+                                   update=lambda: "Satellites: {0:.0f}".format(satellites))
         screen = Screen(lcd,
                         widgets=[lbutton, rbutton, title, x_line, y_line, z_line, acc_line, satellites_line,
                                  parse_button, trigger_button])
     else:
+        noloc=True
         warning_line = TextLine("NO DATA", 20, 60, size=0, font=3, fg=rgb(255, 85, 0))
         screen = Screen(lcd, widgets=[lbutton, rbutton, title, warning_line, parse_button])
     return screen
 
 
 def updateLocMonitorData(locmsg, svs):
-    global locdata, locpage, satellites, forceRead
-    noPreviousData = locdata
+    global locdata, locpage, satellites, forceRead, noloc
+    noPreviousData = locdata is None or noloc
     satellites = svs
     locdata = locmsg
     if noPreviousData:
