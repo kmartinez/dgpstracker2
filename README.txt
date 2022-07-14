@@ -1,4 +1,4 @@
-pyboard version:
+pyb: pyboard version:
   Computer Science dissertation project by Emily James
   University of SOuthampton, April 2021
   pyb - files that should be flashed or copied onto the microcontrollers
