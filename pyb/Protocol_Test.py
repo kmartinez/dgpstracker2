@@ -14,13 +14,13 @@ rtc = RTC()
 
 GPS_BUFFER_SIZE = 512
 GPS_PORT = 6
-GPS_BAUDRATE = 57600
+GPS_BAUDRATE = 38400
 gps_uart = UART(GPS_PORT, GPS_BAUDRATE)
 gps_uart.init(GPS_BAUDRATE, bits=8, parity=None, stop=1, read_buf_len=GPS_BUFFER_SIZE)
 
 RADIO_BUFFER_SIZE = 1024
 RADIO_PORT = 3
-RADIO_BAUDRATE = 57600
+RADIO_BAUDRATE = 38400
 radio_uart = UART(RADIO_PORT, RADIO_BAUDRATE)
 radio_uart.init(RADIO_BAUDRATE, bits=8, stop=1, read_buf_len=RADIO_BUFFER_SIZE)
 
@@ -62,12 +62,15 @@ def pollMessages():
 # validate messages are being sent to the radio
 # def confirmMessages():
 
+
 # TODO: write these to the radio_uart buffer
 # fill the packets up byte by byte until full
 def writeToRadio():
+    # attempt to read messages from gps uart
+    pollMessages()
     global radio_uart, RADIO_BUFFER
     if gps_uart.read():
-        RADIO_BUFFER = PACKET_BUFFER
+        RADIO_BUFFER = pollMessages()
         for data in RADIO_BUFFER:
             if data != b'':
                 radio_uart.write(data)
@@ -77,6 +80,8 @@ def writeToRadio():
 
 
 while True:
-    print(pollMessages())
+    # print(pollMessages())
+    writeToRadio()
     time.sleep_ms(1000)
+    print(radio_uart.read())
 #     writeToRadio()
