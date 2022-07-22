@@ -6,6 +6,10 @@ from Formats import *
 
 fixes = ["No fix", "Dead reckoning", "2D", "3D", "GPS + DR", "Time"]
 
+# The received UBX binary bytes are parsed by the binaryParseUBXMessage method.
+# The class id is first decoded to see which class to initialize it as.
+# Each section of the message is decoded according to the formats described in the u-blox ZED-F9P datasheet.
+
 
 class InvalidFixError(Exception):
     msg = None
@@ -27,6 +31,7 @@ class Message:
         if type(self.iTOW) is not tuple:
             return self.iTOW
         else:
+            #not sure how this works
             return self.iTOW[1](self.iTOW[0])
 
 

@@ -308,6 +308,8 @@ def getLine(file):
     return date, did, type, data
 
 
+
+
 def unparseLog(filename):
     inf = open(filename, "rb")
     line = b''
