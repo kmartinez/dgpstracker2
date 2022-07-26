@@ -14,13 +14,13 @@ rtc = RTC()
 
 GPS_BUFFER_SIZE = 512
 GPS_PORT = 6
-GPS_BAUDRATE = 38400
+GPS_BAUDRATE = 115200
 gps_uart = UART(GPS_PORT, GPS_BAUDRATE)
 gps_uart.init(GPS_BAUDRATE, bits=8, parity=None, stop=1, read_buf_len=GPS_BUFFER_SIZE)
 
 RADIO_BUFFER_SIZE = 1024
 RADIO_PORT = 3
-RADIO_BAUDRATE = 38400
+RADIO_BAUDRATE = 115200
 radio_uart = UART(RADIO_PORT, RADIO_BAUDRATE)
 radio_uart.init(RADIO_BAUDRATE, bits=8, stop=1, read_buf_len=RADIO_BUFFER_SIZE)
 
@@ -69,7 +69,7 @@ def writeToRadio():
     # attempt to read messages from gps uart
     pollMessages()
     global radio_uart, RADIO_BUFFER
-    if gps_uart.read():
+    if gps_uart.any() > 0:
         RADIO_BUFFER = pollMessages()
         for data in RADIO_BUFFER:
             if data != b'':
@@ -77,6 +77,22 @@ def writeToRadio():
             else:
                 return False
     print("Successfully written to radio uart")
+
+
+#TODO: acknowledge receiving code response
+
+
+NUMBER_OF_BYTES = 10
+def acceptResponse():
+    if gps_uart.any() > 0:
+        PACKET_MESSAGE_BUFFER = bytearray(gps_uart.read(NUMBER_OF_BYTES))
+        # forward byte array contents to the radio_uart
+        # for data in PACKET_MESSAGE_BUFFER:
+        radio_uart.write(PACKET_MESSAGE_BUFFER)
+        while True:
+            if radio_uart.any() > 0:
+                print(radio_uart.read())
+                pyb.delay(1000)
 
 
 while True:

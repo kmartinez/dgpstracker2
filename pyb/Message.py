@@ -17,6 +17,7 @@ class InvalidFixError(Exception):
         return self.msg
 
 
+# iTOW = international Time Of Week
 class Message:
     iTOW = None
 
@@ -30,6 +31,7 @@ class Message:
             return self.iTOW[1](self.iTOW[0])
 
 
+# ECEF = Earth Centered, Earth-Fixed, with specific X, Y, Z coordinates.
 # 01 01
 class ECEF(Message):
     ecefX = None
@@ -69,6 +71,7 @@ class ECEF(Message):
             return self.pAcc[1](self.pAcc[0]) * 1e-2
 
 
+# LLH - Longitude, Latitude, Height coordinates.
 # 01 02
 class LLH(Message):
     lon = None
@@ -124,6 +127,7 @@ class Status(Message):
             # print(fix)
             self.gpsFix = "E - Reserved " + str(flags) + " " + str(fixstat)
 
+
 # 01 06
 class Solution(Message):
     fTOW = None
@@ -157,7 +161,7 @@ class Solution(Message):
         self.numSv = numsats
 
 
-# Precise coordinate in cm = ecefX + (ecefXHp * 1e-2).
+# Precise coordinate in cm = ecefX + (ecefXHp * 1e-2). (HP- High Precision)
 # 01 13
 class HPECEF(ECEF):
     ecefXHp = None
@@ -327,6 +331,7 @@ class TimeUTC(Message):
             return self.valid[1](self.valid[0]) & 4
 
 
+# SVIN - Survey-In
 # 01 3B
 class SVIN(Message):
     dur = None
