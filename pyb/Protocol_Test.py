@@ -38,7 +38,8 @@ RADIO_BUFFER = []
 surveying = False
 
 
-def startSVIN(dur=600, acc=1000):
+# start Survey-in process. Should support a duration of 60s and an accuracy of around 2.5m
+def startSVIN(dur=600, acc=2500):
     global surveying
     bs = bytearray()
     bs.append(0xb5)
@@ -76,6 +77,8 @@ def startSVIN(dur=600, acc=1000):
     gps_uart.write(bs)
     return bs
 
+
+# stop Surveypin process.
 def stopSVIN(svinmsg):
     bs = bytearray()
     bs.append(0xb5)
@@ -118,6 +121,7 @@ def stopSVIN(svinmsg):
     bs.append(ck_b)
     gps_uart.write(bs)
     return bs
+
 
 def saveCFG():
     bs = bytearray()
@@ -204,8 +208,17 @@ def acceptResponse():
                 pyb.delay(1000)
 
 #TODO: Listen uart1 for nmea fixes
-# d
+# Rover Loop
+# check xb5 and x62 as the first two bytes in hex format to be coming in when reading from the uart
+# RTCM pending -> send them to GPS
+# So it's the reverse of the base
+# Once that works, it can move onto processing NMEA from GPS to see if fix type == 4
+# if it does it can send the fix back down the radio
+# it gets both ends using the radio
 
+# ROVER LOOP
+def roverCorrections():
+    gps_uart.read()
 
 while True:
     # print(pollMessages())
