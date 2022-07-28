@@ -37,4 +37,7 @@ while True:
         if radio_uart.any() > 0:
             print(radio_uart.readline())
             pyb.delay(500)
+        else:
+            print("Nothing in buffer, waiting for message...")
+            pyb.delay(1000)
 
