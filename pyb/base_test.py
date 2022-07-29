@@ -25,6 +25,13 @@ print("Pyboard Green - Base")
 print("Checking For Messages")
 print("Forwarding to Radio UART")
 PACKET_BUFFER_MESSAGE = bytearray()
+
+#TODO:
+# - Configure the base to send RTCM3 corrections
+# - have the rover accept these messages
+# - use these corrections to parse through the contents of an nmea format
+# - send this information back to the base.
+
 while True:
     if gps_uart.any() == 0:
         print("Nothing Yet...")
