@@ -33,9 +33,19 @@ while True:
     if radio_uart.any() > 0:
         #         print("Incoming...")
         data = radio_uart.readline()
+        # TODO: Forward incoming Radio Data from radio_uart to gps_uart
+        # Forwarding incoming radio data stored in data variable and storing in PACKET_MANAGER
+        # This will be written to the gps_uart.
+        PACKET_MANAGER = bytearray(data)
+        # what happens when you write incoming messages from the base gps_uart to the rover gps_uart?
+        # What kind of messages is it expecting?
+        # What kind of messages should it pass back to the base.
+        gps_uart.write(PACKET_MANAGER)
+
         data = str(data.decode())
         #         print(data)
         #         print(processGPS(data))
+
         if gpsFormatOutput(ROVER_ID, data) is None:
             continue
         if gpsFormatOutput(ROVER_ID, data)[0] == 'p':
