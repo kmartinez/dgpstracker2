@@ -47,7 +47,7 @@ while True:
         #             print(gps_rover_data)
         # need to ignore the contents / skip this message and force the loop to continue
         gps_rover_data = str(gps_rover_data.decode())
-
+        # might want to consider adding .rstrip() to avoid the need to discard any useful data.
         if gps_rover_data.count("$") > 1:
             continue
         #         print(gps_rover_data)
