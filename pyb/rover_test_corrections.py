@@ -6,6 +6,8 @@ from Formats import *
 import time
 import pyb
 
+rtc = pyb.RTC()
+
 ROVER_ID = str(1)
 
 RADIO_BUFFER_SIZE = 1024
@@ -103,8 +105,30 @@ while True:
             processed_data = gpsFormatOutput(ROVER_ID, gps_rover_data)
             print(processed_data)
 
-        elif gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "t":
+        # TODO: retrieve incoming Time Of Day information.
+        #   Feed that information back to the RTC
+        #   Check whether the information matches that of the available time slots.
+
+        if gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "t":
             time_message = gpsFormatOutput(ROVER_ID, gps_rover_data)[1]
+            # reference: programcreek.com/python/example/99858/pyb.RTC
+            t = time.mktime((int(time_message[1]),
+                         int(time_message[2]),
+                         int(time_message[3]),
+                         int(time_message[4]),
+                         int(time_message[5]),
+                         int(time_message[6]),
+                         0, 0))
+            # NOT TESTED YET
+            rtc.datetime((int(time_message[1]),  # year
+                         int(time_message[2]),   # month
+                         int(time_message[3]),   # day
+                          0,                     # weekday
+                         int(time_message[4]),   # hours
+                         int(time_message[5]),   # minutes
+                         int(time_message[6]),   # seconds
+                          0))
+
             final_message = (
                 str(time_message[0])
                 + ", "
