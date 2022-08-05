@@ -126,7 +126,7 @@ def saveCFG():
     gps_uart.write(bs)
     return bs
 
-
+# Code To be Modified LATER
 # def searchForSVIN():
 #     global SVIN_CODE
 #     code=-1
@@ -136,6 +136,7 @@ def saveCFG():
 #         msg, code = getMessageFromBuffer()
 #     return msg
 
+# Code To be Modified LATER
 # cursvin=None
 # def toggleSVIN():
 #     global surveying, cursvin
