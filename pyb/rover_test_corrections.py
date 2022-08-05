@@ -24,6 +24,26 @@ gps_uart.init(GPS_BAUDRATE, bits=8, stop=1, read_buf_len=GPS_BUFFER_SIZE)
 PACKET_MANAGER = bytearray()
 
 
+def saveCFG():
+    bs = bytearray()
+    bs.append(0xB5)
+    bs.append(0x62)
+    bs.append(0x06)
+    bs.append(0x09)
+    bs.extend(u2toBytes(13))
+
+    bs.extend(x4toBytes(0))
+    bs.extend(x4toBytes(7967))
+    bs.extend(x4toBytes(0))
+    bs.extend(x1toBytes(2))
+
+    ck_a, ck_b = ubxChecksum(bs[2:])
+    bs.append(ck_a)
+    bs.append(ck_b)
+    gpsIn.write(bs)
+    return bs
+
+
 print("Pyboard Black - Rover Board")
 # create a poll i.e. wait for incoming messages
 print("Waiting for incoming messages...")
@@ -34,21 +54,21 @@ while True:
         #         data = str(data.decode()) - can't be decode if receiving rtcm messages
         #         print(data)
         #         print(processGPS(data))
-        print("Receiving RTCM Corrections")
+        #         print("Receiving RTCM Corrections")
         # storing corrections into a byte array buffer
         PACKET_MANAGER = bytearray(data)
         # forwarding corrections to rover to gps
         gps_uart.write(PACKET_MANAGER)
 
-        print("Reading Messages")
+        #         print("Reading Messages")
         gps_rover_data = gps_uart.readline()
         if gps_rover_data is None:
             continue
         #             print(gps_rover_data)
         # need to ignore the contents / skip this message and force the loop to continue
         gps_rover_data = str(gps_rover_data.decode())
-        # might want to consider adding .rstrip() to avoid the need to discard any useful data.
-        if gps_rover_data.count("$") > 1:
+
+        if gps_rover_data.count("$") > 1 or (len(gps_rover_data) < 82):
             continue
         #         print(gps_rover_data)
         #         print(data)
@@ -77,6 +97,29 @@ while True:
                 + "\n"
             )
 
+            radio_uart.write(final_message)
+            # might complain, thus might have to put it in a BUFFER
+            processed_data = gpsFormatOutput(ROVER_ID, gps_rover_data)
+            print(processed_data)
+
+        elif gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "t":
+            time_message = gpsFormatOutput(ROVER_ID, gps_rover_data)[1]
+            final_message = (
+                str(time_message[0])
+                + ", "
+                + str(time_message[1])
+                + ", "
+                + str(time_message[2])
+                + ", "
+                + str(time_message[3])
+                + ", "
+                + str(time_message[4])
+                + ", "
+                + str(time_message[5])
+                + ", "
+                + str(time_message[6])
+                + "\n"
+            )
             radio_uart.write(final_message)
             # might complain, thus might have to put it in a BUFFER
             processed_data = gpsFormatOutput(ROVER_ID, gps_rover_data)
