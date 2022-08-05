@@ -173,6 +173,8 @@ while True:
         radio_uart.write(PACKET_BUFFER_MESSAGE)
         pyb.delay(500)
         # need to decode incoming byte formatted data
+        # TODO: Validate that information is in the right format
+        #   Send an ACK back to the rover continue sending messages.
         if radio_uart.any() > 0:
             print(radio_uart.readline())
             pyb.delay(500)

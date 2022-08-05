@@ -78,6 +78,9 @@ while True:
 
         if gpsFormatOutput(ROVER_ID, gps_rover_data) is None:
             continue
+        # TODO:
+        #   Check the fix type - use an isFixed Flag
+        #   If it it has a fix, then send back the data to the rover.
         if gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "p":
             radio_uart.write("3D/DGNSS/FIXED\n")
             fixed_message = gpsFormatOutput(ROVER_ID, gps_rover_data)[1]
