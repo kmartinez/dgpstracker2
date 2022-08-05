@@ -22,28 +22,6 @@ def nmealat2lat(nl):
     return (degrees + decimals)
 
 
-def gpsFormatOutputAgain(device_id, data):
-    if data.startswith('$GNGGA'):
-        # It's positional data
-        data = str(data)
-        # Why?
-        global f
-        f = data.split(',')
-        gpstime = f[1].split(".")[0]
-        lat = f[2]
-        lon = f[4]
-        E = f[5]
-        qual = f[6]
-        sats = f[7].lstrip("0")
-        hdop = str(int(round(float(f[8]), 0)))
-        alt = f[9]
-        nmeafix = device_id + "," + lat + "," + lon.strip('0') + "," + alt + "," + sats
-        location = (nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
-        final_location = (device_id, nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
-        #         return 'p', location, nmeafix
-        return final_location
-
-
 def gpsFormatOutput(device_id, data):
     if data.startswith('$GNGGA'):
         # It's positional data
@@ -75,6 +53,8 @@ def gpsFormatOutput(device_id, data):
         #	YYYY	MM	DD	hh 	mm	ss
         tod = (device_id, fields[4], fields[3], fields[2], hms[0:2], hms[2:4], hms[4:6])
         return "t", tod
+    else:
+        return None, None
 
 
 def processGPS(data):
