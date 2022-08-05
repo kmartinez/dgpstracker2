@@ -2,6 +2,7 @@
 from pyb import UART
 from pyb import RTC
 from gps import *
+from Formats import *
 import time
 import pyb
 
@@ -40,7 +41,7 @@ def saveCFG():
     ck_a, ck_b = ubxChecksum(bs[2:])
     bs.append(ck_a)
     bs.append(ck_b)
-    gpsIn.write(bs)
+    gps_uart.write(bs)
     return bs
 
 
