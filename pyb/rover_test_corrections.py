@@ -6,6 +6,13 @@ from Formats import *
 import time
 import pyb
 
+# Flag to check if rover has achieved a fix of 3D/DGNSS/FIXED
+fixed = False
+# List of Fix Modes - goes through each one to assess fix type
+# if fix_type[4] achieved, then proceed with remaining functions
+# reference: https://www.ardusimple.com/question/3d-dgnss-float-fixed-what-meaning-exactly/
+fix_type = ['3D', '3D/FLOAT, 3D/DGNSS', '3D/FIXED', '3D/DGNSS/FIXED']
+
 rtc = pyb.RTC()
 
 ROVER_ID = str(1)
@@ -81,6 +88,8 @@ while True:
         # TODO:
         #   Check the fix type - use an isFixed Flag
         #   If it it has a fix, then send back the data to the rover.
+        #   need to figure out fix type - check with fix_type to progress with operations.
+
         if gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "p":
             radio_uart.write("3D/DGNSS/FIXED\n")
             fixed_message = gpsFormatOutput(ROVER_ID, gps_rover_data)[1]
