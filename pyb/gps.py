@@ -1,5 +1,7 @@
 # convert longitude nmea to lon degrees.decimalplaces
 
+FIX_QUALITY = 2
+
 def nmealon2lon(l):
     # convert text NMEA lon to degrees.decimalplaces
     if len(l.split('.')[0]) == 4:
@@ -37,11 +39,15 @@ def gpsFormatOutput(device_id, data):
         sats = f[7].lstrip("0")
         hdop = str(int(round(float(f[8]), 0)))
         alt = f[9]
-        nmeafix = device_id + "," + lat + "," + lon.strip('0') + "," + alt + "," + sats
-        location = (nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
-        final_location = (device_id, nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
+        # check fix quality is equal to 0, 1 or 2 (or 5 if supported)
+        if qual == FIX_QUALITY:
+            # pass
+            print("Fix Type: {}", FIX_QUALITY)
+            nmeafix = device_id + "," + lat + "," + lon.strip('0') + "," + alt + "," + sats
+            location = (nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
+            final_location = (device_id, nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
         #         return 'p', location, nmeafix
-        return 'p', final_location
+            return 'p', final_location
     #         return nmeafix
     elif data.startswith('$GNZDA'):
         # It's timing data

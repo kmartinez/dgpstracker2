@@ -151,6 +151,8 @@ def saveCFG():
 #         stopSVIN(cursvin)
 #     saveCFG()
 
+# TODO: Checksum for ACK
+
 
 print("Pyboard Green - Base")
 # create a poll i.e. wait for incoming messages
@@ -176,7 +178,10 @@ while True:
         # TODO: Validate that information is in the right format
         #   Send an ACK back to the rover continue sending messages.
         if radio_uart.any() > 0:
-            print(radio_uart.readline())
+            messages = radio_uart.readline()
+            # print(radio_uart.readline())
+            print(messages)
+            # need to check message format (or just read the checksum bytes and make sure they are valid.)
             pyb.delay(500)
         else:
             print("Nothing in buffer, waiting for message...")

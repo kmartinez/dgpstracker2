@@ -89,7 +89,7 @@ while True:
         #   Check the fix type - use an isFixed Flag
         #   If it it has a fix, then send back the data to the rover.
         #   need to figure out fix type - check with fix_type to progress with operations.
-
+        # reference:   https://www.sparkfun.com/datasheets/GPS/NMEA%20Reference%20Manual1.pdf
         if gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "p":
             radio_uart.write("3D/DGNSS/FIXED\n")
             fixed_message = gpsFormatOutput(ROVER_ID, gps_rover_data)[1]
