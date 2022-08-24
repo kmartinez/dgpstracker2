@@ -110,10 +110,10 @@ while True:
 # AT+HTTPINIT
 # AT+HTTPPARA = "CID",1
 # AT+HTTPPARA="URL","https://iotgate.ecs.soton.ac.uk/myapp"
-# AT+HTTPPARA="URL","https://iotgate.ecs.soton.ac.uk/incoming"
 # AT+HTTPDATA=8,20000 8 chars, 20s to type
 # input here
 # AT+HTTPACTION=1 for POST, 0 for GET
+# AT+HTTPTERM
 
 
 # ptsv2.com : toilet is 
