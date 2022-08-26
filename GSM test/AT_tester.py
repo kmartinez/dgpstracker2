@@ -54,123 +54,69 @@ print(g.value())
 
 ##
 
+def send_command_fst(comm):
+    uart.write(comm+'\r\n')
+    print(comm)
+    pyb.delay(500)
+   # if(uart.any()):
+    resp = uart.read().decode()
+    print(resp)
+    
+def send_command_med(comm):
+    uart.write(comm+'\r\n')
+    print(comm)
+    pyb.delay(1000)
+   # if(uart.any()):
+    resp = uart.read().decode()
+    print(resp)
+    
+def send_command_slow(comm):
+    uart.write(comm+'\r\n')
+    print(comm)
+    pyb.delay(2000)
+   # if(uart.any()):
+    resp = uart.read().decode()
+    print(resp)
+        
+    
+    
+
 ## Need to define buf sizes? Timeouts?
 
 def http_send(arg):   #*args):
-    
-    uart.write('ATE0\r\n')
-    print('ATE0')
-    pyb.delay(200)
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    uart.write('AT+CGDCONT= 1,"IP","TM","0.0.0.0",0,0\r\n')
-    print('AT+CGDCONT= 1,"IP","TM","0.0.0.0",0,0')
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    uart.write('AT+CGACT = 1\r\n')
-    print("AT+CGACT = 1")
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    uart.write('AT+CSTT="TM"\r\n')
-    print('AT+CSTT="TM"')
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-        
-    uart.write('AT+CIICR\r\n')
-    
-    print('AT+CIICR')
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    uart.write('AT+CIFSR\r\n')
-    print('AT+CIFSR')
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-        
-    uart.write('AT+SAPBR=3,1,"CONTYPE","GPRS"\r\n')
-    print('AT+SAPBR=3,1,"CONTYPE","GPRS"')
-    
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    uart.write('AT+SAPBR=3,1,"APN","TM"\r\n')
-    print('AT+SAPBR=3,1,"APN","TM"')
-    
-    pyb.delay(1000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-        
-    uart.write('AT+SAPBR=1,1\r\n')
-    print('AT+SAPBR=1,1')
-    
-    pyb.delay(1000)
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    uart.write('AT+HTTPINIT\r\n')
-    print('AT+HTTPINIT')
-    pyb.delay(200)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-        
-    uart.write('AT+HTTPPARA = "CID",1\r\n')
-    print('AT+HTTPPARA = "CID",1')
-    pyb.delay(200)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-    
-    # uart.write('AT+HTTPPARA = "CID",1\r\n')
-#     pyb.delay(200)
-    
-#     if(uart.any()):
-#         resp = uart.read().decode()
-#         print(resp)
-        
-    uart.write('AT+HTTPPARA="URL","http://ptsv2.com/t/6qgvg-1661366726/post"\r\n')
-    print('AT+HTTPPARA="URL","http://ptsv2.com/t/6qgvg-1661366726/post"')
-    pyb.delay(200)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
+    send_command_fst('ATE0')
 
+    send_command_med('AT+CGDCONT= 1,"IP","TM","0.0.0.0",0,0')
+
+    send_command_med("AT+CGACT = 1")
+
+    send_command_med('AT+CSTT="TM"')
+
+    send_command_med('AT+CIICR')
+
+    send_command_med('AT+CIFSR')
+
+    send_command_med('AT+SAPBR=3,1,"CONTYPE","GPRS"')
+
+    send_command_med('AT+SAPBR=3,1,"APN","TM"')
+
+    send_command_med('AT+SAPBR=1,1')    
+
+    send_command_fst('AT+HTTPINIT')
+
+    send_command_fst('AT+HTTPPARA = "CID",1')
+
+        
+    send_command_fst('AT+HTTPPARA="URL","http://ptsv2.com/t/6qgvg-1661366726/post"')
+    # uart.write('AT+HTTPPARA="URL","http://ptsv2.com/t/6qgvg-1661366726/post"\r\n')
+    # print('AT+HTTPPARA="URL","http://ptsv2.com/t/6qgvg-1661366726/post"')
+
+    #send_command_fst('AT+HTTPDATA='+str(len(arg))+', 20000')
     uart.write('AT+HTTPDATA='+str(len(arg))+',20000\r\n')
     print('AT+HTTPDATA='+str(len(arg))+', 20000')
     
     pyb.delay(200)
     
-    # if(uart.any()):
-        # resp = uart.read()
-        # print(resp)
     
     try:
         resp = uart.read().decode()
@@ -189,9 +135,8 @@ def http_send(arg):   #*args):
     if(uart.any()):
         resp = uart.read().decode()
         print(resp)
-        
-    uart.write('AT+HTTPACTION=1\r\n')
-    print('AT+HTTPACTION=1')
+    send_command_slow('AT+HTTPACTION=1')    
+
     
     pyb.delay(2000)
     
@@ -199,31 +144,11 @@ def http_send(arg):   #*args):
         resp = uart.read().decode()
         print(resp)
         
-    uart.write('AT+HTTPTERM\r\n')
-    print('AT+HTTPTERM')
-    pyb.delay(2000)
+    send_command_slow('AT+HTTPTERM')    
+
     
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-        
-    uart.write('AT+SAPBR=0,1\r\n')
-    print('AT+SAPBR=0,1')
-    pyb.delay(2000)
-    
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp)
-        
-    uart.write('AT+CPOWD=1\r\n')
-    print('AT+CPOWD=1')
-    
-    pyb.delay(500)   
-    if(uart.any()):
-        resp = uart.read().decode()
-        print(resp) 
-     
-    return 
+    send_command_slow('AT+SAPBR=0,1')
+
         
 # command_dict = {
 # "status":"AT",
