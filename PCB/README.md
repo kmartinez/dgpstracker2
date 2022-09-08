@@ -9,17 +9,17 @@
 - Signal names create confusion
 
 ### Improvements/additions in next version:
-- Fix the direction of Q1, Q3, Q5
-- Isolate BQ24074 output from the input of LTC3130-1 and LTC3113
-- Remove JST battery terminal
-- Swap Solar input screw terminal with a standard one
-- Make PJ-031D face away from board
-- Swap VS1 and VS2
-- Rename ambiguous signal names
-- Add two more outputs: 
+- [ ] Fix the direction of Q1, Q3, Q5
+- [ ] Isolate BQ24074 output from the input of LTC3130-1 and LTC3113
+- [ ] Remove JST battery terminal
+- [ ] Swap Solar input screw terminal with a standard one
+- [ ] Make PJ-031D face away from board
+- [ ] Swap VS1 and VS2
+- [ ] Rename ambiguous signal names
+- [ ] Add two more outputs: 
   - one for 5V GSM
   -  one for 3.3V GSM logic
-- Add two versions of power switches for consumption comparison:
+- [ ] Add two versions of power switches for consumption comparison:
   - one with DMG/DMP mosfets
   - one with DMC3028LSDX-13 dual cmos 
 
