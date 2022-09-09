@@ -23,3 +23,7 @@
   - one with DMG/DMP mosfets
   - one with DMC3028LSDX-13 dual cmos 
 
+## Ordered:
+- DMG3414U N-channel MOSFET
+- DMP2045U P-channel MOSFET
+- IRF7319 Dual P/N-channel MOSFET pair
