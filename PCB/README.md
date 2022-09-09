@@ -12,16 +12,18 @@
 - [x] Fix the direction of Q1, Q3, Q5
 - [x] Isolate BQ24074 output from the input of LTC3130-1 and LTC3113
 - [x] Remove JST battery terminal
-- [x] Swap Solar input screw terminal footprint with a ~~standard~~ push click one
+- [x] Swap Solar input screw terminal footprint with a ~~standard~~ push-click one
 - [x] Make PJ-031D face away from board
 - [x] Swap VS1 and VS2
 - [ ] Rename ambiguous signal names
+- [ ] Power tracks width increased from 10 to 16 mil
+- [ ] Add more pins for input/output signals for probing when jumpered
 - [ ] Add two more outputs: 
   - one for 5V GSM
   -  one for 3.3V GSM logic
 - [ ] Add two versions of power switches for consumption comparison:
   - one with DMG/DMP mosfets
-  - one with DMC3028LSDX-13 dual cmos 
+  - one with ~~DMC3028LSDX-13~~ IRF7319 dual cmos 
 
 ### Ordered:
 - DMG3414U N-channel MOSFET
