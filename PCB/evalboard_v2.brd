@@ -7745,7 +7745,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <contactref element="IC3" pad="8"/>
 <contactref element="IC3" pad="21"/>
 <contactref element="IC3" pad="18"/>
-<contactref element="IC3" pad="10"/>
 <contactref element="IC3" pad="11"/>
 <contactref element="IC3" pad="12"/>
 <contactref element="C4" pad="1"/>
@@ -8100,9 +8099,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="31.877" y1="54.483" x2="31.877" y2="55.725" width="0.254" layer="1"/>
 <via x="39.624" y="17.78" extent="1-16" drill="0.35"/>
 <via x="38.735" y="17.145" extent="1-16" drill="0.35"/>
-<via x="39.37" y="16.256" extent="1-16" drill="0.35"/>
-<wire x1="39.993" y1="14.891" x2="39.993" y2="15.633" width="0.254" layer="1"/>
-<wire x1="39.993" y1="15.633" x2="39.37" y2="16.256" width="0.254" layer="1"/>
 <wire x1="32.373" y1="52.729" x2="32.373" y2="53.4247375" width="0.254" layer="1"/>
 <wire x1="32.373" y1="53.4247375" x2="31.59586875" y2="54.20186875" width="0.254" layer="1"/>
 <via x="19.939" y="47.625" extent="1-16" drill="0.35"/>
@@ -8176,7 +8172,7 @@ Siemens, Philips, Valvo&lt;p&gt;
 <via x="69.079721875" y="19.805321875" extent="1-16" drill="0.35"/>
 <via x="26.924" y="20.447" extent="1-16" drill="0.35"/>
 <via x="18.796" y="19.558" extent="1-16" drill="0.35"/>
-<via x="20.066" y="21.844" extent="1-16" drill="0.35"/>
+<via x="22.733" y="21.336" extent="1-16" drill="0.35"/>
 <via x="1.778" y="26.162" extent="1-16" drill="0.35"/>
 <via x="14.097" y="24.765" extent="1-16" drill="0.35"/>
 <via x="17.145" y="33.782" extent="1-16" drill="0.35"/>
@@ -8206,6 +8202,7 @@ Siemens, Philips, Valvo&lt;p&gt;
 <contactref element="J3" pad="3"/>
 <contactref element="J3" pad="4"/>
 <via x="48.641" y="40.767" extent="1-16" drill="0.35"/>
+<contactref element="IC3" pad="9"/>
 <wire x1="78.74" y1="61.595" x2="82.677" y2="61.595" width="0" layer="19" extent="1-1"/>
 <wire x1="75.946" y1="61.849" x2="78.74" y2="61.595" width="0" layer="19" extent="1-1"/>
 <wire x1="73.279" y1="61.849" x2="75.946" y2="61.849" width="0" layer="19" extent="1-1"/>
@@ -8226,16 +8223,17 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="52.197" y1="59.944" x2="52.197" y2="62.484" width="0" layer="19" extent="1-1"/>
 <wire x1="49.657" y1="61.595" x2="52.197" y2="62.484" width="0" layer="19" extent="1-1"/>
 <wire x1="55.118" y1="56.769" x2="55.499" y2="59.436" width="0" layer="19" extent="1-1"/>
+<wire x1="57.023" y1="56.134" x2="55.118" y2="56.769" width="0" layer="19" extent="1-1"/>
 <wire x1="49.784" y1="58.674" x2="52.197" y2="59.944" width="0" layer="19" extent="1-1"/>
 <wire x1="49.911" y1="56.007" x2="49.784" y2="58.674" width="0" layer="19" extent="1-1"/>
 <wire x1="52.324" y1="56.769" x2="49.911" y2="56.007" width="0" layer="19" extent="1-1"/>
 <wire x1="49.911" y1="53.467" x2="49.911" y2="56.007" width="0" layer="19" extent="1-1"/>
 <wire x1="47.625" y1="54.229" x2="49.911" y2="53.467" width="0" layer="19" extent="1-1"/>
+<wire x1="46.482" y1="52.832" x2="47.625" y2="54.229" width="0" layer="19" extent="1-1"/>
 <wire x1="47.371" y1="56.515" x2="47.625" y2="54.229" width="0" layer="19" extent="1-1"/>
 <wire x1="45.593" y1="55.499" x2="47.371" y2="56.515" width="0" layer="19" extent="1-1"/>
 <wire x1="43.815" y1="56.896" x2="45.593" y2="55.499" width="0" layer="19" extent="1-1"/>
 <wire x1="52.451" y1="53.721" x2="49.911" y2="53.467" width="0" layer="19" extent="1-1"/>
-<wire x1="46.482" y1="52.832" x2="47.625" y2="54.229" width="0" layer="19" extent="1-1"/>
 <wire x1="46.99" y1="59.944" x2="49.784" y2="58.674" width="0" layer="19" extent="1-1"/>
 <wire x1="46.101" y1="62.357" x2="46.99" y2="59.944" width="0" layer="19" extent="1-1"/>
 <wire x1="77.343" y1="58.674" x2="78.74" y2="61.595" width="0" layer="19" extent="1-1"/>
@@ -8265,17 +8263,17 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="59.817" y1="53.174" x2="61.341" y2="53.086" width="0" layer="19" extent="1-1"/>
 <wire x1="68.961" y1="47.371" x2="67.822" y2="45.716" width="0" layer="19" extent="1-1"/>
 <wire x1="68.961" y1="49.403" x2="68.961" y2="47.371" width="0" layer="19" extent="1-1"/>
-<wire x1="57.023" y1="56.134" x2="59.817" y2="53.174" width="0" layer="19" extent="1-1"/>
 <wire x1="61.972" y1="45.716" x2="63.5" y2="43.688" width="0" layer="19" extent="1-1"/>
 <wire x1="60.325" y1="45.847" x2="61.972" y2="45.716" width="0" layer="19" extent="1-1"/>
 <wire x1="59.563" y1="44.323" x2="60.325" y2="45.847" width="0" layer="19" extent="1-1"/>
 <wire x1="58.039" y1="45.974" x2="59.563" y2="44.323" width="0" layer="19" extent="1-1"/>
-<wire x1="55.88" y1="52.959" x2="57.023" y2="56.134" width="0" layer="19" extent="1-1"/>
 <wire x1="58.293" y1="50.419" x2="59.817" y2="53.174" width="0" layer="19" extent="1-1"/>
 <wire x1="59.436" y1="49.53" x2="58.293" y2="50.419" width="0" layer="19" extent="1-1"/>
+<wire x1="62.357" y1="57.785" x2="64.389" y2="55.372" width="0" layer="19" extent="1-1"/>
 <wire x1="42.799" y1="62.357" x2="46.101" y2="62.357" width="0" layer="19" extent="1-1"/>
 <wire x1="40.513" y1="56.896" x2="43.815" y2="56.896" width="0" layer="19" extent="1-1"/>
 <wire x1="39.116" y1="55.88" x2="40.513" y2="56.896" width="0" layer="19" extent="1-1"/>
+<wire x1="55.88" y1="52.959" x2="57.023" y2="56.134" width="0" layer="19" extent="1-1"/>
 <wire x1="54.61" y1="45.492" x2="58.039" y2="45.974" width="0" layer="19" extent="1-1"/>
 <wire x1="51.943" y1="43.561" x2="54.61" y2="45.492" width="0" layer="19" extent="1-1"/>
 <wire x1="50.927" y1="41.402" x2="51.943" y2="43.561" width="0" layer="19" extent="1-1"/>
@@ -8288,13 +8286,14 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="39.878" y1="44.577" x2="40.386" y2="42.291" width="0" layer="19" extent="1-1"/>
 <wire x1="38.1" y1="43.053" x2="39.878" y2="44.577" width="0" layer="19" extent="1-1"/>
 <wire x1="36.449" y1="42.418" x2="38.1" y2="43.053" width="0" layer="19" extent="1-1"/>
-<wire x1="38.608" y1="40.64" x2="40.386" y2="42.291" width="0" layer="19" extent="1-1"/>
-<wire x1="37.338" y1="38.608" x2="38.608" y2="40.64" width="0" layer="19" extent="1-1"/>
-<wire x1="35.941" y1="40.513" x2="37.338" y2="38.608" width="0" layer="19" extent="1-1"/>
+<wire x1="35.941" y1="40.513" x2="36.449" y2="42.418" width="0" layer="19" extent="1-1"/>
+<wire x1="37.338" y1="38.608" x2="35.941" y2="40.513" width="0" layer="19" extent="1-1"/>
+<wire x1="38.608" y1="40.64" x2="37.338" y2="38.608" width="0" layer="19" extent="1-1"/>
 <wire x1="36.068" y1="36.449" x2="37.338" y2="38.608" width="0" layer="19" extent="1-1"/>
 <wire x1="34.163" y1="35.306" x2="36.068" y2="36.449" width="0" layer="19" extent="1-1"/>
 <wire x1="32.766" y1="33.274" x2="34.163" y2="35.306" width="0" layer="19" extent="1-1"/>
 <wire x1="30.353" y1="32.893" x2="32.766" y2="33.274" width="0" layer="19" extent="1-1"/>
+<wire x1="28.448" y1="33.02" x2="30.353" y2="32.893" width="0" layer="19" extent="1-1"/>
 <wire x1="30.353" y1="35.179" x2="30.353" y2="32.893" width="0" layer="19" extent="1-1"/>
 <wire x1="35.179" y1="32.639" x2="32.766" y2="33.274" width="0" layer="19" extent="1-1"/>
 <wire x1="34.163" y1="30.353" x2="35.179" y2="32.639" width="0" layer="19" extent="1-1"/>
@@ -8302,8 +8301,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="31.877" y1="30.226" x2="32.893" y2="28.956" width="0" layer="19" extent="1-1"/>
 <wire x1="30.48" y1="29.21" x2="31.877" y2="30.226" width="0" layer="19" extent="1-1"/>
 <wire x1="28.829" y1="29.679" x2="30.48" y2="29.21" width="0" layer="19" extent="1-1"/>
-<wire x1="28.448" y1="33.02" x2="28.829" y2="29.679" width="0" layer="19" extent="1-1"/>
-<wire x1="24.892" y1="32.385" x2="28.448" y2="33.02" width="0" layer="19" extent="1-1"/>
 <wire x1="35.941" y1="29.337" x2="34.163" y2="30.353" width="0" layer="19" extent="1-1"/>
 <wire x1="36.703" y1="30.353" x2="35.941" y2="29.337" width="0" layer="19" extent="1-1"/>
 <wire x1="38.735" y1="29.845" x2="36.703" y2="30.353" width="0" layer="19" extent="1-1"/>
@@ -8322,28 +8319,26 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="37.084" y1="14.478" x2="35.941" y2="16.256" width="0" layer="19" extent="1-1"/>
 <wire x1="38.493" y1="14.891" x2="37.084" y2="14.478" width="0" layer="19" extent="1-1"/>
 <wire x1="38.993" y1="14.891" x2="38.493" y2="14.891" width="0" layer="19" extent="1-1"/>
-<wire x1="39.37" y1="16.256" x2="39.243" y2="16.383" width="0" layer="19" extent="1-1"/>
 <wire x1="39.493" y1="18.891" x2="38.993" y2="18.891" width="0" layer="19" extent="1-1"/>
 <wire x1="40.743" y1="15.641" x2="40.743" y2="16.141" width="0" layer="19" extent="1-1"/>
+<wire x1="39.493" y1="14.891" x2="38.993" y2="14.891" width="0" layer="19" extent="1-1"/>
 <wire x1="38.735" y1="17.145" x2="39.243" y2="16.891" width="0" layer="19" extent="1-1"/>
 <wire x1="39.624" y1="17.78" x2="39.243" y2="16.891" width="0" layer="19" extent="1-1"/>
-<wire x1="49.149" y1="18.415" x2="40.743" y2="16.141" width="0" layer="19" extent="1-1"/>
-<wire x1="42.545" y1="15.367" x2="49.149" y2="18.415" width="0" layer="19" extent="1-1"/>
 <wire x1="41.783" y1="14.605" x2="40.743" y2="15.641" width="0" layer="19" extent="1-1"/>
+<wire x1="42.545" y1="15.367" x2="41.783" y2="14.605" width="0" layer="19" extent="1-1"/>
 <wire x1="41.021" y1="19.177" x2="39.493" y2="18.891" width="0" layer="19" extent="1-1"/>
 <wire x1="41.656" y1="20.828" x2="41.021" y2="19.177" width="0" layer="19" extent="1-1"/>
 <wire x1="37.719" y1="20.955" x2="38.993" y2="18.891" width="0" layer="19" extent="1-1"/>
+<wire x1="48.387" y1="37.338" x2="46.482" y2="39.116" width="0" layer="19" extent="1-1"/>
+<wire x1="49.784" y1="36.195" x2="48.387" y2="37.338" width="0" layer="19" extent="1-1"/>
+<wire x1="49.784" y1="33.655" x2="49.784" y2="36.195" width="0" layer="19" extent="1-1"/>
 <wire x1="44.069" y1="19.812" x2="41.656" y2="20.828" width="0" layer="19" extent="1-1"/>
 <wire x1="44.577" y1="22.225" x2="44.069" y2="19.812" width="0" layer="19" extent="1-1"/>
 <wire x1="45.339" y1="24.003" x2="44.577" y2="22.225" width="0" layer="19" extent="1-1"/>
 <wire x1="45.339" y1="26.035" x2="45.339" y2="24.003" width="0" layer="19" extent="1-1"/>
-<wire x1="48.387" y1="37.338" x2="46.482" y2="39.116" width="0" layer="19" extent="1-1"/>
-<wire x1="49.784" y1="36.195" x2="48.387" y2="37.338" width="0" layer="19" extent="1-1"/>
-<wire x1="49.784" y1="33.655" x2="49.784" y2="36.195" width="0" layer="19" extent="1-1"/>
+<wire x1="45.72" y1="28.829" x2="45.339" y2="26.035" width="0" layer="19" extent="1-1"/>
 <wire x1="33.528" y1="43.053" x2="36.449" y2="42.418" width="0" layer="19" extent="1-1"/>
 <wire x1="30.861" y1="43.18" x2="33.528" y2="43.053" width="0" layer="19" extent="1-1"/>
-<wire x1="45.72" y1="28.829" x2="45.339" y2="26.035" width="0" layer="19" extent="1-1"/>
-<wire x1="25.815" y1="29.789" x2="28.448" y2="33.02" width="0" layer="19" extent="1-1"/>
 <wire x1="28.321" y1="41.656" x2="30.861" y2="43.18" width="0" layer="19" extent="1-1"/>
 <wire x1="25.654" y1="41.783" x2="28.321" y2="41.656" width="0" layer="19" extent="1-1"/>
 <wire x1="23.749" y1="42.418" x2="25.654" y2="41.783" width="0" layer="19" extent="1-1"/>
@@ -8351,11 +8346,25 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="26.289" y1="46.101" x2="26.543" y2="43.815" width="0" layer="19" extent="1-1"/>
 <wire x1="21.463" y1="41.91" x2="23.749" y2="42.418" width="0" layer="19" extent="1-1"/>
 <wire x1="25.654" y1="49.022" x2="26.289" y2="46.101" width="0" layer="19" extent="1-1"/>
-<wire x1="32.258" y1="16.51" x2="34.417" y2="18.669" width="0" layer="19" extent="1-1"/>
-<wire x1="31.115" y1="17.399" x2="32.258" y2="16.51" width="0" layer="19" extent="1-1"/>
 <wire x1="46.99" y1="19.177" x2="44.069" y2="19.812" width="0" layer="19" extent="1-1"/>
-<wire x1="49.657" y1="19.431" x2="46.99" y2="19.177" width="0" layer="19" extent="1-1"/>
+<wire x1="49.149" y1="18.415" x2="46.99" y2="19.177" width="0" layer="19" extent="1-1"/>
+<wire x1="49.657" y1="19.431" x2="49.149" y2="18.415" width="0" layer="19" extent="1-1"/>
+<wire x1="49.403" y1="16.129" x2="49.149" y2="18.415" width="0" layer="19" extent="1-1"/>
+<wire x1="47.628" y1="16.002" x2="49.403" y2="16.129" width="0" layer="19" extent="1-1"/>
 <wire x1="49.657" y1="22.225" x2="49.657" y2="19.431" width="0" layer="19" extent="1-1"/>
+<wire x1="49.53" y1="13.208" x2="49.403" y2="16.129" width="0" layer="19" extent="1-1"/>
+<wire x1="49.403" y1="12.065" x2="49.53" y2="13.208" width="0" layer="19" extent="1-1"/>
+<wire x1="49.784" y1="9.144" x2="49.403" y2="12.065" width="0" layer="19" extent="1-1"/>
+<wire x1="49.022" y1="8.001" x2="49.784" y2="9.144" width="0" layer="19" extent="1-1"/>
+<wire x1="49.022" y1="6.096" x2="49.022" y2="8.001" width="0" layer="19" extent="1-1"/>
+<wire x1="48.895" y1="4.191" x2="49.022" y2="6.096" width="0" layer="19" extent="1-1"/>
+<wire x1="48.895" y1="2.413" x2="48.895" y2="4.191" width="0" layer="19" extent="1-1"/>
+<wire x1="51.943" y1="9.525" x2="49.784" y2="9.144" width="0" layer="19" extent="1-1"/>
+<wire x1="53.848" y1="10.795" x2="51.943" y2="9.525" width="0" layer="19" extent="1-1"/>
+<wire x1="55.245" y1="9.525" x2="53.848" y2="10.795" width="0" layer="19" extent="1-1"/>
+<wire x1="51.689" y1="2.413" x2="48.895" y2="2.413" width="0" layer="19" extent="1-1"/>
+<wire x1="25.815" y1="29.789" x2="28.829" y2="29.679" width="0" layer="19" extent="1-1"/>
+<wire x1="24.892" y1="32.385" x2="25.815" y2="29.789" width="0" layer="19" extent="1-1"/>
 <wire x1="49.657" y1="25.273" x2="49.657" y2="22.225" width="0" layer="19" extent="1-1"/>
 <wire x1="51.181" y1="26.289" x2="49.657" y2="25.273" width="0" layer="19" extent="1-1"/>
 <wire x1="52.197" y1="25.273" x2="51.181" y2="26.289" width="0" layer="19" extent="1-1"/>
@@ -8363,6 +8372,10 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="53.213" y1="20.701" x2="53.213" y2="23.241" width="0" layer="19" extent="1-1"/>
 <wire x1="54.864" y1="25.781" x2="52.197" y2="25.273" width="0" layer="19" extent="1-1"/>
 <wire x1="51.181" y1="29.337" x2="51.181" y2="26.289" width="0" layer="19" extent="1-1"/>
+<wire x1="54.737" y1="2.413" x2="51.689" y2="2.413" width="0" layer="19" extent="1-1"/>
+<wire x1="57.785" y1="2.413" x2="54.737" y2="2.413" width="0" layer="19" extent="1-1"/>
+<wire x1="32.258" y1="16.51" x2="34.417" y2="18.669" width="0" layer="19" extent="1-1"/>
+<wire x1="31.115" y1="17.399" x2="32.258" y2="16.51" width="0" layer="19" extent="1-1"/>
 <wire x1="28.067" y1="17.907" x2="31.115" y2="17.399" width="0" layer="19" extent="1-1"/>
 <wire x1="25.781" y1="16.637" x2="28.067" y2="17.907" width="0" layer="19" extent="1-1"/>
 <wire x1="23.749" y1="16.129" x2="25.781" y2="16.637" width="0" layer="19" extent="1-1"/>
@@ -8377,22 +8390,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="24.003" y1="2.159" x2="26.797" y2="2.159" width="0" layer="19" extent="1-1"/>
 <wire x1="21.463" y1="2.159" x2="24.003" y2="2.159" width="0" layer="19" extent="1-1"/>
 <wire x1="18.796" y1="2.159" x2="21.463" y2="2.159" width="0" layer="19" extent="1-1"/>
-<wire x1="35.179" y1="46.606" x2="36.449" y2="42.418" width="0" layer="19" extent="1-1"/>
-<wire x1="47.628" y1="16.002" x2="46.99" y2="19.177" width="0" layer="19" extent="1-1"/>
-<wire x1="49.403" y1="16.129" x2="47.628" y2="16.002" width="0" layer="19" extent="1-1"/>
-<wire x1="49.53" y1="13.208" x2="49.403" y2="16.129" width="0" layer="19" extent="1-1"/>
-<wire x1="49.403" y1="12.065" x2="49.53" y2="13.208" width="0" layer="19" extent="1-1"/>
-<wire x1="49.784" y1="9.144" x2="49.403" y2="12.065" width="0" layer="19" extent="1-1"/>
-<wire x1="49.022" y1="8.001" x2="49.784" y2="9.144" width="0" layer="19" extent="1-1"/>
-<wire x1="49.022" y1="6.096" x2="49.022" y2="8.001" width="0" layer="19" extent="1-1"/>
-<wire x1="48.895" y1="4.191" x2="49.022" y2="6.096" width="0" layer="19" extent="1-1"/>
-<wire x1="48.895" y1="2.413" x2="48.895" y2="4.191" width="0" layer="19" extent="1-1"/>
-<wire x1="51.943" y1="9.525" x2="49.784" y2="9.144" width="0" layer="19" extent="1-1"/>
-<wire x1="53.848" y1="10.795" x2="51.943" y2="9.525" width="0" layer="19" extent="1-1"/>
-<wire x1="55.245" y1="9.525" x2="53.848" y2="10.795" width="0" layer="19" extent="1-1"/>
-<wire x1="51.689" y1="2.413" x2="48.895" y2="2.413" width="0" layer="19" extent="1-1"/>
-<wire x1="54.737" y1="2.413" x2="51.689" y2="2.413" width="0" layer="19" extent="1-1"/>
-<wire x1="57.785" y1="2.413" x2="54.737" y2="2.413" width="0" layer="19" extent="1-1"/>
 <wire x1="54.483" y1="6.477" x2="55.245" y2="9.525" width="0" layer="19" extent="1-1"/>
 <wire x1="52.197" y1="5.969" x2="54.483" y2="6.477" width="0" layer="19" extent="1-1"/>
 <wire x1="22.606" y1="47.879" x2="25.654" y2="49.022" width="0" layer="19" extent="1-1"/>
@@ -8516,8 +8513,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="14.986" y1="1.27" x2="14.224" y2="3.81" width="0" layer="19" extent="1-1"/>
 <wire x1="11.684" y1="1.651" x2="10.922" y2="4.699" width="0" layer="19" extent="1-1"/>
 <wire x1="18.796" y1="19.558" x2="15.621" y2="19.177" width="0" layer="19" extent="1-1"/>
-<wire x1="20.066" y1="21.844" x2="18.796" y2="19.558" width="0" layer="19" extent="1-1"/>
-<wire x1="22.733" y1="19.939" x2="20.066" y2="21.844" width="0" layer="19" extent="1-1"/>
 <wire x1="6.477" y1="22.987" x2="6.771" y2="19.525" width="0" layer="19" extent="1-1"/>
 <wire x1="4.271" y1="22.225" x2="6.477" y2="22.987" width="0" layer="19" extent="1-1"/>
 <wire x1="1.778" y1="22.987" x2="4.271" y2="22.225" width="0" layer="19" extent="1-1"/>
@@ -8582,6 +8577,9 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="62.865" y1="38.989" x2="64.643" y2="35.941" width="0" layer="19" extent="1-1"/>
 <wire x1="72.771" y1="49.175" x2="68.961" y2="49.403" width="0" layer="19" extent="1-1"/>
 <wire x1="59.817" y1="5.715" x2="57.785" y2="2.413" width="0" layer="19" extent="1-1"/>
+<wire x1="35.179" y1="46.606" x2="33.528" y2="43.053" width="0" layer="19" extent="1-1"/>
+<wire x1="22.733" y1="19.939" x2="23.749" y2="16.129" width="0" layer="19" extent="1-1"/>
+<wire x1="22.733" y1="21.336" x2="22.733" y2="19.939" width="0" layer="19" extent="1-1"/>
 <wire x1="71.882" y1="27.813" x2="68.199" y2="29.337" width="0" layer="19" extent="1-1"/>
 <wire x1="74.803" y1="28.194" x2="71.882" y2="27.813" width="0" layer="19" extent="1-1"/>
 <wire x1="78.613" y1="27.559" x2="74.803" y2="28.194" width="0" layer="19" extent="1-1"/>
@@ -8606,7 +8604,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="18.034" y1="37.211" x2="17.145" y2="33.782" width="0" layer="19" extent="1-1"/>
 <wire x1="17.653" y1="39.751" x2="18.034" y2="37.211" width="0" layer="19" extent="1-1"/>
 <wire x1="15.367" y1="39.37" x2="17.653" y2="39.751" width="0" layer="19" extent="1-1"/>
-<wire x1="62.357" y1="57.785" x2="64.389" y2="55.372" width="0" layer="19" extent="1-1"/>
 <wire x1="10.359" y1="56.341" x2="14.351" y2="54.991" width="0" layer="19" extent="1-1"/>
 <wire x1="7.366" y1="55.118" x2="10.359" y2="56.341" width="0" layer="19" extent="1-1"/>
 <wire x1="6.096" y1="57.023" x2="7.366" y2="55.118" width="0" layer="19" extent="1-1"/>
@@ -8738,15 +8735,15 @@ Siemens, Philips, Valvo&lt;p&gt;
 <signal name="N$10">
 <contactref element="Q2" pad="3"/>
 <contactref element="R6" pad="1"/>
-<contactref element="Q1" pad="1"/>
 <wire x1="41.656" y1="46.521" x2="41.656" y2="43.942" width="0.4064" layer="1"/>
 <wire x1="42.291" y1="43.307" x2="43.781" y2="43.307" width="0.4064" layer="1"/>
 <wire x1="41.656" y1="43.942" x2="42.291" y2="43.307" width="0.4064" layer="1"/>
-<wire x1="45.881" y1="46.284" x2="45.881" y2="45.627" width="0.4064" layer="1"/>
 <wire x1="45.881" y1="45.627" x2="45.339" y2="45.085" width="0.4064" layer="1"/>
 <wire x1="45.339" y1="45.085" x2="44.704" y2="45.085" width="0.4064" layer="1"/>
 <wire x1="44.704" y1="45.085" x2="43.781" y2="44.162" width="0.4064" layer="1"/>
 <wire x1="43.781" y1="44.162" x2="43.781" y2="43.307" width="0.4064" layer="1"/>
+<contactref element="Q1" pad="1"/>
+<wire x1="45.881" y1="45.627" x2="45.881" y2="46.284" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="IO_2">
 <contactref element="Q4" pad="1"/>
@@ -8796,48 +8793,44 @@ Siemens, Philips, Valvo&lt;p&gt;
 <signal name="N$8">
 <contactref element="Q4" pad="3"/>
 <contactref element="R7" pad="1"/>
-<contactref element="Q3" pad="1"/>
-<wire x1="28.321" y1="25.107" x2="28.267" y2="25.053" width="0.1524" layer="1"/>
-<wire x1="28.267" y1="25.053" x2="25.725" y2="25.053" width="0.4064" layer="1"/>
 <wire x1="23.715" y1="28.829" x2="23.715" y2="26.577" width="0.4064" layer="1"/>
-<wire x1="25.239" y1="25.053" x2="25.725" y2="25.053" width="0.4064" layer="1"/>
-<wire x1="23.715" y1="26.577" x2="25.239" y2="25.053" width="0.4064" layer="1"/>
+<contactref element="Q3" pad="1"/>
+<wire x1="23.715" y1="26.577" x2="24.13" y2="26.162" width="0.4064" layer="1"/>
+<wire x1="24.13" y1="26.162" x2="24.384" y2="26.162" width="0.4064" layer="1"/>
+<wire x1="24.384" y1="26.162" x2="24.765" y2="25.781" width="0.4064" layer="1"/>
+<wire x1="24.765" y1="25.781" x2="24.765" y2="25.4" width="0.4064" layer="1"/>
+<wire x1="24.765" y1="25.4" x2="25.112" y2="25.053" width="0.4064" layer="1"/>
+<wire x1="25.112" y1="25.053" x2="25.725" y2="25.053" width="0.4064" layer="1"/>
+<wire x1="25.725" y1="25.053" x2="28.267" y2="25.053" width="0.4064" layer="1"/>
+<wire x1="28.267" y1="25.053" x2="28.321" y2="25.107" width="0.4064" layer="1"/>
 </signal>
 <signal name="N$11">
 <contactref element="Q6" pad="3"/>
 <contactref element="R8" pad="1"/>
 <contactref element="Q5" pad="1"/>
-<wire x1="16.349" y1="28.829" x2="16.349" y2="24.836" width="0.254" layer="1"/>
-<wire x1="16.984" y1="25.725" x2="16.984" y2="24.963" width="0.254" layer="1"/>
-<wire x1="16.984" y1="24.963" x2="16.857" y2="24.836" width="0.254" layer="1"/>
-<wire x1="16.349" y1="24.836" x2="16.857" y2="24.836" width="0.254" layer="1"/>
-<wire x1="17.294" y1="26.035" x2="16.984" y2="25.725" width="0.254" layer="1"/>
-<wire x1="20.828" y1="25.869" x2="20.828" y2="25.234" width="0.254" layer="1"/>
-<wire x1="20.828" y1="25.234" x2="20.955" y2="25.107" width="0.4064" layer="1"/>
-<wire x1="20.828" y1="25.869" x2="20.662" y2="26.035" width="0.254" layer="1"/>
-<wire x1="17.294" y1="26.035" x2="20.662" y2="26.035" width="0.254" layer="1"/>
+<wire x1="16.349" y1="28.829" x2="16.349" y2="24.836" width="0.4064" layer="1"/>
+<wire x1="20.955" y1="25.107" x2="20.828" y2="25.234" width="0.4064" layer="1"/>
+<wire x1="20.828" y1="25.234" x2="20.828" y2="25.781" width="0.4064" layer="1"/>
+<wire x1="20.828" y1="25.781" x2="20.574" y2="26.035" width="0.4064" layer="1"/>
+<wire x1="16.962" y1="24.836" x2="16.349" y2="24.836" width="0.4064" layer="1"/>
+<wire x1="20.574" y1="26.035" x2="18.161" y2="26.035" width="0.4064" layer="1"/>
+<wire x1="18.161" y1="26.035" x2="16.962" y2="24.836" width="0.4064" layer="1"/>
 </signal>
 <signal name="3V3_LOW_1">
-<contactref element="Q5" pad="2"/>
 <contactref element="JP5" pad="6"/>
 <wire x1="18.183" y1="20.701" x2="16.349" y2="22.535" width="0.4064" layer="1"/>
-<wire x1="16.349" y1="22.916" x2="16.349" y2="22.535" width="0.4064" layer="1"/>
 <wire x1="18.183" y1="20.701" x2="20.955" y2="20.701" width="0.4064" layer="1"/>
 <wire x1="20.955" y1="20.701" x2="22.479" y2="19.177" width="0.4064" layer="1"/>
 <wire x1="22.479" y1="19.177" x2="22.479" y2="9.779" width="0.4064" layer="1"/>
 </signal>
 <signal name="3V3_LOW">
-<contactref element="Q3" pad="3"/>
 <contactref element="R7" pad="2"/>
-<contactref element="Q5" pad="3"/>
 <contactref element="R8" pad="2"/>
 <contactref element="IC3" pad="14"/>
 <contactref element="C4" pad="2"/>
 <contactref element="JP5" pad="8"/>
-<wire x1="28.321" y1="23.407" x2="27.559" y2="23.407" width="0.4064" layer="1"/>
-<wire x1="27.559" y1="23.407" x2="27.232" y2="23.08" width="0.4064" layer="1"/>
-<wire x1="27.232" y1="23.08" x2="24.892" y2="23.08" width="0.4064" layer="1"/>
-<wire x1="24.892" y1="23.08" x2="24.765" y2="22.953" width="0.4064" layer="1"/>
+<wire x1="28.321" y1="23.407" x2="27.378" y2="23.407" width="0.4064" layer="1"/>
+<wire x1="27.378" y1="23.407" x2="25.019" y2="21.048" width="0.4064" layer="1"/>
 <wire x1="28.321" y1="23.407" x2="32.981" y2="23.407" width="0.4064" layer="1"/>
 <wire x1="36.449" y1="19.939" x2="32.981" y2="23.407" width="0.4064" layer="1"/>
 <wire x1="36.449" y1="19.939" x2="37.465" y2="19.939" width="0.4064" layer="1"/>
@@ -8850,16 +8843,7 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="43.561" y1="18.161" x2="41.783" y2="19.939" width="0.4064" layer="16"/>
 <contactref element="JP2" pad="1"/>
 <contactref element="JP2" pad="3"/>
-<wire x1="20.027" y1="23.407" x2="20.955" y2="23.407" width="0.4064" layer="1"/>
-<wire x1="20.027" y1="23.407" x2="19.558" y2="23.876" width="0.4064" layer="1"/>
-<wire x1="20.955" y1="23.407" x2="23.075" y2="23.407" width="0.4064" layer="1"/>
-<wire x1="23.075" y1="23.407" x2="23.749" y2="22.733" width="0.4064" layer="1"/>
-<wire x1="23.749" y1="22.733" x2="24.545" y2="22.733" width="0.4064" layer="1"/>
-<wire x1="24.545" y1="22.733" x2="24.765" y2="22.953" width="0.1524" layer="1"/>
-<wire x1="25.019" y1="21.048" x2="24.765" y2="21.302" width="0.4064" layer="1"/>
-<wire x1="24.765" y1="21.302" x2="24.765" y2="22.953" width="0.4064" layer="1"/>
-<wire x1="25.019" y1="21.048" x2="25.019" y2="9.779" width="0.4064" layer="1"/>
-<wire x1="19.558" y1="23.876" x2="18.449" y2="23.876" width="0.4064" layer="1"/>
+<wire x1="25.019" y1="9.779" x2="25.019" y2="21.048" width="0.4064" layer="1"/>
 <wire x1="25.019" y1="9.779" x2="26.67" y2="11.43" width="0.4064" layer="16"/>
 <wire x1="35.687" y1="12.573" x2="36.83" y2="13.716" width="0.4064" layer="16"/>
 <wire x1="42.418" y1="13.716" x2="42.799" y2="13.335" width="0.4064" layer="16"/>
@@ -8874,17 +8858,29 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="30.353" y1="12.573" x2="35.687" y2="12.573" width="0.4064" layer="16"/>
 <wire x1="43.434" y1="13.589" x2="43.434" y2="15.875" width="0.4064" layer="1"/>
 <wire x1="43.434" y1="15.875" x2="43.815" y2="16.256" width="0.4064" layer="1"/>
-<wire x1="18.449" y1="23.876" x2="18.449" y2="25.366" width="0.4064" layer="1"/>
-<wire x1="18.449" y1="25.366" x2="18.415" y2="25.4" width="0.254" layer="1"/>
-<via x="18.415" y="25.4" extent="1-16" drill="0.35"/>
-<wire x1="18.415" y1="25.4" x2="19.05" y2="26.035" width="0.4064" layer="16"/>
+<wire x1="18.576" y1="25.239" x2="18.542" y2="25.273" width="0.254" layer="1"/>
+<via x="18.542" y="25.273" extent="1-16" drill="0.35"/>
+<wire x1="18.542" y1="25.273" x2="19.304" y2="26.035" width="0.4064" layer="16"/>
 <wire x1="19.812" y1="26.035" x2="20.32" y2="26.543" width="0.4064" layer="16"/>
-<wire x1="19.05" y1="26.035" x2="19.812" y2="26.035" width="0.4064" layer="16"/>
+<wire x1="19.304" y1="26.035" x2="19.812" y2="26.035" width="0.4064" layer="16"/>
 <wire x1="20.32" y1="26.543" x2="20.32" y2="26.924" width="0.4064" layer="16"/>
 <wire x1="20.32" y1="26.924" x2="19.685" y2="27.559" width="0.4064" layer="16"/>
 <wire x1="19.685" y1="34.798" x2="22.098" y2="37.211" width="0.4064" layer="16"/>
 <wire x1="19.685" y1="27.559" x2="19.685" y2="34.798" width="0.4064" layer="16"/>
 <wire x1="22.098" y1="37.211" x2="22.098" y2="39.751" width="0.4064" layer="16"/>
+<contactref element="Q3" pad="2"/>
+<contactref element="Q5" pad="2"/>
+<wire x1="18.542" y1="25.273" x2="16.349" y2="23.08" width="0.4064" layer="1"/>
+<wire x1="16.349" y1="23.08" x2="16.349" y2="23.0684" width="0.4064" layer="1"/>
+<wire x1="18.542" y1="25.273" x2="20.408" y2="23.407" width="0.4064" layer="1"/>
+<wire x1="20.408" y1="23.407" x2="20.955" y2="23.407" width="0.4064" layer="1"/>
+<wire x1="20.955" y1="23.407" x2="21.629" y2="23.407" width="0.4064" layer="1"/>
+<wire x1="23.275" y1="25.053" x2="23.805" y2="25.053" width="0.4064" layer="1"/>
+<wire x1="21.629" y1="23.407" x2="23.275" y2="25.053" width="0.4064" layer="1"/>
+<wire x1="23.805" y1="25.053" x2="24.223" y2="25.053" width="0.4064" layer="1"/>
+<wire x1="25.869" y1="23.407" x2="27.378" y2="23.407" width="0.4064" layer="1"/>
+<wire x1="24.223" y1="25.053" x2="25.869" y2="23.407" width="0.4064" layer="1"/>
+<wire x1="16.349" y1="22.916" x2="16.349" y2="23.0684" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="BQ_OUT1">
 <contactref element="IC1" pad="10"/>
@@ -8935,20 +8931,20 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="55.626" y1="18.288" x2="55.753" y2="18.161" width="0.4064" layer="16"/>
 <wire x1="43.053" y1="51.054" x2="41.871" y2="52.705" width="0" layer="19" extent="1-1"/>
 </signal>
-<signal name="VCC">
-<contactref element="IC3" pad="9"/>
-<contactref element="IC3" pad="6"/>
+<signal name="VCC_3130">
 <contactref element="IC3" pad="5"/>
 <contactref element="C5" pad="2"/>
-<wire x1="37.743" y1="16.141" x2="37.743" y2="15.641" width="0.254" layer="1"/>
-<wire x1="38.1" y1="13.97" x2="39.243" y2="13.97" width="0.4064" layer="1"/>
-<wire x1="39.243" y1="13.97" x2="39.493" y2="14.22" width="0.4064" layer="1"/>
-<wire x1="37.743" y1="15.641" x2="37.743" y2="14.327" width="0.4064" layer="1"/>
-<wire x1="37.743" y1="14.327" x2="38.1" y2="13.97" width="0.4064" layer="1"/>
-<wire x1="39.493" y1="14.22" x2="39.493" y2="14.891" width="0.4064" layer="1"/>
 <wire x1="40.259" y1="11.687" x2="40.132" y2="11.814" width="0.254" layer="1"/>
-<wire x1="40.132" y1="13.581" x2="39.493" y2="14.22" width="0.4064" layer="1"/>
-<wire x1="40.132" y1="11.814" x2="40.132" y2="13.581" width="0.4064" layer="1"/>
+<contactref element="IC3" pad="6"/>
+<contactref element="IC3" pad="10"/>
+<wire x1="39.993" y1="14.236" x2="39.993" y2="14.891" width="0.4064" layer="1"/>
+<wire x1="40.132" y1="11.814" x2="40.132" y2="13.97" width="0.4064" layer="1"/>
+<wire x1="40.132" y1="13.97" x2="40.132" y2="14.097" width="0.4064" layer="1"/>
+<wire x1="40.132" y1="14.097" x2="39.993" y2="14.236" width="0.4064" layer="1"/>
+<wire x1="37.743" y1="15.641" x2="37.743" y2="14.327" width="0.4064" layer="1"/>
+<wire x1="38.1" y1="13.97" x2="40.132" y2="13.97" width="0.4064" layer="1"/>
+<wire x1="37.743" y1="14.327" x2="38.1" y2="13.97" width="0.4064" layer="1"/>
+<wire x1="37.743" y1="15.641" x2="37.743" y2="16.141" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$16">
 <contactref element="C6" pad="1"/>
@@ -9045,15 +9041,18 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="23.368" y1="35.941" x2="26.035" y2="35.941" width="0.4064" layer="1"/>
 </signal>
 <signal name="3V3_LOW_2">
-<contactref element="Q3" pad="2"/>
 <contactref element="JP5" pad="4"/>
-<wire x1="23.805" y1="25.053" x2="22.894" y2="25.053" width="0.4064" layer="1"/>
-<wire x1="22.894" y1="25.053" x2="22.479" y2="24.638" width="0.4064" layer="1"/>
-<wire x1="22.479" y1="24.638" x2="22.479" y2="24.511" width="0.4064" layer="1"/>
-<via x="22.479" y="24.511" extent="1-16" drill="0.35"/>
-<wire x1="22.479" y1="24.511" x2="22.479" y2="20.701" width="0.4064" layer="16"/>
-<wire x1="19.939" y1="18.161" x2="19.939" y2="9.779" width="0.4064" layer="16"/>
-<wire x1="22.479" y1="20.701" x2="19.939" y2="18.161" width="0.4064" layer="16"/>
+<contactref element="Q3" pad="3"/>
+<contactref element="Q5" pad="3"/>
+<wire x1="19.939" y1="20.32" x2="18.796" y2="21.463" width="0.4064" layer="16"/>
+<via x="18.796" y="21.463" extent="1-16" drill="0.35"/>
+<wire x1="18.796" y1="21.463" x2="18.449" y2="21.81" width="0.4064" layer="1"/>
+<wire x1="18.449" y1="21.81" x2="18.449" y2="23.876" width="0.4064" layer="1"/>
+<wire x1="19.939" y1="9.779" x2="19.939" y2="20.32" width="0.4064" layer="16"/>
+<wire x1="18.796" y1="21.463" x2="19.431" y2="22.098" width="0.4064" layer="1"/>
+<wire x1="23.207" y1="22.953" x2="24.765" y2="22.953" width="0.4064" layer="1"/>
+<wire x1="19.431" y1="22.098" x2="22.352" y2="22.098" width="0.4064" layer="1"/>
+<wire x1="22.352" y1="22.098" x2="23.207" y2="22.953" width="0.4064" layer="1"/>
 </signal>
 <signal name="3113_OUT">
 <contactref element="IC2" pad="2"/>
@@ -9105,7 +9104,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="62.865" y1="29.083" x2="62.865" y2="28.321" width="0.4064" layer="16"/>
 </signal>
 <signal name="3113_IN">
-<contactref element="Q1" pad="2"/>
 <contactref element="IC2" pad="14"/>
 <contactref element="IC2" pad="4"/>
 <contactref element="R12" pad="1"/>
@@ -9124,7 +9122,6 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="62.611" y1="52.959" x2="62.738" y2="53.086" width="0.4064" layer="16"/>
 <wire x1="64.0599625" y1="53.086" x2="62.738" y2="53.086" width="0.4064" layer="16"/>
 <wire x1="46.546" y1="50.012" x2="45.881" y2="49.347" width="0.4064" layer="1"/>
-<wire x1="45.881" y1="48.204" x2="45.881" y2="49.347" width="0.4064" layer="1"/>
 <wire x1="46.546" y1="50.012" x2="54.61" y2="50.012" width="0.4064" layer="1"/>
 <wire x1="61.8922" y1="50.0812" x2="61.8922" y2="47.117" width="0.4064" layer="16"/>
 <via x="61.8922" y="47.117" extent="1-16" drill="0.35"/>
@@ -9161,6 +9158,8 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="56.642" y1="26.67" x2="56.642" y2="38.227" width="0.4064" layer="1"/>
 <wire x1="64.572" y1="52.5739625" x2="64.0599625" y2="53.086" width="0.4064" layer="1"/>
 <wire x1="64.572" y1="51.566" x2="64.572" y2="52.5739625" width="0.4064" layer="1"/>
+<contactref element="Q1" pad="3"/>
+<wire x1="45.881" y1="49.347" x2="43.781" y2="47.244" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$12">
 <contactref element="IC2" pad="18"/>
@@ -9330,15 +9329,12 @@ Siemens, Philips, Valvo&lt;p&gt;
 <wire x1="17.018" y1="45.212" x2="17.526" y2="45.72" width="0.4064" layer="1"/>
 </signal>
 <signal name="BQ_OUT3">
-<contactref element="Q1" pad="3"/>
 <contactref element="R6" pad="2"/>
 <wire x1="42.799" y1="47.371" x2="42.799" y2="48.006" width="0.4064" layer="1"/>
 <wire x1="42.799" y1="48.006" x2="42.584" y2="48.221" width="0.4064" layer="1"/>
 <wire x1="42.584" y1="48.221" x2="41.656" y2="48.221" width="0.4064" layer="1"/>
-<wire x1="43.781" y1="47.244" x2="42.926" y2="47.244" width="0.4064" layer="1"/>
 <wire x1="42.926" y1="47.244" x2="42.799" y2="47.371" width="0.4064" layer="1"/>
 <contactref element="JP7" pad="2"/>
-<wire x1="43.781" y1="47.244" x2="43.781" y2="46.736" width="0.4064" layer="1"/>
 <wire x1="43.781" y1="46.736" x2="43.307" y2="46.262" width="0.4064" layer="1"/>
 <wire x1="43.307" y1="44.577" x2="42.672" y2="43.942" width="0.4064" layer="1"/>
 <via x="42.672" y="43.942" extent="1-16" drill="0.35"/>
@@ -9356,6 +9352,9 @@ Siemens, Philips, Valvo&lt;p&gt;
 <via x="48.387" y="29.591" extent="1-16" drill="0.35"/>
 <wire x1="52.832" y1="13.081" x2="50.927" y2="14.986" width="0.4064" layer="16"/>
 <wire x1="50.927" y1="22.352" x2="48.387" y2="24.892" width="0.4064" layer="1"/>
+<contactref element="Q1" pad="2"/>
+<wire x1="43.781" y1="46.736" x2="45.881" y2="48.204" width="0" layer="19" extent="1-1"/>
+<wire x1="42.926" y1="47.244" x2="43.781" y2="46.736" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="3130_IN">
 <contactref element="IC3" pad="2"/>
