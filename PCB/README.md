@@ -25,8 +25,8 @@
   - one with DMG/DMP mosfets
   - one with ~~DMC3028LSDX-13~~ IRF7319 dual cmos
 - [x] Add pads for Harwin RFI cans 
-	- 30mm X 30mm or 50mm X 25mm 
-	- 30mm X 25mm 
+	- 30mm X 30mm or 50mm X 25mm for LTC3113 section 
+	- 30mm X 25mm for LTC3130-1 section
 
 
 ### Ordered:
