@@ -15,17 +15,25 @@
 - [x] Swap Solar input screw terminal footprint with a ~~standard~~ push-click one
 - [x] Make PJ-031D face away from board
 - [x] Swap VS1 and VS2
-- [ ] Rename ambiguous signal names
-- [ ] Power tracks width increased from 10 to 16 mil
-- [ ] Add more pins for input/output signals for probing when jumpered
-- [ ] Add two more outputs: 
+- [x] Rename ambiguous signal names
+- [x] Power tracks width increased from 10 to 16 mil, where appropriate
+- [x] Added more pins for input/output signals for probing when jumpered
+- [x] Added two more outputs: 
   - one for 5V GSM
   -  one for 3.3V GSM logic
-- [ ] Add two versions of power switches for consumption comparison:
+- [x] Added two versions of power switches for consumption comparison:
   - one with DMG/DMP mosfets
-  - one with ~~DMC3028LSDX-13~~ IRF7319 dual cmos 
+  - one with ~~DMC3028LSDX-13~~ IRF7319 dual cmos
+- [x] Add pads for Harwin RFI cans 
+	- 30mm X 30mm or 50mm X 25mm 
+	- 30mm X 25mm 
+
 
 ### Ordered:
-- DMG3414U N-channel MOSFET
+- DMG3414U N-channel MOSFET - unavailable at mouser!
 - DMP2045U P-channel MOSFET
 - IRF7319 Dual P/N-channel MOSFET pair
+
+### Notes/remaining issues:
+-  Harwin RFI can pads are only there for future design reference,
+ the dimensions of the latest version's pads are not compatible with any of the available models
