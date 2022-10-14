@@ -1,10 +1,13 @@
 # convert longitude nmea to lon degrees.decimalplaces
 
 FIX_QUALITY = 2
+RTK_FIX = 4
+RTK_FLOAT = 5
+
 
 def nmealon2lon(l):
     # convert text NMEA lon to degrees.decimalplaces
-    if len(l.split('.')[0]) == 4:
+    if len(l.split('.')[0]) == 5:
         degrees = float(l[0:3])
         decimals = float(l[3:]) / 60
     else:
@@ -12,16 +15,24 @@ def nmealon2lon(l):
         decimals = float(l[2:]) / 60
 
     lon = degrees + decimals
-    # if f[3] == 'W':
-    # 	lon = -lon
-    return (lon)
+    # why was this commented out?
+    if f[5] == 'W':
+        lon = -lon
+    #     print('{0:.8f}'.format(lon))
+    #     return (lon)
+    return ('{0:.7f}'.format(lon))
 
 
 def nmealat2lat(nl):
     # convert text NMEA lat to degrees.decimalplaces
     degrees = float(nl[0:2])
     decimals = float(nl[2:]) / 60.0
-    return (degrees + decimals)
+
+    lat = degrees + decimals
+    if f[3] == 'S':
+        lat = -lat
+
+    return ('{0:.7f}'.format(lat))
 
 
 def gpsFormatOutput(device_id, data):
@@ -39,17 +50,23 @@ def gpsFormatOutput(device_id, data):
         sats = f[7].lstrip("0")
         hdop = str(int(round(float(f[8]), 0)))
         alt = f[9]
+        #         print(qual)   - prints 4!
         # check fix quality is equal to 0, 1 or 2 (or 5 if supported)
-        if qual == FIX_QUALITY:
-            # pass
-            print("Fix Type: {}", FIX_QUALITY)
+        #         if qual == FIX_QUALITY:
+        # pass
+        #         print(type(qual))
+        #         Reference: support.dewesoft.com/en/support/solutoins/articles/14000108531-explanation-of-gps-fix-quality-values
+        if int(qual) == RTK_FIX:
+            #             print("Fix Type: {}", qual)
+            print("=" * 40)
             nmeafix = device_id + "," + lat + "," + lon.strip('0') + "," + alt + "," + sats
             location = (nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
             final_location = (device_id, nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
-        #         return 'p', location, nmeafix
+            #         return 'p', location, nmeafix
             return 'p', final_location
     #         return nmeafix
-    elif data.startswith('$GNZDA'):
+    # Changed elif to 'if' to consider the time mode as well, which returns the format needed to write onto the rtc.
+    if data.startswith('$GNZDA'):
         # It's timing data
         # $GPZDA,hhmmss.ss,dd,mm,yyyy,xx,yy*CC
         # ignore decimals seconds, keep 20xx year for our rtc
@@ -91,10 +108,13 @@ def processGPS(data):
         fields = data.split(",")
         hms = fields[1]
         #	YYYY	MM	DD	hh 	mm	ss
+        # 8-tuple has the following format: year, month, day, weekday, hours, minutes, seconds, subseconds
+
         tod = (fields[4], fields[3], fields[2], hms[0:2], hms[2:4], hms[4:6])
         return "t", tod
 
     else:
         # No known string detected == probably timeout
         return None, None
+
 
