@@ -3,7 +3,7 @@
 FIX_QUALITY = 2
 RTK_FIX = 4
 RTK_FLOAT = 5
-
+WEEKDAY = 0
 
 def nmealon2lon(l):
     # convert text NMEA lon to degrees.decimalplaces
@@ -18,8 +18,8 @@ def nmealon2lon(l):
     # why was this commented out?
     if f[5] == 'W':
         lon = -lon
-    #     print('{0:.8f}'.format(lon))
-    #     return (lon)
+#     print('{0:.8f}'.format(lon))
+#     return (lon)
     return ('{0:.7f}'.format(lon))
 
 
@@ -50,19 +50,19 @@ def gpsFormatOutput(device_id, data):
         sats = f[7].lstrip("0")
         hdop = str(int(round(float(f[8]), 0)))
         alt = f[9]
-        #         print(qual)   - prints 4!
+#         print(qual)   - prints 4!
         # check fix quality is equal to 0, 1 or 2 (or 5 if supported)
-        #         if qual == FIX_QUALITY:
-        # pass
-        #         print(type(qual))
-        #         Reference: support.dewesoft.com/en/support/solutoins/articles/14000108531-explanation-of-gps-fix-quality-values
+#         if qual == FIX_QUALITY:
+            # pass
+#         print(type(qual))
+#         Reference: support.dewesoft.com/en/support/solutoins/articles/14000108531-explanation-of-gps-fix-quality-values
         if int(qual) == RTK_FIX:
-            #             print("Fix Type: {}", qual)
+#             print("Fix Type: {}", qual)
             print("=" * 40)
             nmeafix = device_id + "," + lat + "," + lon.strip('0') + "," + alt + "," + sats
             location = (nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
             final_location = (device_id, nmealat2lat(lat), nmealon2lon(lon), alt, qual, hdop, sats, nmeafix)
-            #         return 'p', location, nmeafix
+        #         return 'p', location, nmeafix
             return 'p', final_location
     #         return nmeafix
     # Changed elif to 'if' to consider the time mode as well, which returns the format needed to write onto the rtc.
@@ -73,8 +73,9 @@ def gpsFormatOutput(device_id, data):
         data = str(data)
         fields = data.split(",")
         hms = fields[1]
-        #	YYYY	MM	DD	hh 	mm	ss
-        tod = (device_id, fields[4], fields[3], fields[2], hms[0:2], hms[2:4], hms[4:6])
+        #   device_ID YYYY  MM  DD WEEKDAY  hh  mm  ss ms
+        # Temporary removal of device_ID
+        tod = (int(fields[4]), int(fields[3]), int(fields[2]), int(WEEKDAY), int(hms[0:2]), int(hms[2:4]), int(hms[4:6]), int(hms[7:]))
         return "t", tod
     else:
         return None, None
@@ -107,7 +108,7 @@ def processGPS(data):
         data = str(data)
         fields = data.split(",")
         hms = fields[1]
-        #	YYYY	MM	DD	hh 	mm	ss
+        #   YYYY    MM  DD  hh  mm  ss
         # 8-tuple has the following format: year, month, day, weekday, hours, minutes, seconds, subseconds
 
         tod = (fields[4], fields[3], fields[2], hms[0:2], hms[2:4], hms[4:6])

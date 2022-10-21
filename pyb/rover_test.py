@@ -1,10 +1,14 @@
-# Write your code here :-)
+###################################
+#   Title   : rover_test.py
+#   Author  : Sherif Attia
+#   Date    : 21/10/2022
+#
+###################################
 from pyb import UART
 from pyb import RTC
 from gps import *
 import time
 import pyb
-from Formats import *
 
 ROVER_ID = str(1)
 
@@ -24,6 +28,7 @@ gps_uart.init(GPS_BAUDRATE, bits=8, stop=1, read_buf_len=GPS_BUFFER_SIZE)
 
 PACKET_MANAGER = bytearray()
 
+rtc = RTC()
 
 def saveCFG():
     bs = bytearray()
@@ -41,7 +46,7 @@ def saveCFG():
     ck_a, ck_b = ubxChecksum(bs[2:])
     bs.append(ck_a)
     bs.append(ck_b)
-    gps_uart.write(bs)
+    gpsIn.write(bs)
     return bs
 
 
@@ -67,7 +72,7 @@ while True:
             continue
         #             print(gps_rover_data)
         # need to ignore the contents / skip this message and force the loop to continue
-        gps_rover_data = str(gps_rover_data.decode())
+        gps_rover_data = str(gps_rover_data.decode()) # might need to be removed
 
         if gps_rover_data.count("$") > 1 or (len(gps_rover_data) < 82):
             continue
@@ -105,24 +110,13 @@ while True:
 
         if gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "t":
             time_message = gpsFormatOutput(ROVER_ID, gps_rover_data)[1]
-            # TODO: take each input of time_message[x] and store them in rtc.datetime()
-
-            final_message = (
-                str(time_message[0])
-                + ", "
-                + str(time_message[1])
-                + ", "
-                + str(time_message[2])
-                + ", "
-                + str(time_message[3])
-                + ", "
-                + str(time_message[4])
-                + ", "
-                + str(time_message[5])
-                + ", "
-                + str(time_message[6])
-                + "\n"
-            )
+            # TODO: Need to account the difference a difference between GPS and UTC whenever
+            # there is a leap second.
+            # incoming timing data updated from gps.py
+            print("Updating RTC Time")
+            
+            final_message = str(rtc.datetime(time_message))
+            
             radio_uart.write(final_message)
             # might complain, thus might have to put it in a BUFFER
             processed_data = gpsFormatOutput(ROVER_ID, gps_rover_data)
@@ -144,6 +138,6 @@ while True:
     # need to decode incoming byte formatted data
     # need to send back a message to confirm that we got a fix.
 
-    # send back data to base.
+    # send back data to base. - 10 second intervals
     pyb.delay(1000)
 
