@@ -49,6 +49,12 @@ def saveCFG():
     gpsIn.write(bs)
     return bs
 
+# pass by reference to be able to update gps_uart.
+# TODO: replace all references of gps_rover_data  with read_gps_uart() 
+# TODO: test if these changes have allowed the readings inside to be updated.
+def read_gps_uart():
+    return gps_uart.readline()
+
 
 print("Pyboard Black - Rover Board")
 # create a poll i.e. wait for incoming messages
@@ -73,12 +79,14 @@ while True:
         #             print(gps_rover_data)
         # need to ignore the contents / skip this message and force the loop to continue
         gps_rover_data = str(gps_rover_data.decode()) # might need to be removed
-
+        # 82 - Length of GNGGA message
         if gps_rover_data.count("$") > 1 or (len(gps_rover_data) < 82):
             continue
         #         print(gps_rover_data)
         #         print(data)
-
+        #TODO: need to check if there is a way to update the variable - could just create a function that returns the value format
+        # rather than just store it in a variable. Essentially the function call will udpate the variable inside the scope and be passed 
+        # by reference.
         if gpsFormatOutput(ROVER_ID, gps_rover_data) is None:
             continue
         if gpsFormatOutput(ROVER_ID, gps_rover_data)[0] == "p":
