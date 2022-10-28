@@ -1,75 +1,104 @@
-ERROR_CODE = False
+# Import packages
+import adafruit_gps
+import board
+import busio
+import digitalio
+import adafruit_ds3231
+import time
+import Radio
+from pyrtcm import RTCMReader
+
+
+# Initialise constants
+RETRY_LIMIT = 3
+
+def ChecksumError(Error):
+    pass
+
+def TimeoutError(Error):
+    pass
 
 class Device:
+    '''Generic object for devices intended to be inherited.
+    Contains all require methods and variables for a generic device to be setup.
+    
+    Use init_hardware to setup IO
+    Use radio_send(self,data) to send data
+    Use gps_receive to get GPS readout
+    Use radio_receive to receive data'''
+
     def __init__(self, device_ID):
-        # Device Data
+
+        # Initialise variables
         self.device_ID = device_ID # DEVICE ID, -1 = Base, 0,1,2 = Rover
+        '''Denotes device ID, -1 = Base, 0,1,2 = Rover '''
+        self.GPS_UART1 = busio.UART
+        '''GPS UART1 for NMEA communications'''
+        self.GPS_UART2 = busio.UART
+        '''GPS UART2 for rtcm3 communication (unidirectional towards GPS)'''
+        self.RADIO_UART = busio.UART
+        self.RTC = adafruit_ds3231.DS3231
+        self.GPS = adafruit_gps.GPS
 
-    # ALL COMMS SPECIFIES WICH DEVICE IS AT THE OTHER END BY INCLUDING DEVICE ID IN THE MESSAGES
-    def configure_radio(self):
-        print("CONFIGURING RADIO")
 
-    def configure_GPS(self):
-        print("CONFIGURING GPS")
+        # Initialise the device
+        self.init_hardware()
+        self.init_RTC()
+        self.init_GPS()
 
-    # GET NMEA DATA FROM GPS USING RTCM3 DATA
-    def GPS_get_NMEA(self):
-        self.NMEA = None
-        print("GETTING NMEA DATA")
+    def init_hardware(self):
+        '''
+        Initialises all hardware I/O. Not the devices themselves.
+        '''
+        # Initialise hardware UARTS, specifying Tx, Rx, and baudrate
+        self.gsm_UART = busio.UART(board.D0, board.D1, baudrate=9600)
+        self.gps_uart_nmea = busio.UART(board.D2, board.D3, baudrate=9600)
+        self.gps_uart_rtcm3 = busio.UART(board.D4, board.D5, baudrate=9600)
+        self.RADIO_UART = busio.UART(board.D6, board.D7, baudrate=9600, timeout=1)
 
-    # GET THE RTCM3 DATA FROM THE GPS AND STORE
-    def GPS_get_rtcm3(self):
-        self.rtcm3 = None
-        print("GETTING RTCM3 DATA")
+        # Initialise I2C
+        self.I2C = board.I2C()
 
-    # SET THE RTCM3 OF THE GPS READY TO GET NMEA DATA
-    def GPS_set_RTCM3(self,rtcm3_data):
-        print("SETTING CORRECTION DATA")
-        
-    # SEND REQUEST TO SEND
-    def send_RTS(self):
-        print("SENDING RTS")
+    def init_RTC(self):
+        '''
+        Initialise RTC using adafruit RTC library
+        '''
+        # Initialise RTC object
+        self.RTC = adafruit_ds3231.DS3231(self.I2C)
+        # Set alarm for 3 hours after the previous alarm: converts time struct to time, adds 3 hrs, converts back
+        self.RTC.alarm1 = (time.localtime(time.mktime(self.RTC.alarm1)+10800))
 
-    # SEND CLEAR TO SEND
-    def send_CTS(self):
-        print("SENDING CTS")
+    def radio_broadcast(self,data,data_type):
+        # Send data over radio
+        self.RADIO_UART.write(Radio.create_msg(data,data_type,ID=self.ID))
 
-    # SEND ACKNOWLEDGEMENT
-    def send_ACK(self):
-        print("SENDING ACK")
+    def unicast_data(self,data,data_type):
+        pass
 
-    # SEND RAW RTCM3 DATA
-    def send_RTCM3(self):
-        print("SENDING RTCM3")
+    def radio_receive(self):
+        ''' Gets data from the radio, and validates the checksum. If checksum is invalid, raise `ChecksumError` \n
+        Returns `data_type, data, sender_ID '''
+        # Read UART buffer until EOL
+        packet = self.RADIO_UART.readline()
 
-    # SEND RAW NMEA DATA
-    def send_NMEA(self):
-        print("SENDING NMEA")
-
-    # WAIT FOR A REQUEST TO SEND
-    def rec_RTS(self):
-        print("RECEIVING RTS")
-
-    # WAIT FOR CLEAR TO SEND
-    def rec_CTS(self):
-        print("RECEIVING CTS")
-
-    # WAIT FOR ACK TO BE RECEIVED
-    def rec_ACK(self):
-        print("RECEIVING ACK")
-
-    # WAIT FOR RTCM3 TO BE RECEIVED AND PROCESS IT
-    def rec_rtcm3(self):
-        print("RECEIVING rtcm3")
-
-    # WAIT FOR NMEA TO BE RECEIVED AND PROCESS IT
-    def rec_NMEA(self):
-        print("RECEIVING NMEA")
-        # Change return value based on if NMEA is valid/correct
-        return False
+        # If data was found
+        if packet != None:
+            # Validate checksum
+            if sum(packet[:-2]) == int.from_bytes(packet[-2:]):
+                # Parse packet
+                packet = packet[:-2]
+                data_type = packet[0]
+                data = packet[1:-1]
+                sender_ID = packet[-1]
+                return data_type, data, sender_ID
+            else:
+                raise ChecksumError("Checksum invalid")
+        raise TimeoutError("Timeout")
 
     def shutdown(self):
         # SHUTDOWN SCRIPT USING RTC I2C STUFF
+
+    def latch_on(self):
 
 
 
