@@ -50,6 +50,7 @@ class Device:
         '''
         Initialises all hardware I/O. Not the devices themselves.
         '''
+        #TODO: turn into sigleton
         # Initialise hardware UARTS, specifying Tx, Rx, and baudrate
         self.gsm_UART = busio.UART(board.D0, board.D1, baudrate=9600)
         self.gps_uart_nmea = busio.UART(board.D2, board.D3, baudrate=9600)
@@ -97,8 +98,10 @@ class Device:
 
     def shutdown(self):
         # SHUTDOWN SCRIPT USING RTC I2C STUFF
+        pass
 
     def latch_on(self):
+        pass
 
 
 

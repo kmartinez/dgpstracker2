@@ -43,6 +43,7 @@ class Base(Device):
         while len(self.sent_IDs) < 3 and time.time()-t_start < ROVER_COMMS_TIMEOUT:
             # Send corrections
             self.radio_broadcast(self.get_corrections(), RTCM3_CODE)
+            # Listen for returning communications
             try:
                 # Check for incoming NMEA for 1s (1s is the timeout configured for the radio UART)
                 data_type, data, sender = self.radio_receive()
@@ -58,7 +59,8 @@ class Base(Device):
 
             # If checksum fails
             except Device.ChecksumError:
-                self.radio.broadcast(None, RETRANSMIT_CODE)
+                pass # Rover will keep sending until ACK received anyway...
+                #self.radio.broadcast(None, RETRANSMIT_CODE)
 
             # If timeout occurred waiting for data
             except TimeoutError:

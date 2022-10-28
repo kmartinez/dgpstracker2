@@ -27,20 +27,19 @@ class Rover(Device):
                 time.sleep(Random.random())
                 self.radio_broadcast(nmea, NMEA_CODE)
 
-                # Listen for ACk
+                # Listen for ACK
                 try:
                     data_type, data, sender_ID = self.radio_receive()
                     if data_type == ACK_CODE and data == self.device_ID:
                         return True
 
                 except ChecksumError:
-                    self.radio_broadcast(None, RETRANSMIT_CODE)
+                    pass # Don't care! data will be resent anyway!
+                    # self.radio_broadcast(None, RETRANSMIT_CODE)
                 
 
     def receive_ack(self):
         self.radio_broacst(None,ACK_CODE)
-
-
 
     def send_rover_data(self):
         # Wait for rtcm3 data
@@ -62,8 +61,10 @@ class Rover(Device):
 
             else:
                 pass
+
         # If checksum fails
-        except Device.ChecksumError:
-            self.radio.broadcast(None, RETRANSMIT_CODE)
+        except ChecksumError:
+            pass # if rtcm3 bad, who cares. If ACK bad, a new one will be sent soon anyway
+            # self.radio.broadcast(None, RETRANSMIT_CODE)
 
     
