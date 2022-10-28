@@ -5,7 +5,7 @@ global GPS
 
 
 if __name__ == "__main__":
-	device = Base(-1)
+	device = Base
 
 	# Get GPS data
 

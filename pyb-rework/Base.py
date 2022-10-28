@@ -1,71 +1,67 @@
-from time import time
-from Device import *
+'''
+Base, inheriting from Device, is an object to represent base stations. This contains 
+'''
+
+import time
+from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
+import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
 from Radio import *
+from enum import Enum
 
-class Base(Device):
-    '''
-    Base, inheriting from Device, is an object to represent base stations. This contains 
-    '''
-    def __init__(self, device_ID, lib_mode):
-        super().__init__(device_ID)
-        self.rover_rec_count = 0
-        '''Denotes which rovers have already been communicated with'''
-        self.rover_NMEA = []
-        '''Contains rover NMEA responses'''
-        self.sent_IDs = []
-        '''Contains all rovers whihc have finished communications'''
+class CommunicationState(Enum):
+    WAITING_FOR_GPS: 0
+    NMEA_RECEIVED: 1
 
+ROVER_COUNT = 3
 
-    def get_corrections(self):
-        '''Returns the corrections from the GPS as a bytearray'''
-        # Read UART for newline terminated data - produces bytestr
-        return self.gps_uart_rtcm3.readline()
-        # TODO: add timeout
+rover_comms_states: dict[int, CommunicationState] = {}
 
-    def send_acks(self):
-        '''Send acknowledgements to rovers which are still sending NMEA data'''
-        for recipient in self.ack_list:
-            self.radio_broadcast(recipient, ACK_CODE)
+rover_NMEA: list[bytearray] = []
+'''Contains rover NMEA responses'''
 
-    def received_nmea(self,data,sender):
-        '''If NMEA data is received,, save the data and check if the sender is in the list of senders requiring ACKs'''
-        # TODO: CHECK NMEA
-        self.rover_NMEA.append(data)
-        if sender not in self.ack_queue:
-            self.ack_list.append(sender)
+def get_corrections():
+    '''Returns the corrections from the GPS as a bytearray'''
+    # Read UART for newline terminated data - produces bytestr
+    return GPS_UART_RTCM3.readline()
+    # TODO: add timeout
 
-    def get_rover_data(self):
-        '''Loop for communicating with rover'''
-        t_start = time.time()
-        count += 1
+def received_nmea(data,sender):
+    '''If NMEA data is received,, save the data and check if the sender is in the list of senders requiring ACKs'''
+    #TODO: verify NMEA is valid
+    if NMEA_IS_VALID:
+        if rover_comms_states[sender] == CommunicationState.WAITING_FOR_GPS:
+            rover_NMEA.append(data)
+        rover_comms_states[sender] = CommunicationState.NMEA_RECEIVED
+        radio_broadcast(sender, ACK_CODE)
 
-        # While all rovers are unreceived and timeout is not acheived...
-        while len(self.sent_IDs) < 3 and time.time()-t_start < ROVER_COMMS_TIMEOUT:
-            # Send corrections
-            self.radio_broadcast(self.get_corrections(), RTCM3_CODE)
-            # Listen for returning communications
-            try:
-                # Check for incoming NMEA for 1s (1s is the timeout configured for the radio UART)
-                data_type, data, sender = self.radio_receive()
+def get_rover_data():
+    '''Loop for communicating with rover'''
+    RTC.alarm2 = (time.struct_time(time.mktime(RTC.datetime) + ROVER_COMMS_TIMEOUT), "secondly")
 
-                # If sender has already finished sending
-                if sender in self.sent_IDs:
-                    self.radio_broadcast(sender, ACK_CODE)
-                # If incoming message is tagged as NMEA
-                elif data_type == NMEA_CODE:
-                    self.received_nmea(data)
-                else:
-                    pass
+    # While all rovers are unreceived and timeout is not acheived...
+    while not RTC.alarm2_status:
+        # Send corrections
+        radio_broadcast(get_corrections(), RTCM3_CODE)
+        # Listen for returning communications
+        try:
+            # Check for incoming NMEA for 1s (1s is the timeout configured for the radio UART)
+            data_type, data, sender = radio_receive()
+        
+            # If incoming message is tagged as NMEA
+            if data_type == NMEA_CODE:
+                received_nmea(data)
 
-            # If checksum fails
-            except Device.ChecksumError:
-                pass # Rover will keep sending until ACK received anyway...
-                #self.radio.broadcast(None, RETRANSMIT_CODE)
+        # If checksum fails
+        except Device.ChecksumError:
+            pass # Rover will keep sending until ACK received anyway...
+            #radio.broadcast(None, RETRANSMIT_CODE)
 
-            # If timeout occurred waiting for data
-            except TimeoutError:
-                pass
+        # If timeout occurred waiting for data
+        except TimeoutError:
+            pass
 
-        if count >= 3:
-            self.send_acks()
-            count = 0
+        if sum(rover_comms_states.values > (ROVER_COUNT * CommunicationState.NMEA_RECEIVED)):
+            break
+        
+
+Device.device_ID = 1 #TODO: see if i can put this in device somehow
