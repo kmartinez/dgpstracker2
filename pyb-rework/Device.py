@@ -5,8 +5,11 @@ import busio
 import digitalio
 import adafruit_ds3231
 import time
+
 import Radio
 from pyrtcm import RTCMReader
+import pynmeagps
+import io
 
 
 # Initialise constants
@@ -44,7 +47,7 @@ class Device:
         # Initialise the device
         self.init_hardware()
         self.init_RTC()
-        self.init_GPS()
+        self.init_NMEA_parser()
 
     def init_hardware(self):
         '''
@@ -68,6 +71,7 @@ class Device:
         self.RTC = adafruit_ds3231.DS3231(self.I2C)
         # Set alarm for 3 hours after the previous alarm: converts time struct to time, adds 3 hrs, converts back
         self.RTC.alarm1 = (time.localtime(time.mktime(self.RTC.alarm1)+10800))
+        # self.RTC.datetime_register = WHATEVER THE GPS TIME IS...
 
     def radio_broadcast(self,data,data_type):
         # Send data over radio
@@ -96,12 +100,22 @@ class Device:
                 raise ChecksumError("Checksum invalid")
         raise TimeoutError("Timeout")
 
+    def init_NMEA_parser(self):
+        self.nmea_stream = io.BytesIO()
+        self.nmea_parser = pynmeagps.NMEAReader(self.nmea_stream)
+        
+
+    def parse_NMEA(self,data):
+        self.nmea_stream.flush()
+        self.nmea_stream.write(data)
+        raw_nmea, parsed_nmea = self.nmea_parser.read()
+        return parsed_nmea
+        
+
     def shutdown(self):
         # SHUTDOWN SCRIPT USING RTC I2C STUFF
         pass
 
     def latch_on(self):
         pass
-
-
 

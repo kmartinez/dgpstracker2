@@ -30,6 +30,7 @@ class Base(Device):
     def received_nmea(self,data,sender):
         '''If NMEA data is received,, save the data and check if the sender is in the list of senders requiring ACKs'''
         # TODO: CHECK NMEA
+
         self.rover_NMEA.append(data)
         if sender not in self.ack_queue:
             self.ack_list.append(sender)
@@ -58,7 +59,7 @@ class Base(Device):
                     pass
 
             # If checksum fails
-            except Device.ChecksumError:
+            except ChecksumError:
                 pass # Rover will keep sending until ACK received anyway...
                 #self.radio.broadcast(None, RETRANSMIT_CODE)
 
