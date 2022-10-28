@@ -26,6 +26,7 @@ class Base(Device):
         '''Send acknowledgements to rovers which are still sending NMEA data'''
         for recipient in self.ack_list:
             self.radio_broadcast(recipient, ACK_CODE)
+            self.ack_list = []
 
     def received_nmea(self,data,sender):
         '''If NMEA data is received,, save the data and check if the sender is in the list of senders requiring ACKs'''
