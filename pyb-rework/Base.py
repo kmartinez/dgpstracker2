@@ -7,17 +7,30 @@ from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functi
 import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
 from Radio import *
 from enum import Enum
+from asyncio.timeouts import Timeout
 
-class CommunicationState(Enum):
-    WAITING_FOR_GPS: 0
-    NMEA_RECEIVED: 1
+import pynmea2
 
 ROVER_COUNT = 3
 
-rover_comms_states: dict[int, CommunicationState] = {}
+GSM_UART: busio.UART = busio.UART(board.A2, board.A1, baudrate=9600)
 
-rover_NMEA: list[bytearray] = []
-'''Contains rover NMEA responses'''
+class GPSData:
+    lat: float
+    long: float
+    temperature: int
+    timestamp: int
+
+    def __init__(self, lat, long, temperature, timestamp):
+        self.lat = lat
+        self.long = long
+        self.temperature = temperature
+        self.timestamp = timestamp
+
+#this is a global variable so i can still get the data even if the rover loop times out
+rover_data: dict[int, GPSData] = {}
+for i in range(ROVER_COUNT):
+        rover_data[i] = None
 
 def get_corrections():
     '''Returns the corrections from the GPS as a bytearray'''
@@ -25,43 +38,41 @@ def get_corrections():
     return GPS_UART_RTCM3.readline()
     # TODO: add timeout
 
-def received_nmea(data,sender):
-    '''If NMEA data is received,, save the data and check if the sender is in the list of senders requiring ACKs'''
-    #TODO: verify NMEA is valid
-    if NMEA_IS_VALID:
-        if rover_comms_states[sender] == CommunicationState.WAITING_FOR_GPS:
-            rover_NMEA.append(data)
-        rover_comms_states[sender] = CommunicationState.NMEA_RECEIVED
-        radio_broadcast(sender, ACK_CODE)
+async def rtcm3_loop():
+    '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''
+    while not None in rover_data.values: #Finish running when rover data is done
+        radio_broadcast(PacketType.RTCM3, GPS_UART_RTCM3.readline()) #pls no break TODO: timeout for hw failure
+        asyncio.sleep(1)
 
-def get_rover_data():
-    '''Loop for communicating with rover'''
-    RTC.alarm2 = (time.struct_time(time.mktime(RTC.datetime) + ROVER_COMMS_TIMEOUT), "secondly")
+async def rover_data_loop():
+    while not None in rover_data:
+        packet = await async_radio_receive()
+        if packet.type == PacketType.NMEA:
+            if not rover_data[packet.sender]:
+                gps = pynmea2.parse(packet.payload)
+                if gps.gps_qual == '4':
+                    rover_data[packet.sender] = GPSData(gps.lat, gps.long, 0, time.time())
+            
+            if rover_data[packet.sender]:
+                send_ack(packet.sender)
 
-    # While all rovers are unreceived and timeout is not acheived...
-    while not RTC.alarm2_status:
-        # Send corrections
-        radio_broadcast(get_corrections(), RTCM3_CODE)
-        # Listen for returning communications
-        try:
-            # Check for incoming NMEA for 1s (1s is the timeout configured for the radio UART)
-            data_type, data, sender = radio_receive()
+
         
-            # If incoming message is tagged as NMEA
-            if data_type == NMEA_CODE:
-                received_nmea(data)
+if __name__ == "__main__":
+    #Base needs to:
+    #Get RTCM3 correction.
+    #Send RTCM3 data
+    #Receive packet
+    #If GPS data received:
+    # If rover not already received, store GPS data.
+    # Send ACK to rover
+    #end
+    try:
+        asyncio.wait_for(asyncio.gather(rover_data_loop(), rtcm3_loop()), ROVER_COMMS_TIMEOUT)
+    except TimeoutError:
+        pass #Don't care, we have data, just send what we got
 
-        # If checksum fails
-        except Device.ChecksumError:
-            pass # Rover will keep sending until ACK received anyway...
-            #radio.broadcast(None, RETRANSMIT_CODE)
-
-        # If timeout occurred waiting for data
-        except TimeoutError:
-            pass
-
-        if sum(rover_comms_states.values > (ROVER_COUNT * CommunicationState.NMEA_RECEIVED)):
-            break
-        
-
-Device.device_ID = 1 #TODO: see if i can put this in device somehow
+    
+    
+    #We have as much data as we're gonna get, ship it off now
+    #TODO: Send data

@@ -1,11 +1,6 @@
 # Consts
-RTS_CODE = 1
-CTS_CODE = 2
-ACK_CODE = 3
-NMEA_CODE = 4
-RTCM3_CODE = 5
-RETRANSMIT_CODE = 6
-FINISHED_TRANSMIT_CODE = 7
+from enum import Enum
+import struct
 
 RECEIVE_TIMEOUT = 1
 '''Timeout for listening to UART for messages'''
@@ -13,21 +8,41 @@ RECEIVE_TIMEOUT = 1
 ROVER_COMMS_TIMEOUT = 600
 '''Timeout for base station waiting for rovers to finish sending all of their data. Default is 10 mins (600s)'''
 
-def create_msg(data, msg_type, ID=None):
-    '''
-    Returns a packet ready for sending as a bytearray.
-    \n The data sent is: `bytearray(msg_type + data)'''
-    if msg_type == None:
-        return None
+class ChecksumError(Exception):
+    pass
 
-    message = bytearray()
-    message.append(msg_type)
+class PacketType(Enum):
+    RTS = 1
+    CTS = 2
+    ACK = 3
+    NMEA = 4
+    RTCM3 = 5
+    RETRANSMIT = 6
+    FINISHED_TRANSMIT = 7
 
-    if data != None:
-        message.append(data)
+class RadioPacket:
+    type: PacketType
+    payload: bytearray
+    sender: int
 
-    if ID != None:
-        message.append(ID)
-
-    return message
+    def __init__(self, type: PacketType, payload: bytes, sender_ID: int):
+        self.type = type
+        self.payload = payload
+        self.sender = sender_ID
+    
+    def serialize(self):
+        '''Serializes a data packet into a byte array ready for sending over radio.
+        Includes checksum.'''
+        payload = struct.pack('csc', self.type, self.payload, self.sender)
+        checksum = sum(payload) #TODO: CRC16
+        return struct.pack('sh', payload, checksum)
+    
+    def deserialize(data: bytes):
+        '''Deserializes a received byte array into a Packet class.
+        Includes checksum validation (can error)'''
+        payload, checksum = struct.unpack('sh', data)
+        if sum(payload) != checksum: #TODO: CRC16
+            raise ChecksumError
+        
+        return RadioPacket(*struct.unpack('csc', payload))
 

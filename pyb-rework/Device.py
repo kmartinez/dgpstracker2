@@ -14,8 +14,9 @@ import busio
 import digitalio
 import adafruit_ds3231
 import time
+import asyncio
 
-import Radio
+from Radio import *
 from pyrtcm import RTCMReader
 import pynmeagps
 import io
@@ -24,97 +25,76 @@ import io
 # Initialise constants
 RETRY_LIMIT = 3
 
-class ChecksumError(Exception):
-    pass
-
-class TimeoutError(Exception):
-    pass
-
 #Properties
 device_ID: int = None
 '''Unique ID for the device. -1 = Base; 0,1,2 = Rover'''
 
-GSM_UART: busio.UART = None
-
-GPS_UART_NMEA: busio.UART = None
+GPS_UART_NMEA: busio.UART = busio.UART(board.D0, board.D1, baudrate=9600)
 '''GPS UART1 for NMEA communications'''
 
-GPS_UART_RTCM3: busio.UART = None
+GPS_UART_RTCM3: busio.UART = busio.UART(board.D4, board.D5, baudrate=9600)
 '''GPS UART2 for rtcm3 communication (unidirectional towards GPS)'''
 
-RADIO_UART: busio.UART = None
-'''UART for radio module'''
+RADIO_UART: busio.UART = busio.UART(board.D24, board.D23, baudrate=9600, timeout=0.01)
+'''UART bus for radio module'''
 
-RTC: adafruit_ds3231.DS3231 = None
+I2C: busio.I2C = board.I2C()
+'''I2C bus (for RTC module)'''
+
+RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
+'''RTC timer'''
+#Immediately set alarm for 3 hrs away
+RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1)+10800))
 
 GPS: adafruit_gps.GPS = None
 
-I2C: busio.I2C = None
+async def readline_uart_async(uart: busio.UART):
+    '''Magic readline wrapper that makes it async. Not thread-safe for the *same* uart'''
+    timeout = uart.timeout
+    uart.timeout = 0.01
+    data = None
+    while data is None:
+        data = uart.readline()
+        if data is None:
+            await asyncio.sleep(0)
+    uart.timeout = timeout
+    return data
 
-#Method definitions
-def init_hardware():
-    '''
-    Initialises all hardware I/O. Not the devices themselves.
-    '''
-    # Initialise hardware UARTS, specifying Tx, Rx, and baudrate
-    gsm_UART = busio.UART(board.D0, board.D1, baudrate=9600)
-    GPS_UART_NMEA = busio.UART(board.D2, board.D3, baudrate=9600)
-    GPS_UART_RTCM3 = busio.UART(board.D4, board.D5, baudrate=9600)
-    RADIO_UART = busio.UART(board.D6, board.D7, baudrate=9600, timeout=1)
+def radio_broadcast(type: PacketType, payload: bytes):
+    '''Send payload over radio'''
+    RADIO_UART.write(RadioPacket(type, payload, device_ID))
 
-    # Initialise I2C
-    I2C = board.I2C()
-
-    test = 1
-
-def init_RTC():
-    '''
-    Initialise RTC using adafruit RTC library
-    '''
-    # Initialise RTC object
-    RTC = adafruit_ds3231.DS3231(I2C)
-    # Set alarm for 3 hours after the previous alarm: converts time struct to time, adds 3 hrs, converts back
-    RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1)+10800))
-
-def radio_broadcast(data,data_type):
-    # Send data over radio
-    RADIO_UART.write(Radio.create_msg(data,data_type,ID=device_ID))
-
-def unicast_data(data,data_type):
-    pass
+def send_ack(recipient: int):
+    '''Send ACK intended for given device ID'''
+    radio_broadcast(PacketType.ACK, struct.pack('h', recipient))
 
 def radio_receive():
-    ''' Gets data from the radio, and validates the checksum. If checksum is invalid, raise `ChecksumError` \n
-    Returns `data_type, data, sender_ID '''
+    ''' Gets data from the radio `` \n
+    Returns `RadioPacket` or `None`'''    
     # Read UART buffer until EOL
-    packet = RADIO_UART.readline()
+    raw = RADIO_UART.readline()
+    if raw == None: raise TimeoutError
 
-    # If data was found
-    if packet != None:
-        # Validate checksum
-        if sum(packet[:-2]) == int.from_bytes(packet[-2:]):
-            # Parse packet
-            packet = packet[:-2]
-            data_type = packet[0]
-            data = packet[1:-1]
-            sender_ID = packet[-1]
-            return data_type, data, sender_ID
-        else:
-            raise ChecksumError("Checksum invalid")
-    raise TimeoutError("Timeout")
+    try:
+        return RadioPacket.deserialize(raw)
+    except ChecksumError:
+        return None
+
+async def async_radio_receive():
+    raw = await readline_uart_async(RADIO_UART)
+    try:
+        return RadioPacket.deserialize(raw)
+    except ChecksumError:
+        pass
 
 def shutdown():
     # SHUTDOWN SCRIPT USING RTC I2C STUFF
     RTC.alarm2_status = False
     RTC.alarm1_status = False
-    pass
 
 def latch_on():
     pass
 
 #ACTUAL MAIN CODE THAT RUNS ON IMPORT
 # Initialise the device
-init_hardware()
-init_RTC()
-init_GPS()
-
+#except we did that up top so :shrug:
