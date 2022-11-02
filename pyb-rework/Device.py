@@ -7,7 +7,6 @@ Use gps_receive to get GPS readout
 Use radio_receive to receive data'''
 
 # Import packages
-from cgi import test
 import adafruit_gps
 import board
 import busio
@@ -29,13 +28,14 @@ RETRY_LIMIT = 3
 device_ID: int = None
 '''Unique ID for the device. -1 = Base; 0,1,2 = Rover'''
 
-GPS_UART_NMEA: busio.UART = busio.UART(board.D0, board.D1, baudrate=9600)
-'''GPS UART1 for NMEA communications'''
+GPS_UART: busio.UART = busio.UART(board.D0, board.D1, baudrate=11520)
+'''GPS UART1 for communications'''
 
-GPS_UART_RTCM3: busio.UART = busio.UART(board.D4, board.D5, baudrate=9600)
-'''GPS UART2 for rtcm3 communication (unidirectional towards GPS)'''
+# GPS configured to operate on a single UART, so not longer necessary
+# GPS_UART_RTCM3: busio.UART = busio.UART(board.D4, board.D5, baudrate=115200)
+# '''GPS UART2 for rtcm3 communication (unidirectional towards GPS)'''
 
-RADIO_UART: busio.UART = busio.UART(board.D24, board.D23, baudrate=9600, timeout=0.01)
+RADIO_UART: busio.UART = busio.UART(board.D24, board.D23, baudrate=11200, timeout=0.01)
 '''UART bus for radio module'''
 
 I2C: busio.I2C = board.I2C()
