@@ -6,7 +6,6 @@ import time
 from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
 from Radio import *
-from enum import Enum
 from asyncio.timeouts import Timeout
 
 import pynmea2

@@ -1,5 +1,4 @@
 # Consts
-from enum import Enum
 import struct
 
 RECEIVE_TIMEOUT = 1
@@ -11,7 +10,7 @@ ROVER_COMMS_TIMEOUT = 600
 class ChecksumError(Exception):
     pass
 
-class PacketType(Enum):
+class PacketType():
     RTS = 1
     CTS = 2
     ACK = 3
