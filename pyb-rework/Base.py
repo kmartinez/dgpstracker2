@@ -38,11 +38,14 @@ def get_corrections():
 async def rtcm3_loop():
     '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''
     print("Beginning rtcm3_loop")
-    while not None in rover_data.values(): #Finish running when rover data is done
+    while None in rover_data.values(): #Finish running when rover data is done
         print("Getting RTCM3 and broadcasting...\r\n")
-        radio_broadcast(PacketType.RTCM3, GPS_UART.readline()) #pls no break TODO: timeout for hw failure
+        gps_data = await readline_uart_async(GPS_UART)
+        print("GPS Raw bytes:", gps_data)
+        radio_broadcast(PacketType.RTCM3, gps_data) #pls no break TODO: timeout for hw failure
         print("Corrections sent \r\n")
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
+    print("End RTCM3 Loop")
 
 async def rover_data_loop():
     print("Beginning rover_data_loop")

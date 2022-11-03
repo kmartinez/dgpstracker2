@@ -23,7 +23,7 @@ RETRY_LIMIT = 3
 device_ID: int = None
 '''Unique ID for the device. -1 = Base; 0,1,2 = Rover'''
 
-GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200)
+GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, timeout=0.01)
 '''GPS UART1 for communications'''
 
 # GPS configured to operate on a single UART, so not longer necessary
@@ -79,7 +79,7 @@ def validate_NMEA(raw):
 
 def radio_broadcast(type: PacketType, payload: bytes):
     '''Send payload over radio'''
-    RADIO_UART.write(RadioPacket(type, payload, device_ID))
+    RADIO_UART.write(RadioPacket(type, payload, device_ID).serialize())
 
 def send_ack(recipient: int):
     '''Send ACK intended for given device ID'''

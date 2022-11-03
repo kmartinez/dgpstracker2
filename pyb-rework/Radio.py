@@ -1,5 +1,6 @@
 # Consts
 import struct
+import binascii
 
 RECEIVE_TIMEOUT = 1
 '''Timeout for listening to UART for messages'''
@@ -21,7 +22,7 @@ class PacketType():
 
 class RadioPacket:
     type: PacketType
-    payload: bytearray
+    payload: bytes
     sender: int
 
     def __init__(self, type: PacketType, payload: bytes, sender_ID: int):
@@ -32,9 +33,14 @@ class RadioPacket:
     def serialize(self):
         '''Serializes a data packet into a byte array ready for sending over radio.
         Includes checksum.'''
-        payload = struct.pack('csc', self.type, self.payload, self.sender)
-        checksum = sum(payload) #TODO: CRC16
-        return struct.pack('sh', payload, checksum)
+        payload = bytearray()
+        payload += bytearray(struct.pack('b', self.type)) + bytearray(self.payload) + bytearray(struct.pack('b', self.sender))
+        
+        
+        checksum = binascii.crc32(payload)
+        payload += bytearray(struct.pack('I', checksum))
+        test = bytearray(payload)
+        return bytearray(payload)
     
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
@@ -43,5 +49,5 @@ class RadioPacket:
         if sum(payload) != checksum: #TODO: CRC16
             raise ChecksumError
         
-        return RadioPacket(*struct.unpack('csc', payload))
+        return RadioPacket(*struct.unpack('bsb', payload))
 
