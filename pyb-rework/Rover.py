@@ -1,9 +1,9 @@
-from random import Random, random
 from Device import *
-import time
 from Radio import *
-import pynmea2
-from pynmea2.nmea import NMEASentence
+#import pynmea2
+#from pynmea2.nmea import NMEASentence
+
+import io
 
 def get_nmea(self):
     GPS_UART.readline()
@@ -15,12 +15,8 @@ def process_rtcm3(self, rtcm3):
 
     raw = GPS_UART.readline()
 
-    nmea = pynmea2.parse(raw)
-
-    # If NMEA received back
-    if nmea != None and nmea.gps_qual == '4':
-        print("Quality 4 NMEA data received from GPS\r\n")
-        return nmea
+    #nmea = pynmea2.parse(raw)
+    return validate_NMEA(raw)
 
 
 if __name__ == "__main__":
@@ -40,9 +36,10 @@ if __name__ == "__main__":
             # If incoming message is tagged as RTCM3
             if packet.type == PacketType.RTCM3:
                 print("RTCM3 received, waiting for NMEA response\r\n")
-                nmea = process_rtcm3(packet.payload)
-                print("Sending NMEA data to base station...\r\n")
-                radio_broadcast(PacketType.NMEA, nmea)
+                raw, nmea = process_rtcm3(packet.payload)
+                if raw != None:
+                    print("Sending NMEA data to base station...\r\n")
+                    radio_broadcast(PacketType.NMEA, raw)
 
             # If incoming message is tagged as an ACK
             elif packet.type == PacketType.ACK and struct.unpack('h', packet.payload) == device_ID:

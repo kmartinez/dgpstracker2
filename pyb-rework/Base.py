@@ -6,13 +6,13 @@ import time
 from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
 from Radio import *
-from asyncio.timeouts import Timeout
+import asyncio
 
 import pynmea2
 
 ROVER_COUNT = 3
 
-GSM_UART: busio.UART = busio.UART(board.A2, board.A1, baudrate=9600)
+GSM_UART: busio.UART = busio.UART(board.D13, board.D12, baudrate=9600)
 
 class GPSData:
     lat: float
