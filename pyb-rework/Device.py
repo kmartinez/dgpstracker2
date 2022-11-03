@@ -99,9 +99,11 @@ def radio_receive():
 
 async def async_radio_receive():
     raw = await readline_uart_async(RADIO_UART)
+
     try:
+        print("RAWPKT:", raw)
         return RadioPacket.deserialize(raw)
-    except ChecksumError:
+    except: # Originally only ChecksumErrors but regardless of why it fails we don't want to return
         pass
 
 def shutdown():

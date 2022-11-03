@@ -38,7 +38,7 @@ def get_corrections():
 async def rtcm3_loop():
     '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''
     print("Beginning rtcm3_loop")
-    while not None in rover_data.values: #Finish running when rover data is done
+    while not None in rover_data.values(): #Finish running when rover data is done
         print("Getting RTCM3 and broadcasting...\r\n")
         radio_broadcast(PacketType.RTCM3, GPS_UART.readline()) #pls no break TODO: timeout for hw failure
         print("Corrections sent \r\n")
@@ -61,8 +61,8 @@ async def rover_data_loop():
                 send_ack(packet.sender)
 
 
-        
 if __name__ == "__main__":
+    Device.device_ID = 0
     #Base needs to:
     #Get RTCM3 correction.
     #Send RTCM3 data
@@ -73,12 +73,14 @@ if __name__ == "__main__":
     #end
     try:
         print("Begin ASYNC...")
-        asyncio.wait_for(asyncio.gather(rover_data_loop(), rtcm3_loop()), ROVER_COMMS_TIMEOUT)
+        asyncio.run(asyncio.wait_for(asyncio.gather(rover_data_loop(), rtcm3_loop()), ROVER_COMMS_TIMEOUT))
         print("Finished ASYNC...")
     except TimeoutError:
         print("Timeout!")
         pass #Don't care, we have data, just send what we got
 
-
-    #We have as much data as we're gonna get, ship it off now
-    #TODO: Send data
+    # print("Begin ASYNC...")
+    # # loop.create_task(rover_data_loop())
+    # # loop.create_task(rtcm3_loop())
+    # # loop.run_forever()
+    # print("Finished ASYNC...")

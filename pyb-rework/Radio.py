@@ -11,13 +11,13 @@ class ChecksumError(Exception):
     pass
 
 class PacketType():
-    RTS = 1
-    CTS = 2
+    # RTS = 1
+    # CTS = 2
     ACK = 3
     NMEA = 4
     RTCM3 = 5
-    RETRANSMIT = 6
-    FINISHED_TRANSMIT = 7
+    # RETRANSMIT = 6
+    # FINISHED_TRANSMIT = 7
 
 class RadioPacket:
     type: PacketType
