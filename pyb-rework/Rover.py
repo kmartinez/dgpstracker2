@@ -1,9 +1,6 @@
 from Device import *
 from Radio import *
-#import pynmea2
-#from pynmea2.nmea import NMEASentence
 
-import io
 
 def get_nmea(self):
     GPS_UART.readline()
@@ -36,7 +33,7 @@ if __name__ == "__main__":
             # If incoming message is tagged as RTCM3
             if packet.type == PacketType.RTCM3:
                 print("RTCM3 received, waiting for NMEA response\r\n")
-                raw, nmea = process_rtcm3(packet.payload)
+                raw = process_rtcm3(packet.payload)
                 if raw != None:
                     print("Sending NMEA data to base station...\r\n")
                     radio_broadcast(PacketType.NMEA, raw)

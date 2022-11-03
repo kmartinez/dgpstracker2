@@ -4,7 +4,7 @@ import struct
 RECEIVE_TIMEOUT = 1
 '''Timeout for listening to UART for messages'''
 
-ROVER_COMMS_TIMEOUT = 600
+ROVER_COMMS_TIMEOUT = 600*1000
 '''Timeout for base station waiting for rovers to finish sending all of their data. Default is 10 mins (600s)'''
 
 class ChecksumError(Exception):

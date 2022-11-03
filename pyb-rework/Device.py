@@ -13,27 +13,8 @@ import busio
 import adafruit_ds3231
 import time
 import asyncio
-
+import io
 from Radio import *
-from pynmeagps import NMEAReader
-"""
-Below is the GGA message format to allow easier lookup of attribute names
-"GGA": {
-    "time": TM,
-    "lat": LA,
-    "NS": CH,
-    "lon": LN,
-    "EW": CH,
-    "quality": IN,
-    "numSV": IN,
-    "HDOP": DE,
-    "alt": DE,  # altitude above sea level in m
-    "altUnit": CH,
-    "sep": DE,
-    "sepUnit": CH,
-    "diffAge": DE,
-    "diffStation": IN,
-"""
 
 # Initialise constants
 RETRY_LIMIT = 3
@@ -42,14 +23,14 @@ RETRY_LIMIT = 3
 device_ID: int = None
 '''Unique ID for the device. -1 = Base; 0,1,2 = Rover'''
 
-GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=11520)
+GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200)
 '''GPS UART1 for communications'''
 
 # GPS configured to operate on a single UART, so not longer necessary
 # GPS_UART_RTCM3: busio.UART = busio.UART(board.D4, board.D5, baudrate=115200)
 # '''GPS UART2 for rtcm3 communication (unidirectional towards GPS)'''
 
-RADIO_UART: busio.UART = busio.UART(board.D11, board.D10, baudrate=11200, timeout=0.01)
+RADIO_UART: busio.UART = busio.UART(board.D11, board.D10, baudrate=9600, timeout=0.01)
 '''UART bus for radio module'''
 
 I2C: busio.I2C = board.I2C()
@@ -60,7 +41,10 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 #Immediately set alarm for 3 hrs away
 RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+10800), "monthly")
 
-GPS: adafruit_gps.GPS = None
+'''GPS parser'''
+gps_stream: io.BytesIO = io.BytesIO()
+GPS: adafruit_gps.GPS = adafruit_gps.GPS(gps_stream)
+
 
 async def readline_uart_async(uart: busio.UART):
     '''Magic readline wrapper that makes it async. Not thread-safe for the *same* uart'''
@@ -75,19 +59,23 @@ async def readline_uart_async(uart: busio.UART):
     return data
 
 def validate_NMEA(raw):
-    try:
-        nmea = NMEAReader.parse(raw)
-    except:
-        print("NMEA bad")
-        pass
+    '''Validates NMEA and checks for quality 4.
+    Retutrns raw data. To access the data call GPS.<ATTRIBUTE>'''
+    gps_stream.flush()
+    gps_stream.write(raw)
 
+    # May need timeout
+    if GPS.update():
+        print("No new NMEA data")
+        return None
+        
     # If NMEA received back
-    if nmea != None and nmea.quality == '4':
+    if GPS.fix_quality == '4':
         print("Quality 4 NMEA data received from GPS\r\n")
-        return raw, nmea
+        return raw
     else:
         print("NMEA not quality 4")
-    return None, None
+    return None
 
 def radio_broadcast(type: PacketType, payload: bytes):
     '''Send payload over radio'''
