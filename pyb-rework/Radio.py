@@ -41,8 +41,8 @@ class RadioPacket:
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
         Includes checksum validation (can error)'''
-        payload, checksum = struct.unpack('sh', data)
-        if sum(payload) != checksum: #TODO: CRC16
+        payload, checksum = struct.unpack('sI', data)
+        if binascii.crc32(payload) != checksum:
             raise ChecksumError
         
         return RadioPacket(*struct.unpack('bsb', payload))
