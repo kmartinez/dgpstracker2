@@ -33,17 +33,26 @@ class RadioPacket:
     def serialize(self):
         '''Serializes a data packet into a byte array ready for sending over radio.
         Includes checksum.'''
-        payload = struct.pack('bsb', self.type, self.payload, self.sender)
-        
+        print("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
+        payload = struct.pack('bb', self.type, self.sender)
+        payload += self.payload
+        print("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
         checksum = binascii.crc32(payload)
-        return struct.pack('sI', payload, checksum)
+        return payload + struct.pack('I', checksum)
     
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
         Includes checksum validation (can error)'''
-        payload, checksum = struct.unpack('sI', data)
+        print("RAW:", data)
+        checksum = struct.unpack('I', data[-4:])
+        payload = data[:-4]
         if binascii.crc32(payload) != checksum:
             raise ChecksumError
         
-        return RadioPacket(*struct.unpack('bsb', payload))
+        header = payload[:2]
+        payload = payload[2:]
+
+        packetType, sender = struct.unpack('bb', header)
+
+        return RadioPacket(packetType, payload, sender)
 

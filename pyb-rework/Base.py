@@ -46,11 +46,11 @@ async def rtcm3_loop():
     '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''
     print("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
-        print("Getting RTCM3 and broadcasting...\r\n")
+        print("Getting RTCM3 and broadcasting...")
         gps_data = await get_corrections()
         print("GPS Raw bytes:", gps_data)
         radio_broadcast(PacketType.RTCM3, gps_data) #pls no break TODO: timeout for hw failure
-        print("Corrections sent \r\n")
+        print("Corrections sent")
         #await asyncio.sleep(1)
     print("End RTCM3 Loop")
 
@@ -59,15 +59,15 @@ async def rover_data_loop():
     while not None in rover_data:
         packet = await async_radio_receive()
         if packet.type == PacketType.NMEA:
-            print("Received NMEA...\r\n")
+            print("Received NMEA...")
             if not rover_data[packet.sender]:
-                print("Received NMEA from a new rover,", packet.sender, "\r\n")
+                print("Received NMEA from a new rover,", packet.sender)
                 raw = validate_NMEA(packet.payload)
                 if raw != None:
                     rover_data[packet.sender] = GPSData(GPS.latitude, GPS.longitude, 0, GPS.timestamp_utc)
             
             if rover_data[packet.sender]:
-                print("Sending ACK to rover", packet.sender, "\r\n")
+                print("Sending ACK to rover", packet.sender)
                 send_ack(packet.sender)
 
 

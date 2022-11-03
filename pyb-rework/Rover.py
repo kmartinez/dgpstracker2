@@ -22,28 +22,29 @@ if __name__ == "__main__":
     # If RTCM3 received, get NMEA and send it
     # If ACK received, shutdown
     while True:
-        print("I'm a rover!\r\n")
-    while True:
     # Wait for rtcm3 data
         try:
             # Check for incoming RTCM for 1s (1s is the timeout configured for the radio UART)
-            print("Waiting for incoming RTCM3...\r\n")
+            print("Waiting for incoming RTCM3...")
+            RADIO_UART.timeout = 50
             packet = radio_receive()
 
             # If incoming message is tagged as RTCM3
             if packet.type == PacketType.RTCM3:
-                print("RTCM3 received, waiting for NMEA response\r\n")
+                print("RTCM3 received, waiting for NMEA response")
                 raw = process_rtcm3(packet.payload)
                 if raw != None:
-                    print("Sending NMEA data to base station...\r\n")
+                    print("Sending NMEA data to base station...")
                     radio_broadcast(PacketType.NMEA, raw)
 
             # If incoming message is tagged as an ACK
             elif packet.type == PacketType.ACK and struct.unpack('h', packet.payload) == device_ID:
-                print ("ACK received. Stopping... \r\n")
+                print ("ACK received. Stopping...")
                 break
 
         # If checksum fails
         except ChecksumError:
             pass # if rtcm3 bad, who cares. If ACK bad, a new one will be sent soon anyway
             # self.radio.broadcast(None, RETRANSMIT_CODE)
+        except TimeoutError:
+            pass

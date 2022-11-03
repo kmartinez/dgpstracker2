@@ -5,9 +5,9 @@
         "reportMissingModuleSource": "none"
     },
     "python.analysis.extraPaths": [
-        "c:\\Users\\chris\\.vscode\\extensions\\joedevivo.vscode-circuitpython-0.1.19-win32-x64\\boards\\0x1B4F\\0x0016",
-        "c:\\Users\\chris\\.vscode\\extensions\\joedevivo.vscode-circuitpython-0.1.19-win32-x64\\stubs",
-        "c:\\Users\\chris\\AppData\\Roaming\\Code\\User\\globalStorage\\joedevivo.vscode-circuitpython\\bundle\\20221101\\adafruit-circuitpython-bundle-py-20221101\\lib",
+        "c:\\Users\\slapjd\\.vscode\\extensions\\joedevivo.vscode-circuitpython-0.1.19-win32-x64\\boards\\0x1B4F\\0x0016",
+        "c:\\Users\\slapjd\\.vscode\\extensions\\joedevivo.vscode-circuitpython-0.1.19-win32-x64\\stubs",
+        "c:\\Users\\slapjd\\AppData\\Roaming\\Code\\User\\globalStorage\\joedevivo.vscode-circuitpython\\bundle\\20221101\\adafruit-circuitpython-bundle-py-20221101\\lib",
         "c:\\Users\\slapjd\\Documents\\Uni\\dgpstracker2\\pyb-rework\\lib"
     ],
     "circuitpython.board.version": null,

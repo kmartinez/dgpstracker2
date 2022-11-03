@@ -71,7 +71,7 @@ def validate_NMEA(raw):
         
     # If NMEA received back
     if GPS.fix_quality == '4':
-        print("Quality 4 NMEA data received from GPS\r\n")
+        print("Quality 4 NMEA data received from GPS")
         return raw
     else:
         print("NMEA not quality 4")
@@ -79,7 +79,10 @@ def validate_NMEA(raw):
 
 def radio_broadcast(type: PacketType, payload: bytes):
     '''Send payload over radio'''
-    RADIO_UART.write(RadioPacket(type, payload, device_ID).serialize())
+    print("PRE_SERIALIZE:", payload)
+    raw = RadioPacket(type, payload, device_ID).serialize()
+    print("BROADCASTING:", raw)
+    RADIO_UART.write(raw)
 
 def send_ack(recipient: int):
     '''Send ACK intended for given device ID'''
@@ -95,6 +98,7 @@ def radio_receive():
     try:
         return RadioPacket.deserialize(raw)
     except ChecksumError:
+        print("FUCKED DATA:", raw)
         return None
 
 async def async_radio_receive():
