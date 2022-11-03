@@ -27,20 +27,16 @@ class RadioPacket:
 
     def __init__(self, type: PacketType, payload: bytes, sender_ID: int):
         self.type = type
-        self.payload = payload
+        self.payload = bytes(payload) #for many resiliency
         self.sender = sender_ID
     
     def serialize(self):
         '''Serializes a data packet into a byte array ready for sending over radio.
         Includes checksum.'''
-        payload = bytearray()
-        payload += bytearray(struct.pack('b', self.type)) + bytearray(self.payload) + bytearray(struct.pack('b', self.sender))
-        
+        payload = struct.pack('bsb', self.type, self.payload, self.sender)
         
         checksum = binascii.crc32(payload)
-        payload += bytearray(struct.pack('I', checksum))
-        test = bytearray(payload)
-        return bytearray(payload)
+        return struct.pack('sI', payload, checksum)
     
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
