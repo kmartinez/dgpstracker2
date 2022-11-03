@@ -29,10 +29,17 @@ rover_data: dict[int, GPSData] = {}
 for i in range(ROVER_COUNT):
         rover_data[i] = None
 
-def get_corrections():
+async def get_corrections():
     '''Returns the corrections from the GPS as a bytearray'''
     # Read UART for newline terminated data - produces bytestr
-    return GPS_UART.readline()
+    data = None
+    parsed = None
+    while data is None:
+        data = await readline_uart_async(GPS_UART)
+        print("RAW:", data)
+    
+    print("SUCCESS_REACHED")
+    return data
     # TODO: add timeout
 
 async def rtcm3_loop():
@@ -40,11 +47,11 @@ async def rtcm3_loop():
     print("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
         print("Getting RTCM3 and broadcasting...\r\n")
-        gps_data = await readline_uart_async(GPS_UART)
+        gps_data = await get_corrections()
         print("GPS Raw bytes:", gps_data)
         radio_broadcast(PacketType.RTCM3, gps_data) #pls no break TODO: timeout for hw failure
         print("Corrections sent \r\n")
-        await asyncio.sleep(1)
+        #await asyncio.sleep(1)
     print("End RTCM3 Loop")
 
 async def rover_data_loop():
@@ -66,6 +73,7 @@ async def rover_data_loop():
 
 if __name__ == "__main__":
     Device.device_ID = 0
+    loop = asyncio.new_event_loop()
     #Base needs to:
     #Get RTCM3 correction.
     #Send RTCM3 data
@@ -76,14 +84,14 @@ if __name__ == "__main__":
     #end
     try:
         print("Begin ASYNC...")
-        asyncio.run(asyncio.wait_for(asyncio.gather(rover_data_loop(), rtcm3_loop()), ROVER_COMMS_TIMEOUT))
+        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop()), ROVER_COMMS_TIMEOUT))
         print("Finished ASYNC...")
     except TimeoutError:
         print("Timeout!")
         pass #Don't care, we have data, just send what we got
 
     # print("Begin ASYNC...")
-    # # loop.create_task(rover_data_loop())
-    # # loop.create_task(rtcm3_loop())
-    # # loop.run_forever()
+    # loop.create_task(rover_data_loop())
+    # loop.create_task(rtcm3_loop())
+    # loop.run_forever()
     # print("Finished ASYNC...")
