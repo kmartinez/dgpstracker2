@@ -1,5 +1,5 @@
 from Device import *
-from Drivers.Radio import *
+import Drivers.Radio as radio
 
 
 def get_nmea(self):
