@@ -72,9 +72,9 @@ async def receive_packet():
     (async waits until one is received, that is)'''
     packet = None
     marker = None
-    while marker != 0x80:
-        marker = await UART.__async_get_byte()
     while packet is None:
+        while marker != 0x80:
+            marker = await UART.__async_get_byte()
         size = await UART.async_read(4)
         debug("RAWSIZE:", size)
         size = struct.unpack('I', size)[0]
