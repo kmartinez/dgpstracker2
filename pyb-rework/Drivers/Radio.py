@@ -1,7 +1,7 @@
 # Consts
 import struct
 import binascii
-import AsyncUART
+import Drivers.AsyncUART as AsyncUART
 import board
 from config import *
 from debug import *
@@ -16,6 +16,7 @@ class FormatStrings():
     PACKET_DEVICE_ID = 'b'
     PACKET_CHECKSUM = 'I'
     PACKET_LENGTH = 'I'
+    PACKET_MARKER = 'B'
 
 class PacketType():
     # RTS = 1
@@ -45,13 +46,16 @@ class RadioPacket:
         payload += self.payload
         debug("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
         checksum = binascii.crc32(payload)
-        return payload + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
+        output = payload + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
+        debug("FULL_SERIALIZED_PACKET:", output)
+        return output
     
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
         Includes checksum validation (can error)'''
         debug("RAW:", data)
-        checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])
+        checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
+        debug("CHECKSUM:", checksum)
         payload = data[:-4]
         if binascii.crc32(payload) != checksum:
             raise ChecksumError
@@ -67,15 +71,21 @@ async def receive_packet():
     '''Receives a single valid radio packet asynchronously.
     (async waits until one is received, that is)'''
     packet = None
+    marker = None
+    while marker != 0x80:
+        marker = await UART.__async_get_byte()
     while packet is None:
         size = await UART.async_read(4)
-        size = struct.unpack('I', size)
+        debug("RAWSIZE:", size)
+        size = struct.unpack('I', size)[0]
         data = await UART.async_read_with_timeout(size)
+        debug("RAWDATA:", data)
         if data is None or len(data) < size:
             continue #Packet is garbage, start again
         try:
             packet = RadioPacket.deserialize(data)
         except ChecksumError:
+            debug("CHECKSUM_FAIL")
             continue #Packet failed checksum check, it's garbage, start again
     
     #If we get here, packet was deserialized successfully
@@ -85,8 +95,9 @@ def broadcast_packet(packet: RadioPacket):
     '''Serializes and sends a `RadioPacket` over the radio'''
     packetRaw = packet.serialize()
     size = len(packetRaw)
-    sizeRaw = struct.pack('I', size)
-    UART.write(sizeRaw + packetRaw)
+    sizeRaw = struct.pack(FormatStrings.PACKET_LENGTH, size)
+    marker = struct.pack(FormatStrings.PACKET_MARKER, 0x80)
+    UART.write(marker + sizeRaw + packetRaw)
 
 def broadcast_data(type: PacketType, payload: bytes):
     '''Creates a packet and broadcasts it over radio'''
