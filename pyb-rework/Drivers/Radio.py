@@ -1,12 +1,10 @@
 # Consts
 import struct
 import binascii
+import AsyncUART
+import board
 
-RECEIVE_TIMEOUT = 1
-'''Timeout for listening to UART for messages'''
-
-ROVER_COMMS_TIMEOUT = 600*1000
-'''Timeout for base station waiting for rovers to finish sending all of their data. Default is 10 mins (600s)'''
+RADIO_UART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
 
 class ChecksumError(Exception):
     pass
