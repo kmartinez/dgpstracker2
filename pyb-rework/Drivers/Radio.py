@@ -21,6 +21,7 @@ class PacketType():
     # FINISHED_TRANSMIT = 7
 
 class RadioPacket:
+    '''Helper class for packing data into a nice format'''
     type: PacketType
     payload: bytes
     sender: int

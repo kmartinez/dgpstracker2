@@ -5,7 +5,7 @@ Base, inheriting from Device, is an object to represent base stations. This cont
 import time
 from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
-from Radio import *
+from Drivers.Radio import *
 import asyncio
 
 ROVER_COUNT = 3
