@@ -68,8 +68,6 @@ async def rover_data_loop():
 
 
 if __name__ == "__main__":
-    config.GLOBAL_FAILSAFE_TIMEOUT = 0 #Override because base should *always* be device 0, even if misconfigured
-    Device.device_ID = 0
     loop = asyncio.new_event_loop()
     #Base needs to:
     #Get RTCM3 correction.

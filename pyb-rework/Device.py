@@ -17,13 +17,6 @@ import io
 import Drivers.AsyncUART as AsyncUART
 from debug import *
 
-# Initialise constants
-RETRY_LIMIT = 3
-
-#Properties
-device_ID: int = None
-'''Unique ID for the device. -1 = Base; 0,1,2 = Rover'''
-
 GPS_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.A1, board.A2, baudrate=115200)
 '''GPS UART1 for communications'''
 

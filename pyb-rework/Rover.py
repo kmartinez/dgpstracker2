@@ -35,7 +35,7 @@ async def rover_loop():
                 radio.broadcast_data(PacketType.NMEA, raw)
 
         # If incoming message is tagged as an ACK
-        elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload) == device_ID:
+        elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload) == DEVICE_ID:
             print ("ACK received. Stopping...")
             break
 
