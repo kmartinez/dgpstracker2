@@ -4,7 +4,7 @@ import binascii
 import AsyncUART
 import board
 
-RADIO_UART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
+UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
 
 class ChecksumError(Exception):
     pass
@@ -55,3 +55,27 @@ class RadioPacket:
 
         return RadioPacket(packetType, payload, sender)
 
+async def receive_packet():
+    '''Receives a single valid radio packet asynchronously.
+    (async waits until one is received, that is)'''
+    packet = None
+    while packet is None:
+        size = await UART.async_read(4)
+        size = struct.unpack('I', size)
+        data = await UART.async_read_with_timeout(size)
+        if data is None or len(data) < size:
+            continue #Packet is garbage, start again
+        try:
+            packet = RadioPacket.deserialize(data)
+        except ChecksumError:
+            continue #Packet failed checksum check, it's garbage, start again
+    
+    #If we get here, packet was deserialized successfully
+    return packet
+
+def broadcast_packet(packet: RadioPacket):
+    '''Serializes and sends a `RadioPacket` over the radio'''
+    packetRaw = packet.serialize()
+    size = len(packetRaw)
+    sizeRaw = struct.pack('I', size)
+    UART.write(sizeRaw + packetRaw)
