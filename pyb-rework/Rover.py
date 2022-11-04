@@ -1,6 +1,8 @@
 from Device import *
 import Drivers.Radio as radio
-
+from Drivers.Radio import PacketType
+import struct
+from config import *
 
 def get_nmea(self):
     GPS_UART.readline()
@@ -15,36 +17,27 @@ def process_rtcm3(self, rtcm3):
     #nmea = pynmea2.parse(raw)
     return validate_NMEA(raw)
 
-
-if __name__ == "__main__":
+async def rover_loop():
     # Rover needs to:
     # Receive packet
     # If RTCM3 received, get NMEA and send it
     # If ACK received, shutdown
     while True:
-    # Wait for rtcm3 data
-        try:
-            # Check for incoming RTCM for 1s (1s is the timeout configured for the radio UART)
-            print("Waiting for incoming RTCM3...")
-            RADIO_UART.timeout = 50
-            packet = radio_receive()
+        debug("Waiting for incoming RTCM3...")
+        packet = await radio.receive_packet()
 
-            # If incoming message is tagged as RTCM3
-            if packet.type == PacketType.RTCM3:
-                print("RTCM3 received, waiting for NMEA response")
-                raw = process_rtcm3(packet.payload)
-                if raw != None:
-                    print("Sending NMEA data to base station...")
-                    radio_broadcast(PacketType.NMEA, raw)
+        # If incoming message is tagged as RTCM3
+        if packet.type == PacketType.RTCM3:
+            debug("RTCM3 received, waiting for NMEA response")
+            raw = process_rtcm3(packet.payload)
+            if raw != None:
+                debug("Sending NMEA data to base station...")
+                radio.broadcast_data(PacketType.NMEA, raw)
 
-            # If incoming message is tagged as an ACK
-            elif packet.type == PacketType.ACK and struct.unpack('h', packet.payload) == device_ID:
-                print ("ACK received. Stopping...")
-                break
+        # If incoming message is tagged as an ACK
+        elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload) == device_ID:
+            print ("ACK received. Stopping...")
+            break
 
-        # If checksum fails
-        except ChecksumError:
-            pass # if rtcm3 bad, who cares. If ACK bad, a new one will be sent soon anyway
-            # self.radio.broadcast(None, RETRANSMIT_CODE)
-        except TimeoutError:
-            pass
+if __name__ == "__main__":
+    asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))

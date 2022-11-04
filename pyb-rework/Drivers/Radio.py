@@ -4,6 +4,7 @@ import binascii
 import AsyncUART
 import board
 from config import *
+from debug import *
 
 UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
 
@@ -12,7 +13,7 @@ class ChecksumError(Exception):
 
 class FormatStrings():
     PACKET_TYPE = 'b'
-    PACKET_SENDER = 'b'
+    PACKET_DEVICE_ID = 'b'
     PACKET_CHECKSUM = 'I'
     PACKET_LENGTH = 'I'
 
@@ -39,17 +40,17 @@ class RadioPacket:
     def serialize(self):
         '''Serializes a data packet into a byte array ready for sending over radio.
         Includes checksum.'''
-        print("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
-        payload = struct.pack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_SENDER, self.type, self.sender)
+        debug("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
+        payload = struct.pack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, self.type, self.sender)
         payload += self.payload
-        print("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
+        debug("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
         checksum = binascii.crc32(payload)
         return payload + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
     
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
         Includes checksum validation (can error)'''
-        print("RAW:", data)
+        debug("RAW:", data)
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])
         payload = data[:-4]
         if binascii.crc32(payload) != checksum:
@@ -58,7 +59,7 @@ class RadioPacket:
         header = payload[:2]
         payload = payload[2:]
 
-        packetType, sender = struct.unpack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_SENDER, header)
+        packetType, sender = struct.unpack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, header)
 
         return RadioPacket(packetType, payload, sender)
 
@@ -93,4 +94,4 @@ def broadcast_data(type: PacketType, payload: bytes):
 
 def send_ack(sender: int):
     '''Broadcasts an ACK intended for `sender`'''
-    broadcast_data(PacketType.ACK, struct.pack(FormatStrings.PACKET_SENDER, sender))
+    broadcast_data(PacketType.ACK, struct.pack(FormatStrings.PACKET_DEVICE_ID, sender))

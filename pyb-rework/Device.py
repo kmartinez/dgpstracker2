@@ -14,7 +14,8 @@ import adafruit_ds3231
 import time
 import asyncio
 import io
-from Drivers.Radio import *
+import Drivers.AsyncUART as AsyncUART
+from debug import *
 
 # Initialise constants
 RETRY_LIMIT = 3
@@ -23,7 +24,7 @@ RETRY_LIMIT = 3
 device_ID: int = None
 '''Unique ID for the device. -1 = Base; 0,1,2 = Rover'''
 
-GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, timeout=0.01)
+GPS_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.A1, board.A2, baudrate=115200)
 '''GPS UART1 for communications'''
 
 # GPS configured to operate on a single UART, so not longer necessary
@@ -50,15 +51,15 @@ def validate_NMEA(raw):
 
     # May need timeout
     if GPS.update():
-        print("No new NMEA data")
+        debug("No new NMEA data")
         return None
         
     # If NMEA received back
     if GPS.fix_quality == '4':
-        print("Quality 4 NMEA data received from GPS")
+        debug("Quality 4 NMEA data received from GPS")
         return raw
     else:
-        print("NMEA not quality 4")
+        debug("NMEA not quality 4")
     return None
 
 def shutdown():
