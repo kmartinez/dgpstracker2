@@ -5,8 +5,8 @@ Base, inheriting from Device, is an object to represent base stations. This cont
 import time
 from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
-import Drivers.Radio as radio
-from Drivers.Radio import PacketType
+# import Drivers.Radio as radio
+# from Drivers.Radio import PacketType
 import asyncio
 from debug import *
 from config import *
@@ -35,7 +35,7 @@ for i in range(ROVER_COUNT):
 async def get_corrections():
     '''Returns the corrections from the GPS as a bytearray'''
     # Read UART for newline terminated data - produces bytestr
-    data = await GPS_UART.async_readline()
+    data = await RTCM3_UART.async_readline()
     return data
 
 async def rtcm3_loop():

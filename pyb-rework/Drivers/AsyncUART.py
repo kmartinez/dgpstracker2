@@ -72,7 +72,8 @@ class AsyncUART(busio.UART):
             else: return bytes(self.__dangerous_output)
 
     async def async_readline(self):
-        '''Reads asynchronously until `\n` (included in output)'''
+        '''Reads asynchronously until `\n` (included in output)
+        ***DOES NOT TIMEOUT***'''
         output = bytearray()
         byte = await self.__async_get_byte()
         while True:

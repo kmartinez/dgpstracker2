@@ -15,10 +15,15 @@ import time
 import asyncio
 import io
 import Drivers.AsyncUART as AsyncUART
+import Drivers.Radio as radio
+from Drivers.Radio import PacketType
 from debug import *
 
 GPS_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.A1, board.A2, baudrate=115200)
-'''GPS UART1 for communications'''
+'''GPS NMEA UART for communications'''
+
+RTCM3_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.TX, board.RX, baudrate=115200)
+'''GPS RTCM3 UART'''
 
 # GPS configured to operate on a single UART, so not longer necessary
 # GPS_UART_RTCM3: busio.UART = busio.UART(board.D4, board.D5, baudrate=115200)
