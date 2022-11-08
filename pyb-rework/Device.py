@@ -18,6 +18,7 @@ import Drivers.AsyncUART as AsyncUART
 import Drivers.Radio as radio
 from Drivers.Radio import PacketType
 from debug import *
+from config import *
 
 GPS_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.A1, board.A2, baudrate=115200)
 '''GPS NMEA UART for communications'''
@@ -34,8 +35,8 @@ I2C: busio.I2C = board.I2C()
 
 RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 '''RTC timer'''
-#Immediately set alarm for 3 hrs away
-RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+10800), "monthly")
+#Set alarm for 3 hrs from previous alarm
+RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
 
 '''GPS parser'''
 gps_stream: io.BytesIO = io.BytesIO()
