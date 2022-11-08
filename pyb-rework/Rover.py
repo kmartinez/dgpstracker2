@@ -7,7 +7,7 @@ from config import *
 def get_nmea(self):
     GPS_UART.readline()
 
-def get_nmea_using_rtcm3(self, rtcm3):
+def get_nmea_using_rtcm3(rtcm3):
     '''If rtcm3 data is received, send it to the GPS and wait for an NMEA response. If no NMEA response if found, `pass` \n
     If NMEA data is found, send it to the base station and look for an ACK in return. If not ACK then repeat this loop until timeout.'''
     RTCM3_UART.send(rtcm3)

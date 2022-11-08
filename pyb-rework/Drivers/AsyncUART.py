@@ -1,6 +1,7 @@
 import busio
 import microcontroller
 import asyncio
+from debug import *
 
 class AsyncUART(busio.UART):
     timeout: int
@@ -28,6 +29,7 @@ class AsyncUART(busio.UART):
             output = super().read(1)
             if output is None:
                 await asyncio.sleep(0)
+        debug("READ_BYTE:", output[0])
         return output[0] #read returns a byte array
     
     async def __async_read_forever(self):
@@ -78,7 +80,7 @@ class AsyncUART(busio.UART):
         byte = await self.__async_get_byte()
         while True:
             output.append(byte)
-            if byte == b'\n':
+            if byte == b'\n'[0]:
                 break
             byte = await self.__async_get_byte()
         

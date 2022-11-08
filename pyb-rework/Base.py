@@ -35,18 +35,20 @@ for i in range(ROVER_COUNT):
 async def get_corrections():
     '''Returns the corrections from the GPS as a bytearray'''
     # Read UART for newline terminated data - produces bytestr
+    debug("GETTING_RTCM3")
     data = await RTCM3_UART.async_readline()
+    debug("RTCM3_RECEIVED")
     return data
 
 async def rtcm3_loop():
     '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''
     debug("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
-        debug("Getting RTCM3 and broadcasting...")
+        debug("ROVER_LOOP_START")
         gps_data = await get_corrections()
-        debug("GPS Raw bytes:", gps_data)
+        debug("GPS_RAW_BYTES:", gps_data)
         radio.broadcast_data(PacketType.RTCM3, gps_data)
-        debug("Corrections sent")
+        debug("RTCM3_RADIO_BROADCAST_COMPLETE")
         #await asyncio.sleep(1)
     debug("End RTCM3 Loop")
 
@@ -65,7 +67,7 @@ async def rover_data_loop():
             if rover_data[packet.sender]:
                 debug("Sending ACK to rover", packet.sender)
                 radio.send_ack(packet.sender)
-
+                
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
@@ -79,7 +81,7 @@ if __name__ == "__main__":
     #end
     try:
         debug("Begin ASYNC...")
-        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop()), GLOBAL_FAILSAFE_TIMEOUT))
+        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
         debug("Finished ASYNC...")
     except TimeoutError:
         debug("Timeout!")
