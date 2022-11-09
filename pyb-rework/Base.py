@@ -36,9 +36,13 @@ async def get_corrections():
     '''Returns the corrections from the GPS as a bytearray'''
     # Read UART for newline terminated data - produces bytestr
     debug("GETTING_RTCM3")
-    data = await RTCM3_UART.async_readline()
+    RTCM3_UART.reset_input_buffer()
+    await RTCM3_UART.async_readline() #Garbled maybe
+    data = bytearray()
+    for i in range(5):
+        data += await RTCM3_UART.async_readline()
     debug("RTCM3_RECEIVED")
-    return data
+    return bytes(data)
 
 async def rtcm3_loop():
     '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''

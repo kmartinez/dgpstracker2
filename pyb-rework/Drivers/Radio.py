@@ -6,7 +6,7 @@ import board
 from config import *
 from debug import *
 
-UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
+UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, timeout=5)
 
 class ChecksumError(Exception):
     pass
@@ -41,19 +41,19 @@ class RadioPacket:
     def serialize(self):
         '''Serializes a data packet into a byte array ready for sending over radio.
         Includes checksum.'''
-        debug("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
+        #debug("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
         payload = struct.pack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, self.type, self.sender)
         payload += self.payload
-        debug("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
+        #debug("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
         checksum = binascii.crc32(payload)
         output = payload + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
-        debug("FULL_SERIALIZED_PACKET:", output)
+        #debug("FULL_SERIALIZED_PACKET:", output)
         return output
     
     def deserialize(data: bytes):
         '''Deserializes a received byte array into a Packet class.
         Includes checksum validation (can error)'''
-        debug("RAW:", data)
+        #debug("RAW:", data)
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
         debug("CHECKSUM:", checksum)
         payload = data[:-4]
@@ -71,15 +71,17 @@ async def receive_packet():
     '''Receives a single valid radio packet asynchronously.
     (async waits until one is received, that is)'''
     packet = None
-    marker = None
     while packet is None:
+        marker = None
         while marker != 0x80:
             marker = await UART.__async_get_byte()
         size = await UART.async_read(4)
         debug("RAWSIZE:", size)
         size = struct.unpack('I', size)[0]
+        if size == 0:
+            continue
         data = await UART.async_read_with_timeout(size)
-        debug("RAWDATA:", data)
+        #debug("RAWDATA:", data)
         if data is None or len(data) < size:
             continue #Packet is garbage, start again
         try:

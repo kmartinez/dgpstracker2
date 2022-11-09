@@ -20,10 +20,10 @@ from Drivers.Radio import PacketType
 from debug import *
 from config import *
 
-GPS_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.A1, board.A2, baudrate=115200)
+GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048)
 '''GPS NMEA UART for communications'''
 
-RTCM3_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.TX, board.RX, baudrate=115200)
+RTCM3_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D1, board.D0, baudrate=115200, receiver_buffer_size=2048)
 '''GPS RTCM3 UART'''
 
 # GPS configured to operate on a single UART, so not longer necessary
@@ -39,24 +39,25 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
 
 '''GPS parser'''
-gps_stream: io.BytesIO = io.BytesIO()
-GPS: adafruit_gps.GPS = adafruit_gps.GPS(gps_stream)
+GPS: adafruit_gps.GPS = adafruit_gps.GPS(GPS_UART)
 
-def validate_NMEA(raw):
+def validate_NMEA():
     '''Validates NMEA and checks for quality 4.
     Retutrns raw data. To access the data call GPS.<ATTRIBUTE>'''
-    gps_stream.flush()
-    gps_stream.write(raw)
-
     # May need timeout
-    if GPS.update():
-        debug("No new NMEA data")
-        return None
-        
+
+    GPS_UART.reset_input_buffer()
+    GPS_UART.readline() # BAD DATA (LIKELY GARBLED)
+
+    for i in range(3):
+        GPS.update()
+        debug("LAT:", GPS.latitude)
+        debug("LONG:", GPS.longitude)
+        debug("QUALITY:", GPS.fix_quality)
     # If NMEA received back
     if GPS.fix_quality == '4':
         debug("Quality 4 NMEA data received from GPS")
-        return raw
+        return GPS.nmea_sentence
     else:
         debug("NMEA not quality 4")
     return None
