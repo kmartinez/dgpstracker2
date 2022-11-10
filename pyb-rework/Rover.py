@@ -29,7 +29,7 @@ def sd(list: list[float]):
 async def update_gps_with_rtcm3(rtcm3):
     '''If rtcm3 data is received, send it to the GPS and wait for an NMEA response. If no NMEA response if found, `pass` \n
     If NMEA data is found, send it to the base station and look for an ACK in return. If not ACK then repeat this loop until timeout.'''
-    debug("RTCM3:", rtcm3)
+    #debug("RTCM3:", rtcm3)
     RTCM3_UART.write(rtcm3)
 
     #nmea = pynmea2.parse(raw)
@@ -47,8 +47,9 @@ async def rover_loop():
         # If incoming message is tagged as RTCM3
         if packet.type == PacketType.RTCM3:
             debug("RTCM3 received, waiting for NMEA response")
-            raw = await update_gps_with_rtcm3(packet.payload)
-            if raw != None:
+            sentence = await update_gps_with_rtcm3(packet.payload)
+            #debug("GPS SENTENCE", GPS.nmea_sentence)
+            if sentence != None:
                 NMEA_lats.append(GPS.latitude_degrees)
                 NMEA_longs.append(GPS.longitude_degrees)
                 NMEA_alts.append(GPS.altitude_m)
@@ -68,7 +69,7 @@ async def rover_loop():
                     transmit_str += ",long:" + str(mean(NMEA_longs))
                     transmit_str += ",alt:," + str(mean(NMEA_alts))
                     transmit_str += ",time:" + str(GPS.timestamp_utc)
-                    radio.broadcast_data(PacketType.NMEA, raw)
+                    radio.broadcast_data(PacketType.NMEA, sentence)
 
         # If incoming message is tagged as an ACK
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload) == DEVICE_ID:

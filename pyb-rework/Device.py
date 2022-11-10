@@ -20,7 +20,7 @@ from Drivers.Radio import PacketType
 from debug import *
 from config import *
 
-GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048)
+GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048, timeout=2)
 '''GPS NMEA UART for communications'''
 
 RTCM3_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D1, board.D0, baudrate=115200, receiver_buffer_size=2048)
@@ -39,7 +39,7 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
 
 '''GPS parser'''
-GPS: adafruit_gps.GPS = adafruit_gps.GPS(GPS_UART)
+GPS: adafruit_gps.GPS = adafruit_gps.GPS(GPS_UART, debug=True)
 
 def update_GPS():
     '''Validates NMEA and checks for quality 4.
@@ -47,7 +47,7 @@ def update_GPS():
     # May need timeout
 
     GPS_UART.reset_input_buffer()
-    GPS_UART.readline() # BAD DATA (LIKELY GARBLED)
+    debug("JUNK_LINE:", GPS_UART.readline()) # BAD DATA (LIKELY GARBLED)
 
     GPS.update()
     debug("LAT:", GPS.latitude)
