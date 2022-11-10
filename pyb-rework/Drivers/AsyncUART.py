@@ -23,6 +23,16 @@ class AsyncUART(busio.UART):
         super().__init__(tx, rx, baudrate=baudrate, bits=bits, parity=parity, timeout=0, stop=stop, receiver_buffer_size=receiver_buffer_size)
         self.async_timeout = timeout
     
+    async def __async_get_bytes(self, n):
+        '''Waits for a set of received byte and returns it.'''
+        output = None
+        while output is None:
+            output = super().read(n)
+            if output is None:
+                await asyncio.sleep(0)
+        #debug("READ_BYTE:", output[0])
+        return output #read returns a byte array
+
     async def __async_get_byte(self):
         '''Waits for a received byte and returns it.'''
         output = None
@@ -77,6 +87,20 @@ class AsyncUART(busio.UART):
             else: return bytes(self.__dangerous_output)
         
         return output
+
+    async def aysnc_read_RTCM3_packet(self):
+        '''Reads asynchronously until `b'\xd3\x00` (NOT included in output)
+        ***DOES NOT TIMEOUT***'''
+        output = bytearray()
+        byte = await self.__async_get_byte()
+        #debug("RAW_READLINE_BYTE:", byte)
+        while True:
+            output.append(byte)
+            if output[-2:] == b'\xd3\x00':
+                break
+            byte = await self.__async_get_byte()
+        
+        return bytes(b'\xd3\x00' + output[:-2])
 
     async def async_readline(self):
         '''Reads asynchronously until `\n` (included in output)

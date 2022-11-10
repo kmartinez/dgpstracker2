@@ -37,10 +37,12 @@ async def get_corrections():
     # Read UART for newline terminated data - produces bytestr
     debug("GETTING_RTCM3")
     RTCM3_UART.reset_input_buffer()
-    await RTCM3_UART.async_readline() #Garbled maybe
+    await RTCM3_UART.aysnc_read_RTCM3_packet() #Garbled maybe
     data = bytearray()
     for i in range(5):
-        data += await RTCM3_UART.async_readline()
+        d = await RTCM3_UART.aysnc_read_RTCM3_packet()
+        data += d
+        debug("SINGLE RTCM3 MESSAGE:", d)
     debug("RTCM3_RECEIVED")
     return bytes(data)
 
@@ -64,7 +66,7 @@ async def rover_data_loop():
             debug("Received NMEA...")
             if not rover_data[packet.sender]:
                 debug("Received NMEA from a new rover,", packet.sender)
-                raw = validate_NMEA(packet.payload)
+                raw = update_GPS(packet.payload)
                 if raw != None:
                     rover_data[packet.sender] = GPSData(GPS.latitude, GPS.longitude, 0, GPS.timestamp_utc)
             

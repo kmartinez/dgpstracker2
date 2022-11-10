@@ -41,7 +41,7 @@ RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "m
 '''GPS parser'''
 GPS: adafruit_gps.GPS = adafruit_gps.GPS(GPS_UART)
 
-def validate_NMEA():
+def update_GPS():
     '''Validates NMEA and checks for quality 4.
     Retutrns raw data. To access the data call GPS.<ATTRIBUTE>'''
     # May need timeout
@@ -49,13 +49,14 @@ def validate_NMEA():
     GPS_UART.reset_input_buffer()
     GPS_UART.readline() # BAD DATA (LIKELY GARBLED)
 
-    for i in range(3):
-        GPS.update()
-        debug("LAT:", GPS.latitude)
-        debug("LONG:", GPS.longitude)
-        debug("QUALITY:", GPS.fix_quality)
+    GPS.update()
+    debug("LAT:", GPS.latitude)
+    debug("LONG:", GPS.longitude)
+    debug("QUALITY:", GPS.fix_quality)
+    debug("PACKET TYPE",GPS.fix_quality_3d)
+
     # If NMEA received back
-    if GPS.fix_quality == '4':
+    if GPS.fix_quality == 4:
         debug("Quality 4 NMEA data received from GPS")
         return GPS.nmea_sentence
     else:
