@@ -33,7 +33,11 @@ for i in range(ROVER_COUNT):
         rover_data[i] = None
 
 async def get_corrections():
-    '''Returns the corrections from the GPS as a bytearray'''
+    """Returns the corrections from the GPS as a bytearray
+
+    :return: Bytes object of the 5 RTCM3 messages
+    :rtype: bytes()
+    """
     # Read UART for newline terminated data - produces bytestr
     debug("GETTING_RTCM3")
     RTCM3_UART.reset_input_buffer()
@@ -47,7 +51,8 @@ async def get_corrections():
     return bytes(data)
 
 async def rtcm3_loop():
-    '''Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)'''
+    """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
+    """
     debug("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
         debug("ROVER_LOOP_START")
@@ -59,6 +64,8 @@ async def rtcm3_loop():
     debug("End RTCM3 Loop")
 
 async def rover_data_loop():
+    """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
+    """
     debug("Beginning rover_data_loop")
     while not None in rover_data:
         packet = await radio.receive_packet()

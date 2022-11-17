@@ -19,7 +19,14 @@ def mean(list: list[float]):
     return sum(list)/len(list)
 
 def sd(list: list[float]):
-    '''Returns standard deviation given a list'''
+    """Returns standard deviation of agiven a list
+
+    :param list: List of floats to calculate teh standard deviation of
+    :type list: list[float]
+    :return: Standard deviation of given list
+    :rtype: float
+    """
+    ''''''
     length = len(list)
     li_mean = mean(list)
     list = [(list[i] - li_mean) for i in range(length)]

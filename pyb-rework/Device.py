@@ -42,8 +42,13 @@ RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "m
 GPS: adafruit_gps.GPS = adafruit_gps.GPS(GPS_UART, debug=True)
 
 def update_GPS():
-    '''Validates NMEA and checks for quality 4.
-    Retutrns raw data. To access the data call GPS.<ATTRIBUTE>'''
+    """Validates NMEA and checks for quality 4.
+     To access the data call `GPS.<ATTRIBUTE>`
+
+    :return: Retutrns raw data or `None`
+    :rtype: `GPS.nmea_sentence`
+    """
+    ''''''
     # May need timeout
 
     GPS_UART.reset_input_buffer()
@@ -64,12 +69,11 @@ def update_GPS():
     return None
 
 def shutdown():
+    """Resets timer, causing shutdown of device
+    """
     # SHUTDOWN SCRIPT USING RTC I2C STUFF
     RTC.alarm2_status = False
     RTC.alarm1_status = False
-
-def latch_on():
-    pass
 
 #ACTUAL MAIN CODE THAT RUNS ON IMPORT
 # Initialise the device
