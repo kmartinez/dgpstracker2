@@ -104,6 +104,19 @@ while True:
     button_d12.update()
     if button_d12.fell:
         print("Pressed")
+        print("Writing to Filesystem")
+        count = 0
+        while True:
+            count += 1
+            print(count)
+            LED.value = True
+            time.sleep(1)
+            LED.value = False
+            time.sleep(1)
+            button_d12.update()
+            if button_d12.fell:
+                print("Exited")
+                break;
         LED.value = True
         time.sleep(0.5)
     else:
