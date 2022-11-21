@@ -1,0 +1,2 @@
+Adafruit CircuitPython 7.3.3 on 2022-08-29; SparkFun Thing Plus - SAMD51 with samd51j20
+Board ID:sparkfun_samd51_thing_plus
