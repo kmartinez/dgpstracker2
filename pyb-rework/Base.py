@@ -41,10 +41,10 @@ async def get_corrections():
     # Read UART for newline terminated data - produces bytestr
     debug("GETTING_RTCM3")
     RTCM3_UART.reset_input_buffer()
-    await RTCM3_UART.aysnc_read_RTCM3_packet() #Garbled maybe
+    await RTCM3_UART.aysnc_read_RTCM3_packet_forever() #Garbled maybe
     data = bytearray()
     for i in range(5):
-        d = await RTCM3_UART.aysnc_read_RTCM3_packet()
+        d = await RTCM3_UART.aysnc_read_RTCM3_packet_forever()
         data += d
         debug("SINGLE RTCM3 MESSAGE:", d)
     debug("RTCM3_RECEIVED")

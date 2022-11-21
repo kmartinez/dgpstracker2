@@ -74,13 +74,13 @@ async def receive_packet():
     while packet is None:
         marker = None
         while marker != 0x80:
-            marker = await UART.__async_get_byte()
-        size = await UART.async_read(4)
+            marker = await UART.__async_get_byte_forever()
+        size = await UART.async_read_forever(4)
         debug("RAWSIZE:", size)
         size = struct.unpack('I', size)[0]
         if size == 0:
             continue
-        data = await UART.async_read_with_timeout(size)
+        data = await UART.async_read(size)
         #debug("RAWDATA:", data)
         if data is None or len(data) < size:
             continue #Packet is garbage, start again

@@ -5,9 +5,6 @@ from debug import *
 import time
 
 class AsyncUART(busio.UART):
-    async_timeout: int
-    __dangerous_output: bytearray #If you use this abomination MAKE SURE TO INITIALIZE IT FIRST
-
     def __init__(
         self,
         tx: microcontroller.Pin,
@@ -20,117 +17,92 @@ class AsyncUART(busio.UART):
         timeout: int = 1,
         receiver_buffer_size: int = 64,
         ):
-        super().__init__(tx, rx, baudrate=baudrate, bits=bits, parity=parity, timeout=0, stop=stop, receiver_buffer_size=receiver_buffer_size)
-        self.async_timeout = timeout
-    
-    async def __async_get_bytes(self, n):
-        '''Waits for a set of received byte and returns it.'''
-        output = None
-        while output is None:
-            output = super().read(n)
-            if output is None:
-                await asyncio.sleep(0)
-        #debug("READ_BYTE:", output[0])
-        return output #read returns a byte array
+        super().__init__(tx, rx, baudrate=baudrate, bits=bits, parity=parity, timeout=timeout, stop=stop, receiver_buffer_size=receiver_buffer_size)
 
-    async def __async_get_byte(self):
-        '''Waits for a received byte and returns it.'''
-        output = None
-        while output is None:
-            output = super().read(1)
-            if output is None:
-                await asyncio.sleep(0)
-        #debug("READ_BYTE:", output[0])
-        return output[0] #read returns a byte array
-    
-    async def __async_read_forever(self):
-        '''Reads UART forever. ONLY for use with async_read_with_timeout'''
-        self.__dangerous_output = bytearray()
-        while True:
-            self.__dangerous_output.append(await self.__async_get_byte())
+    async def __async_get_byte_forever(self) -> int:
+        """Reads a single byte asynchronously.
 
-    async def async_read(self, bytes_requested: int | None = None) -> bytes:
-        '''Reads until it gets `bytes_requested` number of bytes.
-        If bytes is not specified it waits until *something* arrives,
-        then reads everything that is available (even if it's not finished receiving).
-        ***DOES NOT TIMEOUT***'''
-        if bytes == 0: return None #handles smartasses
-
-        self.__dangerous_output = bytearray() #Put into there in case of timeouts so we can extract what we have
-        #Wait for first byte
-
-        byte = await self.__async_get_byte()
-        i = 1
-        while byte is not None:
-            self.__dangerous_output.append(byte)
-            if bytes_requested is None: byte = super().read(1)
-            elif i < bytes_requested:
-                byte = await self.__async_get_byte()
-                i += 1
-            else: byte = None
+        :return: Single byte
+        :rtype: int
+        """
+        while (super().in_waiting < 1): #So this exists apparently whoops
+            await asyncio.sleep(0)
         
-        return bytes(self.__dangerous_output)
+        return super().read(1)[0] #read returns a byte array so we return the first index
+
+    async def async_read_forever(self, bytes_requested: int | None = None) -> bytes | None:
+        """Reads until it gets `bytes_requested` number of bytes.
+        Waits forever if `bytes_requested` is None, you have been warned.
+        Returns None if you request 0 bytes like a smartass.
+        Does not actually read anything until there is enough bytes available.
+
+        :param bytes_requested: Number of bytes to read before stopping, defaults to None
+        :type bytes_requested: int | None, optional
+        :return: The requested bytes or None
+        :rtype: bytes | None
+        """
+        if bytes_requested == 0: return None #handles smartasses
+
+        if bytes_requested is None:
+            while True:
+                await asyncio.sleep(0)
+        else:
+            while (super().in_waiting < bytes_requested):
+                await asyncio.sleep(0)
+            
+            return super().read(bytes_requested) #At this point this will be instant because all the bytes are there
     
-    async def async_read_with_timeout(self, bytes_requested: int | None = None) -> bytes | None:
-        '''Attempts to get `bytes_requested` bytes until it times out.
-        Returns whatever bytes it retrieved or None if nothing was retrieved'''
+    async def async_read(self, bytes_requested: int | None = None) -> bytes | None:
+        """Attempts to get `bytes_requested` bytes until it times out.
+        On timeout will return any bytes that are available in UART, or None if there aren't any.
+
+        :param bytes_requested: Number of bytes to attempt to read, defaults to None
+        :type bytes_requested: int | None, optional
+        :return: Available bytes up to length bytes_requested
+        :rtype: bytes | None
+        """
         #Using wait_for_ms because wait_for likes to break circuitpython REPL
-        output = None
+        output = bytearray()
         try:
-            if bytes_requested is None:
-                output = await asyncio.wait_for_ms(self.__async_read_forever(), self.async_timeout * 1000)
-            else:
-                output = await asyncio.wait_for_ms(self.async_read(bytes_requested), self.async_timeout * 1000)
-        except:
+            #Timeout is reset per character, same as synchronous equivalents
+            while len(output) < bytes_requested:
+                output.append(await asyncio.wait_for_ms(self.__async_get_byte_forever(), self.timeout * 1000))
+        except TimeoutError:
             debug("TIMEOUT_REACHED")
-            if len(self.__dangerous_output) < 1: return None
-            else: return bytes(self.__dangerous_output)
+            if len(output) < 1: output = None
         
         return output
 
-    async def aysnc_read_RTCM3_packet(self):
-        '''Reads asynchronously until `b'\xd3\x00` (NOT included in output)
-        ***DOES NOT TIMEOUT***'''
-        output = bytearray()
-        byte = await self.__async_get_byte()
-        #debug("RAW_READLINE_BYTE:", byte)
-        while True:
-            output.append(byte)
-            if output[-2:] == b'\xd3\x00':
-                break
-            byte = await self.__async_get_byte()
-        
-        return bytes(b'\xd3\x00' + output[:-2])
+    async def async_read_until_forever(self, bytes_to_match: bytes) -> bytes:
+        """Reads UART asynchronously until specified byte sequence is read.
+        Actually does read UART while running so do not interrupt this unless you want some garbage left behind.
 
-    async def async_readline(self):
-        '''Reads asynchronously until `\n` (included in output)
-        ***DOES NOT TIMEOUT***'''
+        :param bytes_to_match: Byte sequence to stop at (included in output)
+        :type bytes_to_match: bytes
+        :return: Byte sequence that was read
+        :rtype: bytes
+        """
         output = bytearray()
-        byte = await self.__async_get_byte()
-        #debug("RAW_READLINE_BYTE:", byte)
-        while True:
-            output.append(byte)
-            if byte == b'\n'[0]:
-                break
-            byte = await self.__async_get_byte()
+        while output[-len(bytes_to_match):] != bytes_to_match:
+            output.append(await self.__async_get_byte_forever())
         
         return bytes(output)
-    
-    def readline(self):
-        output = bytearray()
-        start_time = time.time()
-        while True:
-            byte = super().read(1)
-            if byte is not None:
-                #debug("RAW_SYNC_BYTE:", byte)
-                output.append(byte[0])
-                if (byte == b'\n'):
-                    break;
-            if time.time() - start_time > self.async_timeout:
-                break
-        
-        debug("READLINE_SYNC_OUTPUT: ", output)
-        if len(output) > 0:
-            return bytes(output)
-        else:
-            return None
+
+    async def aysnc_read_RTCM3_packet_forever(self) -> bytes:
+        """Asynchronously reads an entire RTCM3 packet sequence.
+        There is no end marker for this so we read until the start of the next packet and prepend the packet marker (b'\\xd3\\x00').
+
+        :return: RTCM3 bytes
+        :rtype: bytes
+        """
+        output = await self.async_read_until_forever(b'\xd3\x00')
+
+        return bytes(b'\xd3\x00' + output[:-2])
+
+    async def async_readline_forever(self) -> bytes:
+        """Reads asynchronously until `\\n` (included in output).
+
+        :return: Line that was read
+        :rtype: bytes
+        """
+        return await self.async_read_until_forever(b'\n')
