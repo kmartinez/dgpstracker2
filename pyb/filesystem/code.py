@@ -98,13 +98,32 @@ def test_led():
     LED.value = False
     time.sleep(5)
 
+def onboard_counter():
+    count = 0
+    while True:
+        count += 1
+        print(count)
+        LED.value = True
+        time.sleep(1)
+        LED.value = False
+        # time.sleep(1)
+        button_d12.update()
+        if button_d12.fell:
+            print("Exited")
+            break;
 
 # TODO: Try including this library for the RTC
+# TODO: Include Flags
+
+button_flag = True
+logging = True
+
 while True:
     button_d12.update()
     if button_d12.fell:
         print("Pressed")
         print("Writing to Filesystem")
+        # onboard_counter() # internal function callback doesn't work - need to find a solution around this
         count = 0
         while True:
             count += 1
@@ -113,6 +132,7 @@ while True:
             time.sleep(1)
             LED.value = False
             time.sleep(1)
+
             button_d12.update()
             if button_d12.fell:
                 print("Exited")
@@ -120,9 +140,7 @@ while True:
         LED.value = True
         time.sleep(0.5)
     else:
-        # print("Nothing detected")
         LED.value = False
-        # time.sleep(1)
 
 
 
