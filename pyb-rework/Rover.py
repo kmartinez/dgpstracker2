@@ -3,7 +3,7 @@ from Device import *
 # from Drivers.Radio import PacketType
 import struct
 from config import *
-from Math.RollingAverage import StatsBuffer
+from Statistics.StatsBuffer import StatsBuffer
 import ulab.numpy as np
 
 SD_MAX = 1e-5 
