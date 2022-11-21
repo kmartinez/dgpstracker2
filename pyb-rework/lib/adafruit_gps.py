@@ -375,8 +375,8 @@ class GPS:
         # This needs to be refactored when it can be tested.
 
         # Only continue if we have at least 11 bytes in the input buffer
-        # if self.in_waiting < 11:
-        #     return None
+        if self.in_waiting < 11:
+            return None
 
         sentence = self.readline()
         if sentence is None or sentence == b"" or len(sentence) < 1:

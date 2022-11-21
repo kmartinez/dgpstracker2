@@ -6,7 +6,7 @@ import board
 from config import *
 from debug import *
 
-UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, timeout=5)
+UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
 
 class ChecksumError(Exception):
     pass
