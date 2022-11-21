@@ -3,17 +3,18 @@ from Device import *
 # from Drivers.Radio import PacketType
 import struct
 from config import *
-from Math.RollingAverage import RollingAverage
+from Math.RollingAverage import StatsBuffer
+import ulab.numpy as np
 
 SD_MAX = 1e-5 
 '''Maximum acceptible standard deviation [m]'''
 AVERAGING_SAMPLE_SIZE = 5
 '''number of samples to take a rolling standard deviation and average of'''
 
-GPS_SAMPLES: dict[str, RollingAverage] = {
-    "lats": RollingAverage(AVERAGING_SAMPLE_SIZE),
-    "longs": RollingAverage(AVERAGING_SAMPLE_SIZE),
-    "alts": RollingAverage(AVERAGING_SAMPLE_SIZE)
+GPS_SAMPLES: dict[str, StatsBuffer] = {
+    "lats": StatsBuffer(AVERAGING_SAMPLE_SIZE),
+    "longs": StatsBuffer(AVERAGING_SAMPLE_SIZE),
+    "alts": StatsBuffer(AVERAGING_SAMPLE_SIZE)
 }
 
 def update_gps_with_rtcm3(rtcm3):
@@ -44,12 +45,13 @@ async def rover_loop():
                 GPS_SAMPLES["longs"].append(GPS.longitude_degrees)
                 GPS_SAMPLES["alts"].append(GPS.altitude_m)
 
-                if GPS_SAMPLES["longs"].sd() < SD_MAX and GPS_SAMPLES["lats"].sd() < SD_MAX and GPS_SAMPLES["alts"].sd() < SD_MAX:
+                if np.std(GPS_SAMPLES["longs"]) < SD_MAX and np.std(GPS_SAMPLES["lats"]) < SD_MAX and np.std(GPS_SAMPLES["alts"]) < SD_MAX:
                     debug("Sending NMEA data to base station...")
                     #TODO: Proper serialization maybe
-                    transmit_str = "lat:" + str(GPS_SAMPLES["lats"].mean())
-                    transmit_str += ",long:" + str(GPS_SAMPLES["longs"].mean())
-                    transmit_str += ",alt:," + str(GPS_SAMPLES["alts"].mean())
+                    #TODO: Check if this works over iterables or if we need to call np.array() first
+                    transmit_str = "lat:" + str(np.mean(GPS_SAMPLES["lats"]))
+                    transmit_str += ",long:" + str(np.mean(GPS_SAMPLES["longs"]))
+                    transmit_str += ",alt:," + str(np.mean(GPS_SAMPLES["alts"]))
                     transmit_str += ",time:" + str(GPS.timestamp_utc)
                     radio.broadcast_data(PacketType.NMEA, sentence)
 
