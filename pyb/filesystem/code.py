@@ -116,27 +116,63 @@ def onboard_counter():
 # TODO: Include Flags
 
 button_flag = True
-logging = True
+logging = False
 
 while True:
+    """_summary_: Filesystem main loop that effectively needs boot.py to be present to be able to write data into incoming data.txt
+                  General Operation currently runs a simple timestamp - not accurate but acts as a template to be fixed
+                  Currently relies on a push-button on pin D12 with an LED to interface with - flash once a second and it's working; 0.5s and it's not working
+                  NB: To work properly, please make sure that boot.py is present on the board. It will force the board into read-only mode and can only be changed on the REPL.
+                  To make changes to the code, please change the name of boot.py to something else like boost.py using os.rename on the REPL.
+                  Final Notes: Any changes in your code requires you to reset the board so that it enters Read-Only mode, and vice-versa.
+    """
     button_d12.update()
     if button_d12.fell:
         print("Pressed")
         print("Writing to Filesystem")
         # onboard_counter() # internal function callback doesn't work - need to find a solution around this
         count = 0
-        while True:
-            count += 1
-            print(count)
-            LED.value = True
-            time.sleep(1)
-            LED.value = False
-            time.sleep(1)
-
-            button_d12.update()
-            if button_d12.fell:
-                print("Exited")
-                break;
+        try:
+            print("Ready to Log...")
+            while button_flag:
+                button_d12.update()
+                if button_d12.fell:
+                    print("Button Pressed")     
+                    print(button_d12.fell)
+                    button_flag = False
+            print("Logging...")
+            is_logging = True
+            with open(FILE_PATH, "w") as fp:
+                fp.write("Timestamp\tLongitude\tLatitude\tFix Quality\n")
+                initial_time = time.monotonic()
+                initial_t = initial_time
+                while is_logging:
+                    sec_time = time.monotonic()
+                    if (sec_time - initial_time) >= 1:
+                        time_stamp = sec_time - initial_t
+                        sec_time = 0
+                        initial_time = time.monotonic()
+                        #   Writes time-stamp   \t  Longitude   \t  Latitude    \t  Fix Quality
+                        fp.write("{}".format(time_stamp) + "\t"
+                         +  "{}".format(initial_t) + "\t"
+                         +  "{}".format(initial_t) + "\t"
+                         +  "{}".format(initial_t) + "\n" )
+                        fp.flush()
+                        LED.value = not LED.value
+                        print(time_stamp)
+                    button_d12.update()
+                    if button_d12.fell:
+                        is_logging = False
+                        print("Stopped Logging")
+                    
+        except OSError as e:  # Typically when the filesystem isn't writeable...
+            delay = 0.5  # ...blink the LED every half second.
+            if e.args[0] == 28:  # If the file system is full...
+                delay = 0.25  # ...blink the LED faster!
+            while True:
+                if is_logging:
+                    LED.value = not LED.value
+                    time.sleep(delay)
         LED.value = True
         time.sleep(0.5)
     else:
