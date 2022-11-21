@@ -16,7 +16,7 @@ class AsyncUART(busio.UART):
         stop: int = 1,
         timeout: int = 1,
         receiver_buffer_size: int = 64,
-        ):
+        ) -> None:
         super().__init__(tx, rx, baudrate=baudrate, bits=bits, parity=parity, timeout=timeout, stop=stop, receiver_buffer_size=receiver_buffer_size)
 
     async def __async_get_byte_forever(self) -> int:
