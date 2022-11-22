@@ -131,7 +131,7 @@ while True:
         print("Pressed")
         print("Writing to Filesystem")
         # onboard_counter() # internal function callback doesn't work - need to find a solution around this
-        count = 0
+        # count = 0 - redundant
         try:
             print("Ready to Log...")
             while button_flag:
@@ -146,20 +146,24 @@ while True:
                 fp.write("Timestamp\tLongitude\tLatitude\tFix Quality\n")
                 initial_time = time.monotonic()
                 initial_t = initial_time
+                latitude = 52.3951  # to be read from gps
+                longitude = 1.3452  # to be read from gps
+                quality_fix = 4     # to be read form gps
                 while is_logging:
                     sec_time = time.monotonic()
                     if (sec_time - initial_time) >= 1:
-                        time_stamp = sec_time - initial_t
+                        time_stamp = sec_time - initial_t   # may want to use datetime from RTC
                         sec_time = 0
                         initial_time = time.monotonic()
                         #   Writes time-stamp   \t  Longitude   \t  Latitude    \t  Fix Quality
                         fp.write("{}".format(time_stamp) + "\t"
-                         +  "{}".format(initial_t) + "\t"
-                         +  "{}".format(initial_t) + "\t"
-                         +  "{}".format(initial_t) + "\n" )
+                         +  "{}".format(longitude) + "\t"
+                         +  "{}".format(latitude) + "\t"
+                         +  "{}".format(quality_fix) + "\n" )
                         fp.flush()
                         LED.value = not LED.value
-                        print(time_stamp)
+                        # print(time_stamp)
+                        print("{}".format(time_stamp) + "\t" + "{}".format(longitude) + "\t" + "{}".format(latitude) + "\t" + "{}".format(quality_fix) + "\n")
                     button_d12.update()
                     if button_d12.fell:
                         is_logging = False
