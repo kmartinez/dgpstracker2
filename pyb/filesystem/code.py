@@ -98,6 +98,20 @@ def test_led():
     LED.value = False
     time.sleep(5)
 
+def init_datetime(rtc):
+    """Initialising datetime format to be used with writing into filesystem
+
+    Args:
+        rtc (Class): DS3231 object will be used to provide necessary functions for setting up timestamps
+        and using these along with the correct timing data to apply with alarm.
+        Must include time and rtc.datetime to be able to update details  
+        
+    """
+    # rtc = DS3231(i2c)
+    ds3231.datetime = time.struct_time()
+
+    
+
 def onboard_counter():
     count = 0
     while True:
@@ -119,12 +133,12 @@ button_flag = True
 logging = False
 
 while True:
-    """_summary_: Filesystem main loop that effectively needs boot.py to be present to be able to write data into incoming data.txt
-                  General Operation currently runs a simple timestamp - not accurate but acts as a template to be fixed
-                  Currently relies on a push-button on pin D12 with an LED to interface with - flash once a second and it's working; 0.5s and it's not working
-                  NB: To work properly, please make sure that boot.py is present on the board. It will force the board into read-only mode and can only be changed on the REPL.
-                  To make changes to the code, please change the name of boot.py to something else like boost.py using os.rename on the REPL.
-                  Final Notes: Any changes in your code requires you to reset the board so that it enters Read-Only mode, and vice-versa.
+    """ Filesystem main loop that effectively needs boot.py to be present to be able to write data into incoming data.txt
+        General Operation currently runs a simple timestamp - not accurate but acts as a template to be fixed
+        Currently relies on a push-button on pin D12 with an LED to interface with - flash once a second and it's working; 0.5s and it's not working
+        NB: To work properly, please make sure that boot.py is present on the board. It will force the board into read-only mode and can only be changed on the REPL.
+        To make changes to the code, please change the name of boot.py to something else like boost.py using os.rename on the REPL.
+        Final Notes: Any changes in your code requires you to reset the board so that it enters Read-Only mode, and vice-versa.
     """
     button_d12.update()
     if button_d12.fell:
@@ -144,6 +158,10 @@ while True:
             is_logging = True
             with open(FILE_PATH, "w") as fp:
                 fp.write("Timestamp\tLongitude\tLatitude\tFix Quality\n")
+                # correct timestamp using RTC
+                # timestamp = "{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec )
+                # print("{}".format(timestamp))
+                # print(timestamp)
                 initial_time = time.monotonic()
                 initial_t = initial_time
                 latitude = 52.3951  # to be read from gps
@@ -156,14 +174,17 @@ while True:
                         sec_time = 0
                         initial_time = time.monotonic()
                         #   Writes time-stamp   \t  Longitude   \t  Latitude    \t  Fix Quality
-                        fp.write("{}".format(time_stamp) + "\t"
+                        fp.write("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t"
                          +  "{}".format(longitude) + "\t"
                          +  "{}".format(latitude) + "\t"
                          +  "{}".format(quality_fix) + "\n" )
                         fp.flush()
                         LED.value = not LED.value
                         # print(time_stamp)
-                        print("{}".format(time_stamp) + "\t" + "{}".format(longitude) + "\t" + "{}".format(latitude) + "\t" + "{}".format(quality_fix) + "\n")
+                        print("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t" 
+                        + "{}".format(longitude) + "\t" 
+                        + "{}".format(latitude) + "\t"
+                        + "{}".format(quality_fix) + "\n")
                     button_d12.update()
                     if button_d12.fell:
                         is_logging = False
