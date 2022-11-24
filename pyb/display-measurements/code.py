@@ -16,12 +16,14 @@ import terminalio
 # External Libs
 from adafruit_debouncer import Debouncer
 from adafruit_ds3231 import DS3231
+# import adafruit_gps
 
 # Display Libs
 # standalone label does not work; best to use bitmap_label instead.
 # can try import bitmap_label below for alternative
 from adafruit_display_text import bitmap_label
 import adafruit_displayio_sh1107
+
 
 # TODO: Create Global Variables
 # TODO: Test the ability of writing to a file on flash - using old code
@@ -34,6 +36,7 @@ LED.direction = digitalio.Direction.OUTPUT
 uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=10)
 i2c = board.I2C()
 ds3231 = DS3231(i2c)
+# gps = adafruit_gps.GPS_GtopI2C(i2c, address=0x10, debug=False)
 displayio.release_displays()
 
 display_bus = displayio.I2CDisplay(
@@ -156,6 +159,113 @@ def init_datetime(rtc):
     # need to compare time in RTC with GPS message time 
     ds3231.datetime = time.struct_time()
 
+def gps_data_page(timestamp, long, lat, fix_quality):
+    """Display Real-Time GPS data according to time stamp, longitude, latitude and fix_quality.
+
+    Args:
+        timestamp (_type_): _description_
+        long (_type_): _description_
+        lat (_type_): _description_
+        fix_quality (_type_): _description_
+    """
+    gps_flag = True
+    loop_flag = True
+    # setTextAreaXY(timestamp, 20, 4)
+    time_stamp_display = bitmap_label.Label(
+        terminalio.FONT,
+        text="Lon: {}".format(timestamp),
+        scale=1,
+        x=20,
+        y=4,
+    )
+    display_group.append(time_stamp_display)
+    gps_long = bitmap_label.Label(
+        terminalio.FONT,
+        text="Lon: {}".format(long),
+        scale=1,
+        x=10,
+        y=28,
+    )
+    display_group.append(gps_long)
+
+    gps_lat = bitmap_label.Label(
+        terminalio.FONT,
+        text="Lat: {}".format(lat),
+        scale=1,
+        x=10,
+        y=38,
+    )
+    display_group.append(gps_lat)
+
+
+    gps_fix = bitmap_label.Label(
+        terminalio.FONT,
+        text="Fix: {}".format(fix_quality),
+        scale=1,
+        x=10,
+        y=48,
+    )
+    display_group.append(gps_fix)
+    '''Internal Loop Bug Preventing from logging properly - useful for seeing real-time info but doesn't help with writing to filesystem yet.'''
+    # while loop_flag:
+    #     button_d12.update()
+    #     if button_d12.fell:
+    #         loop_flag = False
+    #     else:
+    #         time_stamp_display.text = ("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec))
+    #         gps_long.text = "Lon: {}".format(long)
+    #         gps_lat.text = "Lat: {}".format(lat)
+    #         gps_fix.text = "Fix: {}".format(fix_quality)
+
+    # while gps_flag:
+    #     gps.update()
+    #     if not gps.has_fix:
+    #         # setTextAreaXY("                   ", 10, 16)
+    #         # clear_screen()
+    #         setTextAreaXY("GPS Position", 20, 4)
+    #         setTextAreaXY("Waiting for fix... ", 10, 16)
+    #         print("Waiting for fix...", gps.has_fix)
+    #         # time.sleep(1)
+    #         continue
+    #     else:
+    #         print("Got a fix!")
+    #         # clear_screen()
+    #         # setTextAreaXY("                   ", 10, 16)
+    #         clear_screen()
+    #         setTextAreaXY("GPS Position", 20, 4)
+    #         setTextAreaXY("Got a fix!", 10, 16)
+    #         # time.sleep(1)
+    #         gps_flag = False
+    # gps_long = bitmap_label.Label(
+    #     terminalio.FONT,
+    #     text="Lon: {}".format(gps.longitude),
+    #     scale=1,
+    #     x=10,
+    #     y=28,
+    # )
+    # display_group.append(gps_long)
+
+    # gps_lat = bitmap_label.Label(
+    #     terminalio.FONT,
+    #     text="Lat: {}".format(gps.latitude),
+    #     scale=1,
+    #     x=10,
+    #     y=38,
+    # )
+    # display_group.append(gps_lat)
+
+    # while loop_flag_one:
+    #     gps.update()
+    #     # button_a.update()
+    #     butt_gps = button_check(button_a, button_b, button_c)
+    #     if butt_gps == 0:
+    #         print("exited")
+    #         loop_flag_one = False
+    #     else:
+    #         gps_long.text = "Lon: {}".format(gps.longitude)
+    #         gps_lat.text = "Lat: {}".format(gps.latitude)
+
+
     
 
 def onboard_counter():
@@ -239,6 +349,9 @@ def main():
                             + "{}".format(longitude) + "\t" 
                             + "{}".format(latitude) + "\t"
                             + "{}".format(quality_fix) + "\n")
+                            # clear screen and refresh data
+                            clear_screen()
+                            gps_data_page(timestamp=("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec)) ,long=longitude, lat=latitude, fix_quality=quality_fix)
                         button_d12.update()
                         if button_d12.fell:
                             is_logging = False
