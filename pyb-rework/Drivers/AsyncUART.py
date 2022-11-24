@@ -25,7 +25,7 @@ class AsyncUART(busio.UART):
         :return: Single byte
         :rtype: int
         """
-        while (super().in_waiting < 1): #So this exists apparently whoops
+        while (self.in_waiting < 1): #So this exists apparently whoops
             await asyncio.sleep(0)
         
         return super().read(1)[0] #read returns a byte array so we return the first index
@@ -47,7 +47,7 @@ class AsyncUART(busio.UART):
             while True:
                 await asyncio.sleep(0)
         else:
-            while (super().in_waiting < bytes_requested):
+            while (self.in_waiting < bytes_requested):
                 await asyncio.sleep(0)
             
             return super().read(bytes_requested) #At this point this will be instant because all the bytes are there
