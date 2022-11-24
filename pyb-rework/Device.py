@@ -51,8 +51,8 @@ def update_GPS():
     ''''''
     # May need timeout
 
-    GPS_UART.reset_input_buffer()
-    debug("JUNK_LINE:", GPS_UART.readline()) # BAD DATA (LIKELY GARBLED)
+    # GPS_UART.reset_input_buffer()
+    # debug("JUNK_LINE:", GPS_UART.readline()) # BAD DATA (LIKELY GARBLED)
 
     while GPS.update():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
