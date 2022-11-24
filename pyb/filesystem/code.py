@@ -32,16 +32,6 @@ ds3231 = DS3231(i2c)
 # it takes a tuple anyways
 # ds3231.datetime = time.struct_time()  # provide tuple of information
 
-# def radio_init(self):
-#     self.uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=10)
-
-def radio_comms():
-    # radio_init()
-    if uart.any() > 0:
-        uart.readline()
-        time.sleep(1)
-
-    
 # Debouncer function
 def debouncable(pin):
     switch_io = digitalio.DigitalInOut(pin)
