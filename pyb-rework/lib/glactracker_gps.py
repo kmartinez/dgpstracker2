@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-`adafruit_gps`
+`glactracker_gps`
 ====================================================
 
 GPS parsing module.  Can parse simple NMEA data sentences from serial GPS

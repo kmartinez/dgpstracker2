@@ -7,7 +7,7 @@ Use gps_receive to get GPS readout
 Use radio_receive to receive data'''
 
 # Import packages
-import adafruit_gps
+import glactracker_gps
 import board
 import busio
 import adafruit_ds3231
@@ -39,7 +39,7 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
 
 '''GPS parser'''
-GPS: adafruit_gps.GPS = adafruit_gps.GPS(GPS_UART, debug=True)
+GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=True)
 
 def update_GPS():
     """Validates NMEA and checks for quality 4.
