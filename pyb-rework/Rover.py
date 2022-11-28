@@ -5,8 +5,12 @@ import struct
 from config import *
 from Statistics.StatsBuffer import StatsBuffer
 import ulab.numpy as np
+from Statistics import Util as util
+from mpy_decimal import *
 
-SD_MAX = 1e-5 
+DecimalNumber.set_scale(32)
+SD_MAX = DecimalNumber("0.00001")
+VAR_MAX = SD_MAX ** 2
 '''Maximum acceptible standard deviation [m]'''
 AVERAGING_SAMPLE_SIZE = 5
 '''number of samples to take a rolling standard deviation and average of'''
@@ -40,25 +44,25 @@ async def rover_loop():
             debug("RTCM3 received, waiting for NMEA response")
             sentence = update_gps_with_rtcm3(packet.payload)
             #debug("GPS SENTENCE", GPS.nmea_sentence)
-            if sentence != None:
-                GPS_SAMPLES["lats"].append(GPS.latitude_degrees)
-                GPS_SAMPLES["longs"].append(GPS.longitude_degrees)
+            if sentence is not None:
+                GPS_SAMPLES["lats"].append(GPS.latitude)
+                GPS_SAMPLES["longs"].append(GPS.longitude)
                 GPS_SAMPLES["alts"].append(GPS.altitude_m)
 
                 #no do standard dev on 1 sample pls
                 if (len(GPS_SAMPLES["longs"].circularBuffer) < AVERAGING_SAMPLE_SIZE): continue
 
-                debug("STD_DEV_LONG:", np.std(GPS_SAMPLES["longs"].circularBuffer))
+                debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
                 
 
-                if np.std(GPS_SAMPLES["longs"].circularBuffer) < SD_MAX and np.std(GPS_SAMPLES["lats"].circularBuffer) < SD_MAX and np.std(GPS_SAMPLES["alts"].circularBuffer) < SD_MAX:
+                if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["alts"].circularBuffer) < VAR_MAX:
                     debug("Sending NMEA data to base station...")
                     #TODO: Proper serialization maybe
                     #TODO: Check if this works over iterables or if we need to call np.array() first
-                    transmit_str = "lat:" + str(np.mean(GPS_SAMPLES["lats"].circularBuffer))
-                    transmit_str += ",long:" + str(np.mean(GPS_SAMPLES["longs"].circularBuffer))
-                    transmit_str += ",alt:," + str(np.mean(GPS_SAMPLES["alts"].circularBuffer))
+                    transmit_str = "lat:" + str(util.mean(GPS_SAMPLES["lats"].circularBuffer))
+                    transmit_str += ",long:" + str(util.mean(GPS_SAMPLES["longs"].circularBuffer))
+                    transmit_str += ",alt:," + str(util.mean(GPS_SAMPLES["alts"].circularBuffer))
                     transmit_str += ",time:" + str(GPS.timestamp_utc)
                     radio.broadcast_data(PacketType.NMEA, sentence)
 
