@@ -20,7 +20,7 @@ from Drivers.Radio import PacketType
 from debug import *
 from config import *
 
-GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048)
+GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=256)
 '''GPS NMEA UART for communications'''
 
 RTCM3_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D1, board.D0, baudrate=115200, receiver_buffer_size=2048)
@@ -53,13 +53,15 @@ def update_GPS():
 
     # GPS_UART.reset_input_buffer()
     # debug("JUNK_LINE:", GPS_UART.readline()) # BAD DATA (LIKELY GARBLED)
+    GPS.update() #Potentially garbage line so we continue anyway even if it doesn't actually work
 
     while GPS.update():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
     debug("LAT:", GPS.latitude)
     debug("LONG:", GPS.longitude)
     debug("QUALITY:", GPS.fix_quality)
-    debug("PACKET TYPE",GPS.fix_quality_3d)
+    debug("PACKET TYPE:",GPS.fix_quality_3d)
+    debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
 
     # If NMEA received back
     if GPS.fix_quality == 4:
