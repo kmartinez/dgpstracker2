@@ -29,6 +29,7 @@ MODIFIED TO WORK LESS FREQUENTLY WITHOUT BEING BAD
 """
 import time
 from micropython import const
+from mpy_decimal import *
 
 try:
     from typing import Optional, Tuple, List
@@ -84,7 +85,7 @@ _SENTENCE_PARAMS = (
 # Internal helper parsing functions.
 # These handle input that might be none or null and return none instead of
 # throwing errors.
-def _parse_degrees(nmea_data: str) -> int:
+def _parse_degrees(nmea_data: str) -> DecimalNumber:
     # Parse a NMEA lat/long data pair 'dddmm.mmmm' into a pure degrees value.
     # Where ddd is the degrees, mm.mmmm is the minutes.
     if nmea_data is None or len(nmea_data) < 3:
@@ -92,11 +93,12 @@ def _parse_degrees(nmea_data: str) -> int:
     # To avoid losing precision handle degrees and minutes separately
     # Return the final value as an integer. Further functions can parse
     # this into a float or separate parts to retain the precision
-    raw = nmea_data.split(".")
-    degrees = int(raw[0]) // 100 * 1000000  # the ddd
-    minutes = int(raw[0]) % 100  # the mm.
-    minutes += int(f"{raw[1][:4]:0<4}") / 10000
-    minutes = int(minutes / 60 * 1000000)
+    temp = nmea_data.split('.')
+    raw = [temp[0][0:-2], temp[0][-2:] + '.' + temp[1]]
+    degrees = DecimalNumber(raw[0])  # the ddd
+    minutes = DecimalNumber(raw[1]) / 60  # the mm.mm...
+    print("DEGREES:", degrees)
+    print("MINUTES:", minutes)
     return degrees + minutes
 
 
@@ -118,12 +120,12 @@ def _parse_str(nmea_data: str) -> str:
     return str(nmea_data)
 
 
-def _read_degrees(data: List[float], index: int, neg: str) -> float:
+def _read_degrees(data: List[DecimalNumber], index: int, neg: str) -> DecimalNumber:
     # This function loses precision with float32
-    x = data[index] / 1000000
+    print("READ_DEG_TYPE:", type(data[index]))
     if data[index + 1].lower() == neg:
-        x *= -1.0
-    return x
+        data[index] *= -1
+    return data[index]
 
 
 def _read_int_degrees(data: List[float], index: int, neg: str) -> Tuple[int, float]:
@@ -450,11 +452,11 @@ class GPS:
 
         # Latitude
         self.latitude = _read_degrees(data, 0, "s")
-        self.latitude_degrees, self.latitude_minutes = _read_int_degrees(data, 0, "s")
+        #self.latitude_degrees, self.latitude_minutes = _read_int_degrees(data, 0, "s")
 
         # Longitude
         self.longitude = _read_degrees(data, 2, "w")
-        self.longitude_degrees, self.longitude_minutes = _read_int_degrees(data, 2, "w")
+        #self.longitude_degrees, self.longitude_minutes = _read_int_degrees(data, 2, "w")
 
         # UTC time of position
         self._update_timestamp_utc(data[4])
@@ -490,11 +492,11 @@ class GPS:
 
         # Latitude
         self.latitude = _read_degrees(data, 2, "s")
-        self.latitude_degrees, self.latitude_minutes = _read_int_degrees(data, 2, "s")
+        #self.latitude_degrees, self.latitude_minutes = _read_int_degrees(data, 2, "s")
 
         # Longitude
         self.longitude = _read_degrees(data, 4, "w")
-        self.longitude_degrees, self.longitude_minutes = _read_int_degrees(data, 4, "w")
+        #self.longitude_degrees, self.longitude_minutes = _read_int_degrees(data, 4, "w")
 
         # Speed over ground, knots
         self.speed_knots = data[6]
@@ -528,11 +530,11 @@ class GPS:
 
         # Latitude
         self.latitude = _read_degrees(data, 1, "s")
-        self.latitude_degrees, self.latitude_minutes = _read_int_degrees(data, 1, "s")
+        #self.latitude_degrees, self.latitude_minutes = _read_int_degrees(data, 1, "s")
 
         # Longitude
         self.longitude = _read_degrees(data, 3, "w")
-        self.longitude_degrees, self.longitude_minutes = _read_int_degrees(data, 3, "w")
+        #self.longitude_degrees, self.longitude_minutes = _read_int_degrees(data, 3, "w")
 
         # GPS quality indicator
         # 0 - fix not available,
