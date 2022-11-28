@@ -45,13 +45,20 @@ async def rover_loop():
                 GPS_SAMPLES["longs"].append(GPS.longitude_degrees)
                 GPS_SAMPLES["alts"].append(GPS.altitude_m)
 
-                if np.std(GPS_SAMPLES["longs"]) < SD_MAX and np.std(GPS_SAMPLES["lats"]) < SD_MAX and np.std(GPS_SAMPLES["alts"]) < SD_MAX:
+                #no do standard dev on 1 sample pls
+                if (len(GPS_SAMPLES["longs"].circularBuffer) < AVERAGING_SAMPLE_SIZE): continue
+
+                debug("STD_DEV_LONG:", np.std(GPS_SAMPLES["longs"].circularBuffer))
+
+                
+
+                if np.std(GPS_SAMPLES["longs"].circularBuffer) < SD_MAX and np.std(GPS_SAMPLES["lats"].circularBuffer) < SD_MAX and np.std(GPS_SAMPLES["alts"].circularBuffer) < SD_MAX:
                     debug("Sending NMEA data to base station...")
                     #TODO: Proper serialization maybe
                     #TODO: Check if this works over iterables or if we need to call np.array() first
-                    transmit_str = "lat:" + str(np.mean(GPS_SAMPLES["lats"]))
-                    transmit_str += ",long:" + str(np.mean(GPS_SAMPLES["longs"]))
-                    transmit_str += ",alt:," + str(np.mean(GPS_SAMPLES["alts"]))
+                    transmit_str = "lat:" + str(np.mean(GPS_SAMPLES["lats"].circularBuffer))
+                    transmit_str += ",long:" + str(np.mean(GPS_SAMPLES["longs"].circularBuffer))
+                    transmit_str += ",alt:," + str(np.mean(GPS_SAMPLES["alts"].circularBuffer))
                     transmit_str += ",time:" + str(GPS.timestamp_utc)
                     radio.broadcast_data(PacketType.NMEA, sentence)
 
