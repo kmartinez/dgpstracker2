@@ -6,3 +6,9 @@ DEVICE_ID = 1
 '''ID of this device (Will become base station if is 0)'''
 DEBUG = True
 '''Turns on debug print() statements'''
+
+SECRETS = {
+    "apn": "TM",
+    "apn_username": "",
+    "apn_password": "",
+}

@@ -10,22 +10,19 @@ import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not devi
 import asyncio
 from debug import *
 from config import *
+import digitalio
+from RadioMessages.GPSData import *
+
+import adafruit_requests as requests
+from adafruit_fona.adafruit_fona import FONA
+from adafruit_fona.fona_3g import FONA3G
+import adafruit_fona.adafruit_fona_network as network
+import adafruit_fona.adafruit_fona_socket as cellular_socket
 
 ROVER_COUNT = 3
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
-
-class GPSData:
-    lat: float
-    long: float
-    temperature: int
-    timestamp: int
-
-    def __init__(self, lat, long, temperature, timestamp):
-        self.lat = lat
-        self.long = long
-        self.temperature = temperature
-        self.timestamp = timestamp
+GSM_RST_PIN: digitalio.DigitalInOut(board.D4) #TODO: Find an actual pin for this
 
 #this is a global variable so i can still get the data even if the rover loop times out
 rover_data: dict[int, GPSData] = {}
@@ -73,9 +70,7 @@ async def rover_data_loop():
             debug("Received NMEA...")
             if not rover_data[packet.sender]:
                 debug("Received NMEA from a new rover,", packet.sender)
-                raw = update_GPS(packet.payload)
-                if raw != None:
-                    rover_data[packet.sender] = GPSData(GPS.latitude, GPS.longitude, 0, GPS.timestamp_utc)
+                rover_data[packet.sender] = GPSData.deserialize(packet.payload) #TODO: validation maybe?
             
             if rover_data[packet.sender]:
                 debug("Sending ACK to rover", packet.sender)
@@ -105,3 +100,35 @@ if __name__ == "__main__":
     # loop.create_task(rtcm3_loop())
     # loop.run_forever()
     # debug("Finished ASYNC...")
+
+    fona = FONA(GSM_UART, GSM_RST_PIN)
+    debug("FONA VERSION:", fona.version)
+
+    # Initialize cellular data network
+    network = network.CELLULAR(
+        fona, (SECRETS["apn"], SECRETS["apn_username"], SECRETS["apn_password"])
+    )
+
+    while not network.is_attached:
+        debug("Attaching to network...")
+        time.sleep(0.5)
+    debug("Attached!")
+
+    while not network.is_connected:
+        debug("Connecting to network...")
+        network.connect()
+        time.sleep(0.5)
+    debug("Network Connected!")
+
+    print("My Local IP address is:", fona.local_ip)
+
+    # Initialize a requests object with a socket and cellular interface
+    requests.set_socket(cellular_socket, fona)
+
+    payload = []
+    for k,v in rover_data:
+        v.id = k
+        v.iemi = fona.iemi
+        payload.append(v)
+
+    requests.post("http://MYCOOLAPI.COM/api/ingest", json=payload)

@@ -7,6 +7,7 @@ from Statistics.StatsBuffer import StatsBuffer
 import ulab.numpy as np
 from Statistics import Util as util
 from mpy_decimal import *
+from RadioMessages.GPSData import *
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.00001")
@@ -17,8 +18,7 @@ AVERAGING_SAMPLE_SIZE = 5
 
 GPS_SAMPLES: dict[str, StatsBuffer] = {
     "lats": StatsBuffer(AVERAGING_SAMPLE_SIZE),
-    "longs": StatsBuffer(AVERAGING_SAMPLE_SIZE),
-    "alts": StatsBuffer(AVERAGING_SAMPLE_SIZE)
+    "longs": StatsBuffer(AVERAGING_SAMPLE_SIZE)
 }
 
 def update_gps_with_rtcm3(rtcm3):
@@ -47,24 +47,26 @@ async def rover_loop():
             if sentence is not None:
                 GPS_SAMPLES["lats"].append(GPS.latitude)
                 GPS_SAMPLES["longs"].append(GPS.longitude)
-                GPS_SAMPLES["alts"].append(GPS.altitude_m)
 
                 #no do standard dev on 1 sample pls
                 if (len(GPS_SAMPLES["longs"].circularBuffer) < AVERAGING_SAMPLE_SIZE): continue
 
                 debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
-                
-
-                if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["alts"].circularBuffer) < VAR_MAX:
+                if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
                     debug("Sending NMEA data to base station...")
                     #TODO: Proper serialization maybe
                     #TODO: Check if this works over iterables or if we need to call np.array() first
-                    transmit_str = "lat:" + str(util.mean(GPS_SAMPLES["lats"].circularBuffer))
-                    transmit_str += ",long:" + str(util.mean(GPS_SAMPLES["longs"].circularBuffer))
-                    transmit_str += ",alt:," + str(util.mean(GPS_SAMPLES["alts"].circularBuffer))
-                    transmit_str += ",time:" + str(GPS.timestamp_utc)
-                    radio.broadcast_data(PacketType.NMEA, sentence)
+                    payload = GPSData(
+                        datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
+                        util.mean(GPS_SAMPLES["lats"].circularBuffer),
+                        util.mean(GPS_SAMPLES["longs"].circularBuffer),
+                        GPS.altitude_m,
+                        GPS.fix_quality,
+                        GPS.hdop,
+                        GPS.sats
+                        )
+                    radio.broadcast_data(PacketType.NMEA, payload.serialize())
 
         # If incoming message is tagged as an ACK
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload) == DEVICE_ID:
