@@ -58,6 +58,9 @@ async def rover_loop():
                     #TODO: Proper serialization maybe
                     #TODO: Check if this works over iterables or if we need to call np.array() first
                     print("GPS TIME:", GPS.timestamp_utc)
+                    print("GPS_HDOP:", GPS.sats)
+                    if GPS.fix_quality in ["R", "r"]:
+                        GPS.fix_quality = 4 #makes things easier
                     payload = GPSData(
                         datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),

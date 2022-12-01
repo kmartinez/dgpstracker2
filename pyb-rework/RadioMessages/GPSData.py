@@ -40,6 +40,7 @@ class GPSData:
             "hdop": self.hdop,
             "sats": self.sats
         }
+        print("JSON_TIMESTAMP?:", self.timestamp.isoformat())
         print("JSON_DUMP_2:", json.dumps(data))
         return json.dumps(data).encode('utf-8')
 
