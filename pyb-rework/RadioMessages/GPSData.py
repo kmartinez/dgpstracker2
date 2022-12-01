@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from adafruit_datetime import datetime
 from mpy_decimal import DecimalNumber
 
 class GPSData:
@@ -30,7 +30,18 @@ class GPSData:
         self.sats = sats
 
     def serialize(self):
-        return bytes(json.dumps(self))
+        print("JSON DUMP:\n",json.dumps(self))
+        data = {
+            "timestamp": self.timestamp.isoformat(),
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "altitude": self.altitude,
+            "quality": self.quality,
+            "hdop": self.hdop,
+            "sats": self.sats
+        }
+        print("JSON_DUMP_2:", json.dumps(data))
+        return json.dumps(data).encode('utf-8')
 
     def deserialize(byte_arr: bytes):
         return json.loads(str(byte_arr))

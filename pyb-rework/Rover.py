@@ -10,7 +10,7 @@ from mpy_decimal import *
 from RadioMessages.GPSData import *
 
 DecimalNumber.set_scale(32)
-SD_MAX = DecimalNumber("0.00001")
+SD_MAX = DecimalNumber("0.0001")
 VAR_MAX = SD_MAX ** 2
 '''Maximum acceptible standard deviation [m]'''
 AVERAGING_SAMPLE_SIZE = 5
@@ -57,6 +57,7 @@ async def rover_loop():
                     debug("Sending NMEA data to base station...")
                     #TODO: Proper serialization maybe
                     #TODO: Check if this works over iterables or if we need to call np.array() first
+                    print("GPS TIME:", GPS.timestamp_utc)
                     payload = GPSData(
                         datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),

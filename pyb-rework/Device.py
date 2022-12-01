@@ -59,16 +59,16 @@ def update_GPS():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
     debug("LAT:", GPS.latitude)
     debug("LONG:", GPS.longitude)
-    debug("QUALITY:", GPS.fix_quality)
+    debug("QUALITY:", GPS._mode_indicator)
     debug("PACKET TYPE:",GPS.fix_quality_3d)
     debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
 
     # If NMEA received back
-    if GPS.fix_quality == 4:
-        debug("Quality 4 NMEA data received from GPS")
+    if GPS._mode_indicator in ["F","R","r"]:
+        debug("Quality R NMEA data received from GPS")
         return GPS.nmea_sentence
     else:
-        debug("NMEA not quality 4")
+        debug("NMEA not quality R")
     return None
 
 def shutdown():
