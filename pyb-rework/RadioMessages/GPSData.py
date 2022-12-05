@@ -1,6 +1,7 @@
 import json
 from adafruit_datetime import datetime
 from mpy_decimal import DecimalNumber
+from debug import *
 
 class GPSData:
     timestamp: datetime
@@ -45,4 +46,5 @@ class GPSData:
         return json.dumps(data).encode('utf-8')
 
     def deserialize(byte_arr: bytes):
-        return json.loads(str(byte_arr))
+        debug(byte_arr)
+        return json.loads(bytes.decode(byte_arr, 'utf-8'))
