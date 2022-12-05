@@ -38,7 +38,7 @@ async def rover_loop():
     while True:
         debug("Waiting for incoming RTCM3...")
         packet = await radio.receive_packet()
-
+        
         # If incoming message is tagged as RTCM3
         if packet.type == PacketType.RTCM3:
             debug("RTCM3 received, waiting for NMEA response")
@@ -73,7 +73,7 @@ async def rover_loop():
                     radio.broadcast_data(PacketType.NMEA, payload.serialize())
 
         # If incoming message is tagged as an ACK
-        elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload) == DEVICE_ID:
+        elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             print ("ACK received. Stopping...")
             break
 
