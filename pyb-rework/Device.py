@@ -58,14 +58,9 @@ def update_GPS():
 
     while GPS.update():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
-    debug("LAT:", GPS.latitude)
-    debug("LONG:", GPS.longitude)
-    debug("QUALITY:", GPS._mode_indicator)
-    debug("PACKET TYPE:",GPS.fix_quality_3d)
-    debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
-
     if (config.DEBUG["FAKE_DATA"]):
         #Fake data
+        debug("FAKE_DATA_MODE_ON")
         GPS.latitude = DecimalNumber("59.3")
         GPS.longitude = DecimalNumber("-1.2")
         GPS.altitude_m = 5002.3
@@ -73,6 +68,13 @@ def update_GPS():
         GPS._mode_indicator = "R"
         GPS.hdop = 0.01
         GPS.sats = 9
+    
+    debug("LAT:", GPS.latitude)
+    debug("LONG:", GPS.longitude)
+    debug("QUALITY:", GPS._mode_indicator)
+    debug("PACKET TYPE:",GPS.fix_quality_3d)
+    debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
+
 
     # If NMEA received back
     if GPS._mode_indicator in ["R","r"]:
