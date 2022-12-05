@@ -19,6 +19,7 @@ import Drivers.Radio as radio
 from Drivers.Radio import PacketType
 from debug import *
 from config import *
+from mpy_decimal import *
 
 GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=256)
 '''GPS NMEA UART for communications'''
@@ -63,8 +64,18 @@ def update_GPS():
     debug("PACKET TYPE:",GPS.fix_quality_3d)
     debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
 
+    if (config.DEBUG["FAKE_DATA"]):
+        #Fake data
+        GPS.latitude = DecimalNumber("59.3")
+        GPS.longitude = DecimalNumber("-1.2")
+        GPS.altitude_m = 5002.3
+        GPS.timestamp_utc = time.localtime(time.time())
+        GPS._mode_indicator = "R"
+        GPS.hdop = 0.01
+        GPS.sats = 9
+
     # If NMEA received back
-    if GPS._mode_indicator in ["F","R","r"]:
+    if GPS._mode_indicator in ["R","r"]:
         debug("Quality R NMEA data received from GPS")
         return GPS.nmea_sentence
     else:

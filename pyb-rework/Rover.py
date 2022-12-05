@@ -66,7 +66,7 @@ async def rover_loop():
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),
                         util.mean(GPS_SAMPLES["longs"].circularBuffer),
                         GPS.altitude_m,
-                        GPS.fix_quality,
+                        GPS._mode_indicator,
                         GPS.hdop,
                         GPS.sats
                         )
