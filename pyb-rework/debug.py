@@ -1,8 +1,8 @@
-import config
+from config import *
 
 def debug(
     *values: object,
 ) -> None:
     '''Prints if debugging is on'''
-    if config.DEBUG["LOGGING"]:
+    if DEBUG["LOGGING"]:
         print(*values)

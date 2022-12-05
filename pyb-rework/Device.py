@@ -58,7 +58,7 @@ def update_GPS():
 
     while GPS.update():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
-    if (config.DEBUG["FAKE_DATA"]):
+    if (DEBUG["FAKE_DATA"]):
         #Fake data
         debug("FAKE_DATA_MODE_ON")
         GPS.latitude = DecimalNumber("59.3")
