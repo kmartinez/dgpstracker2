@@ -20,7 +20,7 @@ class GPSData:
         altitude: float,
         quality: int,
         hdop: float,
-        sats: int
+        sats: str
         ):
         self.timestamp = timestamp
         self.latitude = str(latitude)
@@ -31,7 +31,7 @@ class GPSData:
         self.sats = sats
 
     def serialize(self):
-        print("JSON DUMP:\n",json.dumps(self))
+        debug("JSON DUMP:\n",json.dumps(self))
         data = {
             "timestamp": self.timestamp.isoformat(),
             "latitude": self.latitude,
@@ -41,8 +41,8 @@ class GPSData:
             "hdop": self.hdop,
             "sats": self.sats
         }
-        print("JSON_TIMESTAMP?:", self.timestamp.isoformat())
-        print("JSON_DUMP_2:", json.dumps(data))
+        debug("JSON_TIMESTAMP?:", self.timestamp.isoformat())
+        debug("JSON_DUMP_2:", json.dumps(data))
         return json.dumps(data).encode('utf-8')
 
     def deserialize(byte_arr: bytes):

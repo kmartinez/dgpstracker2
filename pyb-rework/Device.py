@@ -77,8 +77,8 @@ def update_GPS():
 
 
     # If NMEA received back
-    if GPS._mode_indicator in ["R","r"]:
-        debug("Quality R NMEA data received from GPS")
+    if GPS.fix_quality == 4 or GPS.fix_quality == 5:
+        debug("Quality 4 NMEA data received from GPS")
         return GPS.nmea_sentence
     else:
         debug("NMEA not quality R")
