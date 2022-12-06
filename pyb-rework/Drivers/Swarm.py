@@ -36,5 +36,5 @@ async def send_message(message: str):
     send_message_no_wait(message)
     response = receive_msg()
     response_relevant = response[0:6]
-    if response_relevant != b'$TD OK':
+    if response_relevant != b'$TD OK': #TODO: better check
         raise Exception("COMMS_ERROR, MSG=" + bytes.decode(response, 'ascii'))
