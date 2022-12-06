@@ -20,12 +20,13 @@ import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
-GSM_RST_PIN: digitalio.DigitalInOut(board.D4) #TODO: Find an actual pin for this
+GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
 
 #this is a global variable so i can still get the data even if the rover loop times out
 rover_data: dict[int, GPSData] = {}
-for i in range(ROVER_COUNT):
-        rover_data[i] = None
+for i in range(1, ROVER_COUNT + 1): #ROVER_COUNT is 1 indexed because 0 is the base
+    debug("FILLING_NONE_DATA_FOR_ROVER:", i)
+    rover_data[i] = None
 
 async def get_corrections():
     """Returns the corrections from the GPS as a bytearray
@@ -50,7 +51,7 @@ async def rtcm3_loop():
     """
     debug("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
-        debug("ROVER_LOOP_START")
+        debug("RTCM_LOOP_START")
         gps_data = await get_corrections()
         debug("GPS_RAW_BYTES:", gps_data)
         radio.broadcast_data(PacketType.RTCM3, gps_data)
@@ -62,10 +63,11 @@ async def rover_data_loop():
     """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
     """
     debug("Beginning rover_data_loop")
-    while not None in rover_data:
+    while None in rover_data.values(): #While there are any Nones in rover_data
         packet = await radio.receive_packet()
         if packet.type == PacketType.NMEA:
             debug("Received NMEA...")
+            debug("FROM_SENDER:", packet.sender)
             if not rover_data[packet.sender]:
                 debug("Received NMEA from a new rover,", packet.sender)
                 rover_data[packet.sender] = GPSData.deserialize(packet.payload) #TODO: validation maybe?
@@ -73,6 +75,8 @@ async def rover_data_loop():
             if rover_data[packet.sender]:
                 debug("Sending ACK to rover", packet.sender)
                 radio.send_ack(packet.sender)
+
+    debug("ROVER_DATA_LOOP_FINISH")
                 
 
 if __name__ == "__main__":
@@ -124,7 +128,8 @@ if __name__ == "__main__":
     requests.set_socket(cellular_socket, fona)
 
     payload = []
-    for k,v in rover_data:
+    for k in rover_data:
+        v = rover_data[k]
         v.id = k
         v.iemi = fona.iemi
         payload.append(v)
