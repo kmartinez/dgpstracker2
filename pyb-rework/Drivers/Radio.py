@@ -46,6 +46,7 @@ class RadioPacket:
         payload += self.payload
         #debug("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
         checksum = binascii.crc32(payload)
+        debug("CHECKSUM_SEND:", checksum)
         output = payload + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
         #debug("FULL_SERIALIZED_PACKET:", output)
         return output
@@ -55,8 +56,9 @@ class RadioPacket:
         Includes checksum validation (can error)'''
         #debug("RAW:", data)
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
-        debug("CHECKSUM:", checksum)
         payload = data[:-4]
+        debug("CHECKSUM:", checksum)
+        debug("CALCULATED_CHECKSUM:", binascii.crc32(payload))
         if binascii.crc32(payload) != checksum:
             raise ChecksumError
         
