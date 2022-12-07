@@ -79,7 +79,7 @@ async def receive_packet():
         size = await UART.async_read_forever(4)
         debug("RAWSIZE:", size)
         size = struct.unpack('I', size)[0]
-        if size == 0:
+        if size == 0 or size > 1000:
             continue
         data = await UART.async_read(size)
         #debug("RAWDATA:", data)

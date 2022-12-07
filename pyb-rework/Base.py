@@ -65,6 +65,7 @@ async def rover_data_loop():
     debug("Beginning rover_data_loop")
     while None in rover_data.values(): #While there are any Nones in rover_data
         packet = await radio.receive_packet()
+        debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
         if packet.type == PacketType.NMEA:
             debug("Received NMEA...")
             debug("FROM_SENDER:", packet.sender)
