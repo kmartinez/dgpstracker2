@@ -482,13 +482,13 @@ class GPS:
         # UTC time of position and date
         self._update_timestamp_utc(data[0], data[8])
 
-        # Status Valid(A) or Invalid(V)
-        self.isactivedata = data[1]
-        if data[1].lower() == "a":
-            if self.fix_quality == 0:
-                self.fix_quality = 1
-        else:
-            self.fix_quality = 0
+        # # Status Valid(A) or Invalid(V)
+        # self.isactivedata = data[1]
+        # if data[1].lower() == "a":
+        #     if self.fix_quality == 0:
+        #         self.fix_quality = 1
+        # else:
+        #     self.fix_quality = 0
 
         # Latitude
         self.latitude = _read_degrees(data, 2, "s")
