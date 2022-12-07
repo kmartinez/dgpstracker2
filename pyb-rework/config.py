@@ -8,10 +8,10 @@ ROVER_COUNT = 1
 
 DEBUG =  {
     "LOGGING": True, #Turns on debug print() statements
-    "FAKE_DATA": True #Ignores actual GPS data and just uses fake static data instead
+    "FAKE_DATA": False #Ignores actual GPS data and just uses fake static data instead
 }
 
-SECRETS = {
+SECRETS = { #I would put this on its own file untracked by git if you ever put any actual sensitive info here
     "apn": "TM",
     "apn_username": "",
     "apn_password": "",

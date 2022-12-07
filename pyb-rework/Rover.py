@@ -68,7 +68,7 @@ async def rover_loop():
                         GPS.altitude_m,
                         GPS.fix_quality,
                         GPS.hdop,
-                        GPS.satellites
+                        int(GPS.satellites)
                         )
                     radio.broadcast_data(PacketType.NMEA, payload.serialize())
 

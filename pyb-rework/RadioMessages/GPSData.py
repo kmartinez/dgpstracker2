@@ -20,7 +20,7 @@ class GPSData:
         altitude: float,
         quality: int,
         hdop: float,
-        sats: str
+        sats: int
         ):
         self.timestamp = timestamp
         self.latitude = str(latitude)

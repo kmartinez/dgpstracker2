@@ -67,11 +67,11 @@ def update_GPS():
         GPS.timestamp_utc = time.localtime(time.time())
         GPS._mode_indicator = "R"
         GPS.hdop = 0.01
-        GPS.sats = 9
+        GPS.satellites = "9"
     
     debug("LAT:", GPS.latitude)
     debug("LONG:", GPS.longitude)
-    debug("QUALITY:", GPS._mode_indicator)
+    debug("QUALITY:", GPS.fix_quality)
     debug("PACKET TYPE:",GPS.fix_quality_3d)
     debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
 
