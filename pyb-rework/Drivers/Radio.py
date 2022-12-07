@@ -73,6 +73,7 @@ async def receive_packet():
     packet = None
     while packet is None:
         marker = None
+        debug("WAIT_FOR_MARKER")
         while marker != 0x80:
             marker = await UART.__async_get_byte_forever()
         size = await UART.async_read_forever(4)
@@ -95,6 +96,7 @@ async def receive_packet():
 
 def broadcast_packet(packet: RadioPacket):
     '''Serializes and sends a `RadioPacket` over the radio'''
+    debug("BROADCASTING!!!")
     packetRaw = packet.serialize()
     size = len(packetRaw)
     sizeRaw = struct.pack(FormatStrings.PACKET_LENGTH, size)

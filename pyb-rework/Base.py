@@ -42,7 +42,7 @@ async def get_corrections():
     for i in range(5):
         d = await RTCM3_UART.aysnc_read_RTCM3_packet_forever()
         data += d
-        debug("SINGLE RTCM3 MESSAGE:", d)
+        #debug("SINGLE RTCM3 MESSAGE:", d)
     debug("RTCM3_RECEIVED")
     return bytes(data)
 
@@ -51,11 +51,11 @@ async def rtcm3_loop():
     """
     debug("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
-        debug("RTCM_LOOP_START")
+        # debug("RTCM_LOOP_START")
         gps_data = await get_corrections()
-        debug("GPS_RAW_BYTES:", gps_data)
+        # debug("GPS_RAW_BYTES:", gps_data)
         radio.broadcast_data(PacketType.RTCM3, gps_data)
-        debug("RTCM3_RADIO_BROADCAST_COMPLETE")
+        # debug("RTCM3_RADIO_BROADCAST_COMPLETE")
         #await asyncio.sleep(1)
     debug("End RTCM3 Loop")
 
