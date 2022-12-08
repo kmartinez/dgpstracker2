@@ -131,9 +131,9 @@ if __name__ == "__main__":
     payload = []
     for k in rover_data:
         v = rover_data[k]
-        v.id = k
-        v.iemi = fona.iemi
+        v['id'] = k
+        v['imei'] = fona.iemi
         payload.append(v)
 
-    requests.post("http://MYCOOLAPI.COM/api/ingest", json=payload)
+    requests.post("http://google.com/api/ingest", json=payload)
     shutdown()
