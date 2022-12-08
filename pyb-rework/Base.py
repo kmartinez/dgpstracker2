@@ -136,3 +136,4 @@ if __name__ == "__main__":
         payload.append(v)
 
     requests.post("http://MYCOOLAPI.COM/api/ingest", json=payload)
+    shutdown()

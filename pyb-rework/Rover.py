@@ -79,3 +79,4 @@ async def rover_loop():
 
 if __name__ == "__main__":
     asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+    shutdown()

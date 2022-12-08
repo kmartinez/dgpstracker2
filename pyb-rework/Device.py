@@ -35,6 +35,7 @@ I2C: busio.I2C = board.I2C()
 '''I2C bus (for RTC module)'''
 
 RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
+RTC.datetime
 '''RTC timer'''
 #Set alarm for 3 hrs from previous alarm
 RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
