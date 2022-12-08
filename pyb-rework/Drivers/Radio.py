@@ -58,6 +58,7 @@ class RadioPacket:
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
         payload = data[:-4]
         debug("CHECKSUM:", checksum)
+        debug("PAYLOAD:", payload)
         debug("CALCULATED_CHECKSUM:", binascii.crc32(payload))
         if binascii.crc32(payload) != checksum:
             raise ChecksumError
