@@ -83,6 +83,9 @@ async def rover_data_loop():
         except TimeoutError:
             packet = None
             radio_locked = False #no deadlock pls
+        except radio.ChecksumError:
+            packet = None
+            radio_locked = False #no deadlock pls
         debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
         if packet is None: continue
         elif packet.type == PacketType.NMEA:

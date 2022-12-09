@@ -87,11 +87,7 @@ async def receive_packet():
         #debug("RAWDATA:", data)
         if data is None or len(data) < size:
             continue #Packet is garbage, start again
-        try:
-            packet = RadioPacket.deserialize(data)
-        except ChecksumError:
-            debug("CHECKSUM_FAIL")
-            continue #Packet failed checksum check, it's garbage, start again
+        packet = RadioPacket.deserialize(data)
     
     #If we get here, packet was deserialized successfully
     return packet

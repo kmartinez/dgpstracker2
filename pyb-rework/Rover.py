@@ -38,7 +38,10 @@ async def rover_loop():
     # If ACK received, shutdown
     while True:
         debug("Waiting for incoming RTCM3...")
-        packet = await radio.receive_packet()
+        try:
+            packet = await radio.receive_packet()
+        except radio.ChecksumError:
+            continue
         
         # If incoming message is tagged as RTCM3
         if packet.type == PacketType.RTCM3:
