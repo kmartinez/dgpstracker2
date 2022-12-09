@@ -58,30 +58,22 @@ async def rover_loop():
                 debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
-                    # send RTS
-                    radio.broadcast_data(PacketType.RTS, bytes())
-
-        elif packet.type == PacketType.CTS and struct.unpack(FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
-            debug("Sending NMEA data to base station...")
-            #TODO: Proper serialization maybe
-            print("GPS TIME:", GPS.timestamp_utc)
-            print("GPS_HDOP:", GPS.sats)
-            #if GPS.fix_quality in ["R", "r"]:
-            #    GPS.fix_quality = 4 #makes things easier
-            payload = GPSData(
-                datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
-                util.mean(GPS_SAMPLES["lats"].circularBuffer),
-                util.mean(GPS_SAMPLES["longs"].circularBuffer),
-                GPS.altitude_m,
-                GPS.fix_quality,
-                float(GPS.horizontal_dilution),
-                int(GPS.satellites)
-                )
-            radio.broadcast_data(PacketType.NMEA, payload.serialize())
-            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
-            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
-            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
-            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
+                    debug("Sending NMEA data to base station...")
+                    #TODO: Proper serialization maybe
+                    print("GPS TIME:", GPS.timestamp_utc)
+                    print("GPS_HDOP:", GPS.sats)
+                    #if GPS.fix_quality in ["R", "r"]:
+                    #    GPS.fix_quality = 4 #makes things easier
+                    payload = GPSData(
+                        datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
+                        util.mean(GPS_SAMPLES["lats"].circularBuffer),
+                        util.mean(GPS_SAMPLES["longs"].circularBuffer),
+                        GPS.altitude_m,
+                        GPS.fix_quality,
+                        float(GPS.horizontal_dilution),
+                        int(GPS.satellites)
+                        )
+                    radio.broadcast_data(PacketType.NMEA, payload.serialize())
 
         # If incoming message is tagged as an ACK
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
