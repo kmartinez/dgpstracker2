@@ -6,7 +6,7 @@ import board
 from config import *
 from debug import *
 
-UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, receiver_buffer_size=1024)
+UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
 
 class ChecksumError(Exception):
     pass
@@ -82,10 +82,12 @@ async def receive_packet():
         debug("RAWSIZE:", size)
         size = struct.unpack('I', size)[0]
         if size == 0 or size > 1000:
+            debug("PACKET_SIZE_INVALID")
             continue
         data = await UART.async_read(size)
         #debug("RAWDATA:", data)
         if data is None or len(data) < size:
+            debug("PACKET_SIZE_WRONG")
             continue #Packet is garbage, start again
         packet = RadioPacket.deserialize(data)
     

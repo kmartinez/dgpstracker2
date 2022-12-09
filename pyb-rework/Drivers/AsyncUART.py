@@ -67,7 +67,7 @@ class AsyncUART(busio.UART):
             #Timeout is reset per character, same as synchronous equivalents
             while len(output) < bytes_requested:
                 output.append(await asyncio.wait_for_ms(self.__async_get_byte_forever(), self.timeout * 1000))
-        except TimeoutError:
+        except asyncio.TimeoutError:
             debug("TIMEOUT_REACHED")
             if len(output) < 1: output = None
         

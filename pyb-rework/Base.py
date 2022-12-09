@@ -60,7 +60,7 @@ async def rtcm3_loop():
         gps_data = await get_corrections()
         # debug("GPS_RAW_BYTES:", gps_data)
         while radio_locked: #wait for unlocked radio
-            debug("RADIO_BUFFER_SIZE:", radio.UART.in_waiting)
+            #debug("RADIO_BUFFER_SIZE:", radio.UART.in_waiting)
             await asyncio.sleep_ms(0)
         radio_locked = True #probably not necessary but here for completeness
         radio.broadcast_data(PacketType.RTCM3, gps_data)
@@ -78,12 +78,14 @@ async def rover_data_loop():
     while None in rover_data.values(): #While there are any Nones in rover_data
         try:
             debug("CONTROL_ROVER_LOOP_WAIT_FOR_PKT")
-            packet = await asyncio.wait_for_ms(radio.receive_packet(), 1.5 * 1000)
+            packet = await asyncio.wait_for(radio.receive_packet(), 1.5)
             debug("CONTROL_ROVER_LOOP_FINISH_PKT")
-        except TimeoutError:
+        except asyncio.TimeoutError:
+            debug("CONTROL_ROVER_LOOP_PKT_TIMEOUT")
             packet = None
             radio_locked = False #no deadlock pls
         except radio.ChecksumError:
+            debug("CONTROL_ROVER_LOOP_PKT_CHECKSUM_FAIL")
             packet = None
             radio_locked = False #no deadlock pls
         debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
@@ -122,7 +124,7 @@ if __name__ == "__main__":
         debug("Begin ASYNC...")
         loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(asyncio.create_task(rover_data_loop()), asyncio.create_task(rtcm3_loop())), GLOBAL_FAILSAFE_TIMEOUT * 1000))
         debug("Finished ASYNC...")
-    except TimeoutError:
+    except asyncio.TimeoutError:
         debug("Timeout!")
         pass #Don't care, we have data, just send what we got
 
