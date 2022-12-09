@@ -6,7 +6,7 @@ import board
 from config import *
 from debug import *
 
-UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600)
+UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, receiver_buffer_size=1024)
 
 class ChecksumError(Exception):
     pass
@@ -19,8 +19,8 @@ class FormatStrings():
     PACKET_MARKER = 'B'
 
 class PacketType():
-    # RTS = 1
-    # CTS = 2
+    RTS = 1
+    CTS = 2
     ACK = 3
     NMEA = 4
     RTCM3 = 5
@@ -77,8 +77,7 @@ async def receive_packet():
     while packet is None:
         marker = None
         debug("WAIT_FOR_MARKER")
-        while marker != 0x80:
-            marker = await UART.__async_get_byte_forever()
+        await UART.async_read_until_forever(bytes([0x80,0x80]))
         size = await UART.async_read_forever(4)
         debug("RAWSIZE:", size)
         size = struct.unpack('I', size)[0]
@@ -104,7 +103,9 @@ def broadcast_packet(packet: RadioPacket):
     size = len(packetRaw)
     sizeRaw = struct.pack(FormatStrings.PACKET_LENGTH, size)
     marker = struct.pack(FormatStrings.PACKET_MARKER, 0x80)
-    UART.write(marker + sizeRaw + packetRaw)
+    UART.write(marker + marker + sizeRaw + packetRaw)
+    #debug("ENTIRE SENT DATA:", (marker + marker + sizeRaw + packetRaw))
+    debug(f'\n\nMARKERS: {marker + marker}\n sizeRaw: {sizeRaw}\n packetRaw: {packetRaw}\n\n')
 
 def broadcast_data(type: PacketType, payload: bytes):
     '''Creates a packet and broadcasts it over radio'''

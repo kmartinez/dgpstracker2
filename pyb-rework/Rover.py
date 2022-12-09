@@ -1,6 +1,6 @@
 from Device import *
-# import Drivers.Radio as radio
-# from Drivers.Radio import PacketType
+import Drivers.Radio as radio
+from Drivers.Radio import PacketType
 import struct
 from config import *
 from Statistics.StatsBuffer import StatsBuffer
@@ -8,6 +8,7 @@ import ulab.numpy as np
 from Statistics import Util as util
 from mpy_decimal import *
 from RadioMessages.GPSData import *
+from Drivers.Radio import FormatStrings
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -54,23 +55,30 @@ async def rover_loop():
                 debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
-                    debug("Sending NMEA data to base station...")
-                    #TODO: Proper serialization maybe
-                    #TODO: Check if this works over iterables or if we need to call np.array() first
-                    print("GPS TIME:", GPS.timestamp_utc)
-                    print("GPS_HDOP:", GPS.sats)
-                    if GPS.fix_quality in ["R", "r"]:
-                        GPS.fix_quality = 4 #makes things easier
-                    payload = GPSData(
-                        datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
-                        util.mean(GPS_SAMPLES["lats"].circularBuffer),
-                        util.mean(GPS_SAMPLES["longs"].circularBuffer),
-                        GPS.altitude_m,
-                        GPS.fix_quality,
-                        GPS.hdop,
-                        int(GPS.satellites)
-                        )
-                    radio.broadcast_data(PacketType.NMEA, payload.serialize())
+                    # send RTS
+                    radio.broadcast_data(PacketType.RTS, bytes())
+
+        elif packet.type == PacketType.CTS and struct.unpack(FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
+            debug("Sending NMEA data to base station...")
+            #TODO: Proper serialization maybe
+            print("GPS TIME:", GPS.timestamp_utc)
+            print("GPS_HDOP:", GPS.sats)
+            #if GPS.fix_quality in ["R", "r"]:
+            #    GPS.fix_quality = 4 #makes things easier
+            payload = GPSData(
+                datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
+                util.mean(GPS_SAMPLES["lats"].circularBuffer),
+                util.mean(GPS_SAMPLES["longs"].circularBuffer),
+                GPS.altitude_m,
+                GPS.fix_quality,
+                GPS.hdop,
+                int(GPS.satellites)
+                )
+            radio.broadcast_data(PacketType.NMEA, payload.serialize())
+            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
+            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
+            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
+            # radio.broadcast_data(PacketType.NMEA, payload.serialize())
 
         # If incoming message is tagged as an ACK
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
