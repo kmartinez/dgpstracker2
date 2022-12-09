@@ -1,11 +1,16 @@
 from config import *
-from debug import *
+
+def debug(
+    *values: object,
+) -> None:
+   if DEBUG["LOGGING"]["MAIN_FILE"]:
+      print(*values)
 
 if __name__ == "__main__":
    #input()
    if DEVICE_ID == 0:
-      debug("I'm a base station!")
+      debug("BASE_STATION_MODE")
       exec(open('./Base.py').read())
    else:
-      debug("I'm a rover!")
+      debug("ROVER_MODE")
       exec(open('./Rover.py').read())

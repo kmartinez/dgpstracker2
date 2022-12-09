@@ -8,7 +8,6 @@ import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not devi
 # import Drivers.Radio as radio
 # from Drivers.Radio import PacketType
 import asyncio
-from debug import *
 from config import *
 import digitalio
 from RadioMessages.GPSData import *
@@ -22,6 +21,13 @@ import adafruit_fona.adafruit_fona_socket as cellular_socket
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
+
+def debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["LOGGING"]["BASE"]:
+        print(*values)
 
 #this is a global variable so i can still get the data even if the rover loop times out
 rover_data: dict[int, GPSData] = {}
@@ -43,7 +49,6 @@ async def get_corrections():
     for i in range(5):
         d = await RTCM3_UART.aysnc_read_RTCM3_packet_forever()
         data += d
-        #debug("SINGLE RTCM3 MESSAGE:", d)
     debug("RTCM3_RECEIVED")
     return bytes(data)
 
@@ -52,28 +57,24 @@ async def rtcm3_loop():
     """
     debug("Beginning rtcm3_loop")
     while None in rover_data.values(): #Finish running when rover data is done
-        # debug("RTCM_LOOP_START")
         gps_data = await get_corrections()
-        # debug("GPS_RAW_BYTES:", gps_data)
         radio.broadcast_data(PacketType.RTCM3, gps_data)
-        # debug("RTCM3_RADIO_BROADCAST_COMPLETE")
-        #await asyncio.sleep(1)
     debug("End RTCM3 Loop")
 
 async def rover_data_loop():
     """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
     """
-    debug("Beginning rover_data_loop")
+    debug("BEGIN_ROVER_DATA_LOOP")
     while None in rover_data.values(): #While there are any Nones in rover_data
         try:
             packet = await radio.receive_packet()
+            debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
         except radio.ChecksumError:
-            debug("CONTROL_ROVER_LOOP_PKT_CHECKSUM_FAIL")
+            debug("ROVER_LOOP_PKT_CHECKSUM_FAIL")
             packet = None
-        debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
         if packet is None: continue
         elif packet.type == PacketType.NMEA:
-            debug("Received NMEA...")
+            debug("NMEA_RECEIVED")
             debug("FROM_SENDER:", packet.sender)
             if not rover_data[packet.sender]:
                 debug("Received NMEA from a new rover,", packet.sender)

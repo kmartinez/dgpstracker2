@@ -17,7 +17,6 @@ import io
 import Drivers.AsyncUART as AsyncUART
 import Drivers.Radio as radio
 from Drivers.Radio import PacketType
-from debug import *
 from config import *
 from mpy_decimal import *
 
@@ -41,7 +40,21 @@ RTC.alarm1_interrupt = True
 RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
 
 '''GPS parser'''
-GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=True)
+GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=DEBUG["LOGGING"]["GPS"])
+
+def debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["LOGGING"]["DEVICE"]:
+        print(*values)
+
+def extended_debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["EXTENDED_LOGGING"]["GPS"]:
+        print(*values)
 
 def update_GPS():
     """Validates NMEA and checks for quality 4.
@@ -52,42 +65,46 @@ def update_GPS():
     """
     # May need timeout
 
-    # GPS_UART.reset_input_buffer()
-    # debug("JUNK_LINE:", GPS_UART.readline()) # BAD DATA (LIKELY GARBLED)
+    debug("GPS_UPDATE_STARTED")
+    extended_debug("GPS_BUFFER_SIZE_BEFORE_UPDATE:", GPS_UART.in_waiting)
     GPS.update() #Potentially garbage line so we continue anyway even if it doesn't actually work
 
     while GPS.update():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
     if (DEBUG["FAKE_DATA"]):
         #Fake data
-        debug("FAKE_DATA_MODE_ON")
+        print("WARNING_FAKE_DATA_MODE_ON")
         GPS.latitude = DecimalNumber("59.3")
         GPS.longitude = DecimalNumber("-1.2")
         GPS.altitude_m = 5002.3
         GPS.timestamp_utc = time.localtime(time.time())
-        GPS._mode_indicator = "R"
-        GPS.hdop = 0.01
+        GPS.fix_quality = 4
+        GPS.hdop = "0.01"
         GPS.satellites = "9"
     
-    debug("LAT:", GPS.latitude)
-    debug("LONG:", GPS.longitude)
-    debug("QUALITY:", GPS.fix_quality)
-    debug("PACKET TYPE:",GPS.fix_quality_3d)
-    debug("STUFF_IN_BUFFER:", GPS_UART.in_waiting)
+    extended_debug("LAT:", GPS.latitude)
+    extended_debug("LONG:", GPS.longitude)
+    extended_debug("ALTITUDE:", GPS.altitude_m)
+    extended_debug("TIMESTAMP:", GPS.timestamp_utc)
+    extended_debug("QUALITY:", GPS.fix_quality)
+    extended_debug("HDOP_STR:",GPS.horizontal_dilution)
+    extended_debug("SATELLITES_STR:", GPS.satellites)
+    extended_debug("REMAINING_BUFFER_SIZE:", GPS_UART.in_waiting)
 
 
     # If NMEA received back
     if GPS.fix_quality == 4 or GPS.fix_quality == 5:
-        debug("Quality 4 NMEA data received from GPS")
+        debug("NMEA_QUALITY_SUCCESS")
         return GPS.nmea_sentence
     else:
-        debug("NMEA not quality R")
+        debug("NMEA_QUALITY_FAIL")
     return None
 
 def shutdown():
     """Resets timer, causing shutdown of device
     """
     # SHUTDOWN SCRIPT USING RTC I2C STUFF
+    debug("SHUTDOWN_INITIATED")
     RTC.alarm2_status = False
     RTC.alarm1_status = False
 

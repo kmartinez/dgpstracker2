@@ -1,8 +1,22 @@
 import busio
 import microcontroller
 import asyncio
-from debug import *
 import time
+from config import *
+
+def debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["LOGGING"]["ASYNC_UART"]:
+        print(*values)
+
+def extended_debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["EXTENDED_LOGGING"]["ASYNC_UART"]:
+        print(*values)
 
 class AsyncUART(busio.UART):
     def __init__(
@@ -27,8 +41,10 @@ class AsyncUART(busio.UART):
         """
         while (self.in_waiting < 1): #So this exists apparently whoops
             await asyncio.sleep(0)
-        
-        return super().read(1)[0] #read returns a byte array so we return the first index
+        output = super().read(1)[0] #read returns a byte array so we return the first index
+
+        extended_debug("ASYNC_UART_GET_BYTE:", output)
+        return output
 
     async def async_read_forever(self, bytes_requested: int | None = None) -> bytes | None:
         """Reads until it gets `bytes_requested` number of bytes.
@@ -71,6 +87,7 @@ class AsyncUART(busio.UART):
             debug("TIMEOUT_REACHED")
             if len(output) < 1: output = None
         
+        debug("ASYNC_UART_READ_OUTPUT:", output)
         return output
 
     async def async_read_until_forever(self, bytes_to_match: bytes) -> bytes:
@@ -86,6 +103,7 @@ class AsyncUART(busio.UART):
         while output[-len(bytes_to_match):] != bytes_to_match:
             output.append(await self.__async_get_byte_forever())
         
+        debug("ASYNC_UART_READ_UNTIL_OUTPUT:", output)
         return bytes(output)
 
     async def aysnc_read_RTCM3_packet_forever(self) -> bytes:
@@ -96,8 +114,10 @@ class AsyncUART(busio.UART):
         :rtype: bytes
         """
         output = await self.async_read_until_forever(b'\xd3\x00')
+        output = b'\xd3\x00' + output[:-2]
 
-        return bytes(b'\xd3\x00' + output[:-2])
+        debug("ASYNC_UART_READ_RTCM3_OUTPUT:", output)
+        return bytes(output)
 
     async def async_readline_forever(self) -> bytes:
         """Reads asynchronously until `\\n` (included in output).
@@ -105,4 +125,7 @@ class AsyncUART(busio.UART):
         :return: Line that was read
         :rtype: bytes
         """
-        return await self.async_read_until_forever(b'\n')
+        output = await self.async_read_until_forever(b'\n')
+
+        debug("ASYNC_UART_READLINE_OUTPUT:", output)
+        return output

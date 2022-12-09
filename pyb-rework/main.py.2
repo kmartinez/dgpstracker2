@@ -1,16 +1,15 @@
 import Drivers.Radio as radio
 from Drivers.Radio import PacketType
 from config import *
-from debug import *
 import asyncio
 
 if __name__ == "__main__":
     if DEVICE_ID == 0:
         while True:
-            debug("I AM A RECEIVER")
+            print("I AM A RECEIVER")
             packet = asyncio.run(radio.receive_packet())
             print("PAYLOAD:", packet.payload)
     else:
         while True:
-            debug("I AM A SENDER")
+            print("I AM A SENDER")
             radio.broadcast_data(PacketType.NMEA, b"I_AM_A_TEST_MESSAGE\nLINE_2\r\nLINE_3")

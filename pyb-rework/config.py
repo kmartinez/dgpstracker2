@@ -7,7 +7,21 @@ DEVICE_ID = 1
 ROVER_COUNT = 1
 
 DEBUG =  {
-    "LOGGING": True, #Turns on debug print() statements
+    "LOGGING": {
+        "BASE": True,
+        "DEVICE": True,
+        "ROVER": True,
+        "ASYNC_UART": True,
+        "RADIO": True,
+        "MAIN_FILE": True,
+        "GPS": True
+    }, #Turns on debug print() statements
+    "EXTENDED_LOGGING": {
+        "GPS": True,
+        "ASYNC_UART": False,
+        "RADIO": False,
+        "GPS_DATA": False
+    },
     "FAKE_DATA": False #Ignores actual GPS data and just uses fake static data instead
 }
 

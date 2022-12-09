@@ -4,7 +4,6 @@ import binascii
 import Drivers.AsyncUART as AsyncUART
 import board
 from config import *
-from debug import *
 
 UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, receiver_buffer_size=2048)
 
@@ -27,6 +26,20 @@ class PacketType():
     # RETRANSMIT = 6
     # FINISHED_TRANSMIT = 7
 
+def debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["LOGGING"]["RADIO"]:
+        print(*values)
+
+def extended_debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["EXTENDED_LOGGING"]["RADIO"]:
+        print(*values)
+
 class RadioPacket:
     '''Helper class for packing data into a nice format'''
     type: PacketType
@@ -45,14 +58,19 @@ class RadioPacket:
         :return: Serialized byte array
         :rtype: bytes
         """
-        #debug("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
-        payload = struct.pack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, self.type, self.sender)
-        payload += self.payload
-        #debug("SERIALIZED_PAYLORD_NO_CHECKSUM:", payload)
-        checksum = binascii.crc32(payload)
-        debug("CHECKSUM_SEND:", checksum)
-        output = payload + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
-        #debug("FULL_SERIALIZED_PACKET:", output)
+        extended_debug(f"""SERIALIZE_PACKET:
+        PAYLOAD: {self.payload}
+        TYPE_INT: {self.type}
+        SENDER_INT: {self.sender}""")
+
+        serialized = struct.pack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, self.type, self.sender)
+        serialized += self.payload
+        checksum = binascii.crc32(serialized)
+        output = serialized + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
+
+        extended_debug("SERIALIZED_PACKET_NO_CHECKSUM:", serialized)
+        extended_debug("SERIALIZE_PACKET_CHECKSUM_INT:", checksum)
+        extended_debug("FULL_SERIALIZED_PACKET:", output)
         return output
     
     def deserialize(data: bytes):
@@ -65,19 +83,25 @@ class RadioPacket:
         :return: Deserialized packet
         :rtype: RadioPacket
         """
-        #debug("RAW:", data)
+        extended_debug("DESERIALIZE_PACKET_RAW_BYTES:", data)
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
         payload = data[:-4]
-        debug("CHECKSUM:", checksum)
-        debug("PAYLOAD:", payload)
-        debug("CALCULATED_CHECKSUM:", binascii.crc32(payload))
+        extended_debug("DESERIALIZE_PACKET_CHECKSUM_INT:", checksum)
+        extended_debug("DESERIALIZE_PACKET_NO_CHECKSUM:", payload)
+        extended_debug("DESERIALIZE_PACKET_CALCULATED_CHECKSUM:", binascii.crc32(payload))
         if binascii.crc32(payload) != checksum:
             raise ChecksumError
         
         header = payload[:2]
         payload = payload[2:]
+        extended_debug("DESERIALIZE_PACKET_HEADER_RAW:", header)
+        extended_debug("DESERIALIZE_PACKET_DATA:", payload)
+
 
         packetType, sender = struct.unpack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, header)
+        extended_debug(f"""HEADER_INFO:
+        PACKET_TYPE_INT: {packetType}
+        SENDER_INT: {sender}""")
 
         return RadioPacket(packetType, payload, sender)
 
@@ -93,8 +117,9 @@ async def receive_packet() -> RadioPacket:
         marker = None
         debug("WAIT_FOR_MARKER")
         await UART.async_read_until_forever(bytes([0x80,0x80]))
+        debug("MARKER_FOUND")
         size = await UART.async_read_forever(4)
-        debug("RAWSIZE:", size)
+        debug("SIZE_VALUE_FOUND:", size)
         size = struct.unpack('I', size)[0]
         if size == 0 or size > 1000:
             debug("PACKET_SIZE_INVALID")
@@ -102,11 +127,12 @@ async def receive_packet() -> RadioPacket:
         data = await UART.async_read(size)
         #debug("RAWDATA:", data)
         if data is None or len(data) < size:
-            debug("PACKET_SIZE_WRONG")
+            debug("PACKET_SIZE_DOES_NOT_MATCH_DATA_SIZE")
             continue #Packet is garbage, start again
         packet = RadioPacket.deserialize(data)
     
     #If we get here, packet was deserialized successfully
+    debug("PACKET_RECEIVED")
     return packet
 
 def broadcast_packet(packet: RadioPacket):
@@ -115,14 +141,13 @@ def broadcast_packet(packet: RadioPacket):
     :param packet: Packet to send
     :type packet: RadioPacket
     """
-    debug("BROADCASTING!!!")
+    debug("SENDING_PACKET")
     packetRaw = packet.serialize()
     size = len(packetRaw)
     sizeRaw = struct.pack(FormatStrings.PACKET_LENGTH, size)
     marker = struct.pack(FormatStrings.PACKET_MARKER, 0x80)
     UART.write(marker + marker + sizeRaw + packetRaw)
-    #debug("ENTIRE SENT DATA:", (marker + marker + sizeRaw + packetRaw))
-    debug(f'\n\nMARKERS: {marker + marker}\n sizeRaw: {sizeRaw}\n packetRaw: {packetRaw}\n\n')
+    debug("PACKET_SENT")
 
 def broadcast_data(type: PacketType, payload: bytes):
     """Creates a packet for you and send it over radio

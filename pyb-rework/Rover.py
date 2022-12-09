@@ -22,6 +22,13 @@ GPS_SAMPLES: dict[str, StatsBuffer] = {
     "longs": StatsBuffer(AVERAGING_SAMPLE_SIZE)
 }
 
+def debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["LOGGING"]["ROVER"]:
+        print(*values)
+
 def update_gps_with_rtcm3(rtcm3: bytes) -> str | None:
     """Sends RTCM3 data to GPS then updates GPS object with any new serial data
 
@@ -30,10 +37,7 @@ def update_gps_with_rtcm3(rtcm3: bytes) -> str | None:
     :return: Last GPS Sentence or None if no update occured
     :rtype: str | None
     """
-    #debug("RTCM3:", rtcm3)
     RTCM3_UART.write(rtcm3)
-
-    #nmea = pynmea2.parse(raw)
     return update_GPS()
 
 async def rover_loop():
@@ -47,7 +51,7 @@ async def rover_loop():
     # If RTCM3 received, get NMEA and send it
     # If ACK received, shutdown
     while True:
-        debug("Waiting for incoming RTCM3...")
+        debug("WAITING_FOR_RTCM3")
         try:
             packet = await radio.receive_packet()
         except radio.ChecksumError:
@@ -55,9 +59,8 @@ async def rover_loop():
         
         # If incoming message is tagged as RTCM3
         if packet.type == PacketType.RTCM3:
-            debug("RTCM3 received, waiting for NMEA response")
+            debug("RTCM3_SUCCESS, WAITING_FOR_NMEA")
             sentence = update_gps_with_rtcm3(packet.payload)
-            #debug("GPS SENTENCE", GPS.nmea_sentence)
             if sentence is not None:
                 GPS_SAMPLES["lats"].append(GPS.latitude)
                 GPS_SAMPLES["longs"].append(GPS.longitude)
@@ -68,12 +71,8 @@ async def rover_loop():
                 debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
-                    debug("Sending NMEA data to base station...")
+                    debug("NMEA_SENDING")
                     #TODO: Proper serialization maybe
-                    print("GPS TIME:", GPS.timestamp_utc)
-                    print("GPS_HDOP:", GPS.sats)
-                    #if GPS.fix_quality in ["R", "r"]:
-                    #    GPS.fix_quality = 4 #makes things easier
                     payload = GPSData(
                         datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),

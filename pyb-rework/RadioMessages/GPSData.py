@@ -1,7 +1,14 @@
 import json
 from adafruit_datetime import datetime
 from mpy_decimal import DecimalNumber
-from debug import *
+from config import *
+
+def extended_debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["EXTENDED_LOGGING"]["GPS_DATA"]:
+        print(*values)
 
 class GPSData:
     timestamp: datetime
@@ -36,7 +43,6 @@ class GPSData:
         :return: self as bytes
         :rtype: bytes
         """
-        debug("JSON DUMP:\n",json.dumps(self))
         data = {
             "timestamp": self.timestamp.isoformat(),
             "latitude": self.latitude,
@@ -46,9 +52,11 @@ class GPSData:
             "hdop": self.hdop,
             "sats": self.sats
         }
-        debug("JSON_TIMESTAMP?:", self.timestamp.isoformat())
-        debug("JSON_DUMP_2:", json.dumps(data))
-        return json.dumps(data).encode('utf-8')
+        output = json.dumps(data).encode('utf-8')
+
+        extended_debug("SERIALIZE_GPSDATA_JSON_DUMP_DICTIONARY:", json.dumps(data))
+        extended_debug("SERIALIZE_GPSDATA_BYTES_OUTPUT:", output)
+        return output
 
     def deserialize(byte_arr: bytes) -> dict:
         """Deserializes a byte array to a dict, *NOT A GPSDATA OBJECT*
@@ -58,5 +66,8 @@ class GPSData:
         :return: Dict representing a GPSData object (ready to send over json)
         :rtype: dict
         """
-        debug(byte_arr)
-        return json.loads(bytes.decode(byte_arr, 'utf-8'))
+        output = json.loads(bytes.decode(byte_arr, 'utf-8'))
+
+        extended_debug("DESERIALIZE_GPSDATA_BYTES:", byte_arr)
+        extended_debug("DESERIALIZE_GPSDATA_DICT_OUTPUT:", output)
+        return output
