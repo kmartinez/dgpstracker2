@@ -74,7 +74,7 @@ async def rover_loop():
                 util.mean(GPS_SAMPLES["longs"].circularBuffer),
                 GPS.altitude_m,
                 GPS.fix_quality,
-                GPS.hdop,
+                float(GPS.horizontal_dilution),
                 int(GPS.satellites)
                 )
             radio.broadcast_data(PacketType.NMEA, payload.serialize())
