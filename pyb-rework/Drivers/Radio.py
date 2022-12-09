@@ -38,9 +38,13 @@ class RadioPacket:
         self.payload = bytes(payload) #for many resiliency
         self.sender = sender_ID
     
-    def serialize(self):
-        '''Serializes a data packet into a byte array ready for sending over radio.
-        Includes checksum.'''
+    def serialize(self) -> bytes:
+        """Serializes a data packet into a byte array ready for sending over radio.
+        Includes checksum.
+
+        :return: Serialized byte array
+        :rtype: bytes
+        """
         #debug("PAYLOAD_AFTER_CONSTRUCTOR:", self.payload)
         payload = struct.pack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, self.type, self.sender)
         payload += self.payload
@@ -52,8 +56,15 @@ class RadioPacket:
         return output
     
     def deserialize(data: bytes):
-        '''Deserializes a received byte array into a Packet class.
-        Includes checksum validation (can error)'''
+        """Deserializes a received byte array into a packet class.
+        Includes checksum validation (raises exception on incorrect checksum)
+
+        :param data: Bytes to deserialize
+        :type data: bytes
+        :raises ChecksumError: Error indicating the packet was invalid
+        :return: Deserialized packet
+        :rtype: RadioPacket
+        """
         #debug("RAW:", data)
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
         payload = data[:-4]
@@ -70,9 +81,13 @@ class RadioPacket:
 
         return RadioPacket(packetType, payload, sender)
 
-async def receive_packet():
-    '''Receives a single valid radio packet asynchronously.
-    (async waits until one is received, that is)'''
+async def receive_packet() -> RadioPacket:
+    """Receives a single valid radio packet asynchronously.
+    (does not timeout, but can checksum error)
+
+    :return: Received packet
+    :rtype: RadioPacket
+    """
     packet = None
     while packet is None:
         marker = None
@@ -95,7 +110,11 @@ async def receive_packet():
     return packet
 
 def broadcast_packet(packet: RadioPacket):
-    '''Serializes and sends a `RadioPacket` over the radio'''
+    """Broadcasts a RadioPacket over the serial connected radio
+
+    :param packet: Packet to send
+    :type packet: RadioPacket
+    """
     debug("BROADCASTING!!!")
     packetRaw = packet.serialize()
     size = len(packetRaw)
@@ -106,9 +125,19 @@ def broadcast_packet(packet: RadioPacket):
     debug(f'\n\nMARKERS: {marker + marker}\n sizeRaw: {sizeRaw}\n packetRaw: {packetRaw}\n\n')
 
 def broadcast_data(type: PacketType, payload: bytes):
-    '''Creates a packet and broadcasts it over radio'''
+    """Creates a packet for you and send it over radio
+
+    :param type: Type of data
+    :type type: PacketType
+    :param payload: Serialized data (serialized to bytes)
+    :type payload: bytes
+    """
     broadcast_packet(RadioPacket(type, payload, DEVICE_ID))
 
 def send_ack(sender: int):
-    '''Broadcasts an ACK intended for `sender`'''
+    """Sends an ACK packet to a specified sender (0-255)
+
+    :param sender: ID of device ACK is aimed for (original sender)
+    :type sender: int
+    """
     broadcast_data(PacketType.ACK, struct.pack(FormatStrings.PACKET_DEVICE_ID, sender))

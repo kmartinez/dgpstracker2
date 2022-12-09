@@ -50,7 +50,6 @@ def update_GPS():
     :return: Retutrns raw data or `None`
     :rtype: `GPS.nmea_sentence`
     """
-    ''''''
     # May need timeout
 
     # GPS_UART.reset_input_buffer()

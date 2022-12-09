@@ -30,7 +30,12 @@ class GPSData:
         self.hdop = hdop
         self.sats = sats
 
-    def serialize(self):
+    def serialize(self) -> bytes:
+        """Serializes self to json and then to bytes ready to send over radio
+
+        :return: self as bytes
+        :rtype: bytes
+        """
         debug("JSON DUMP:\n",json.dumps(self))
         data = {
             "timestamp": self.timestamp.isoformat(),
@@ -45,6 +50,13 @@ class GPSData:
         debug("JSON_DUMP_2:", json.dumps(data))
         return json.dumps(data).encode('utf-8')
 
-    def deserialize(byte_arr: bytes):
+    def deserialize(byte_arr: bytes) -> dict:
+        """Deserializes a byte array to a dict, *NOT A GPSDATA OBJECT*
+
+        :param byte_arr: Bytes to deserialize
+        :type byte_arr: bytes
+        :return: Dict representing a GPSData object (ready to send over json)
+        :rtype: dict
+        """
         debug(byte_arr)
         return json.loads(bytes.decode(byte_arr, 'utf-8'))

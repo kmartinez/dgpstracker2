@@ -22,9 +22,14 @@ GPS_SAMPLES: dict[str, StatsBuffer] = {
     "longs": StatsBuffer(AVERAGING_SAMPLE_SIZE)
 }
 
-def update_gps_with_rtcm3(rtcm3):
-    '''If rtcm3 data is received, send it to the GPS and wait for an NMEA response. If no NMEA response if found, `pass`.
-    If NMEA data is found, send it to the base station and look for an ACK in return. If not ACK then repeat this loop until timeout.'''
+def update_gps_with_rtcm3(rtcm3: bytes) -> str | None:
+    """Sends RTCM3 data to GPS then updates GPS object with any new serial data
+
+    :param rtcm3: RTCM3 bytes
+    :type rtcm3: bytes
+    :return: Last GPS Sentence or None if no update occured
+    :rtype: str | None
+    """
     #debug("RTCM3:", rtcm3)
     RTCM3_UART.write(rtcm3)
 
@@ -32,6 +37,11 @@ def update_gps_with_rtcm3(rtcm3):
     return update_GPS()
 
 async def rover_loop():
+    """Main loop of each rover.
+    Waits for radio message and checks its type.
+    If it's RTCM3, send back NMEA data.
+    If it's an ACK for us, shutdown the system because the base has our stuff
+    """
     # Rover needs to:
     # Receive packet
     # If RTCM3 received, get NMEA and send it
