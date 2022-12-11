@@ -20,7 +20,7 @@ from Drivers.Radio import PacketType
 from config import *
 from mpy_decimal import *
 
-GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=256)
+GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048)
 '''GPS NMEA UART for communications'''
 
 RTCM3_UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D1, board.D0, baudrate=115200, receiver_buffer_size=2048)
@@ -37,7 +37,7 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 '''RTC timer'''
 #Set alarm for 3 hrs from previous alarm
 RTC.alarm1_interrupt = True
-RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+TIME_BETWEEN_WAKEUP), "monthly")
+RTC.alarm1 = (time.localtime(time.mktime(RTC.datetime)+60), "monthly")
 
 '''GPS parser'''
 GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=DEBUG["LOGGING"]["GPS"])

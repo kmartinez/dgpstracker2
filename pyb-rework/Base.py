@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # loop.run_forever()
     # debug("Finished ASYNC...")
 
-    fona = FONA(GSM_UART, GSM_RST_PIN)
+    fona = FONA(GSM_UART, GSM_RST_PIN, debug=True)
     debug("FONA VERSION:", fona.version)
 
     # Initialize cellular data network
@@ -138,9 +138,8 @@ if __name__ == "__main__":
     payload = []
     for k in rover_data:
         v = rover_data[k]
-        v['id'] = k
-        v['imei'] = fona.iemi
+        v['rover_id'] = k
         payload.append(v)
 
-    requests.post("http://google.com/api/ingest", json=payload)
+    requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=payload)
     shutdown()
