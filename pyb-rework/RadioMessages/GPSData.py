@@ -58,15 +58,18 @@ class GPSData:
         extended_debug("SERIALIZE_GPSDATA_BYTES_OUTPUT:", output)
         return output
 
-    def deserialize(byte_arr: bytes) -> dict:
-        """Deserializes a byte array to a dict, *NOT A GPSDATA OBJECT*
+    def deserialize(byte_arr: bytes) -> list(dict):
+        """Deserializes a byte array to a list of dicts, *NOT A GPSDATA OBJECT*
 
         :param byte_arr: Bytes to deserialize
         :type byte_arr: bytes
         :return: Dict representing a GPSData object (ready to send over json)
         :rtype: dict
         """
-        output = json.loads(bytes.decode(byte_arr, 'utf-8'))
+        output = []
+        data = bytes.decode(byte_arr, 'utf-8').split('|||')
+        for d in data:
+            output.append(json.loads(d))
 
         extended_debug("DESERIALIZE_GPSDATA_BYTES:", byte_arr)
         extended_debug("DESERIALIZE_GPSDATA_DICT_OUTPUT:", output)

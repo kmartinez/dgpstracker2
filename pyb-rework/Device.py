@@ -37,7 +37,7 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 '''RTC timer'''
 #Set alarm for 3 hrs from previous alarm
 RTC.alarm1_interrupt = True
-RTC.alarm1 = (time.localtime(time.mktime(RTC.datetime)+300), "hourly")
+RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+600), "hourly")
 
 '''GPS parser'''
 GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=DEBUG["LOGGING"]["GPS"])

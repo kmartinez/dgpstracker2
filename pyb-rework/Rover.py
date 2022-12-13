@@ -9,6 +9,7 @@ from Statistics import Util as util
 from mpy_decimal import *
 from RadioMessages.GPSData import *
 from Drivers.Radio import FormatStrings
+from Drivers.FileFuncs import *
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -65,14 +66,13 @@ async def rover_loop():
                 GPS_SAMPLES["lats"].append(GPS.latitude)
                 GPS_SAMPLES["longs"].append(GPS.longitude)
 
-                #no do standard dev on 1 sample pls
+                # Make sure standard deviation is only taken once a certain number of readings has been raken in
                 if (len(GPS_SAMPLES["longs"].circularBuffer) < AVERAGING_SAMPLE_SIZE): continue
 
                 debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
                     debug("NMEA_SENDING")
-                    #TODO: Proper serialization maybe
                     payload = GPSData(
                         datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),
@@ -82,7 +82,20 @@ async def rover_loop():
                         float(GPS.horizontal_dilution),
                         int(GPS.satellites)
                         )
-                    radio.broadcast_data(PacketType.NMEA, payload.serialize())
+
+                    # Serialise payload
+                    serialised_payload = payload.serialize()
+
+                    # Save data
+                    store_data(serialised_payload)
+
+                    # Broadcast all unsent NMEA messages
+                    while data := read_data(UNSENT):
+                        serialised_payload += FILE_DELIMITER + data
+                    
+                    radio.broadcast_data(PacketType.NMEA, serialised_payload)
+                    # Set RTC datetime to GPS time
+                    RTC.datetime = GPS.timestamp_utc
 
         # If incoming message is tagged as an ACK
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
