@@ -76,6 +76,9 @@ async def rover_data_loop():
         elif packet.type == PacketType.NMEA:
             debug("NMEA_RECEIVED")
             debug("FROM_SENDER:", packet.sender)
+            if packet.sender < 0 or packet.sender > len(rover_data) - 1:
+                raise ValueError(f"Rover has ID, {packet.sender}, is not within the bounds {[0, ROVER_COUNT]}\n"
+                                + f"Please check the rover ID and the ROVER_COUNT in config")
             if not rover_data[packet.sender]:
                 debug("Received NMEA from a new rover,", packet.sender)
                 rover_data[packet.sender] = GPSData.deserialize(packet.payload) #TODO: validation maybe?
@@ -141,5 +144,8 @@ if __name__ == "__main__":
         v['rover_id'] = k
         payload.append(v)
 
-    requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=payload)
+    try:
+        requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=payload)
+    except:
+        shutdown()
     shutdown()
