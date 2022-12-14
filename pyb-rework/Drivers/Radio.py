@@ -6,6 +6,9 @@ import board
 from config import *
 
 UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, receiver_buffer_size=2048)
+MAX_MSG_SIZE = 5000
+MAX_PAYLOAD_SIZE = 5120
+CHECKSUM_LEN = 4
 
 class ChecksumError(Exception):
     pass
@@ -84,8 +87,8 @@ class RadioPacket:
         :rtype: RadioPacket
         """
         extended_debug("DESERIALIZE_PACKET_RAW_BYTES:", data)
-        checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
-        payload = data[:-4]
+        checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-CHECKSUM_LEN:])[0]
+        payload = data[:-CHECKSUM_LEN]
         extended_debug("DESERIALIZE_PACKET_CHECKSUM_INT:", checksum)
         extended_debug("DESERIALIZE_PACKET_NO_CHECKSUM:", payload)
         extended_debug("DESERIALIZE_PACKET_CALCULATED_CHECKSUM:", binascii.crc32(payload))
@@ -121,7 +124,7 @@ async def receive_packet() -> RadioPacket:
         size = await UART.async_read_forever(4)
         debug("SIZE_VALUE_FOUND:", size)
         size = struct.unpack('I', size)[0]
-        if size == 0 or size > 1000:
+        if size == 0 or size > MAX_PAYLOAD_SIZE + CHECKSUM_LEN:
             debug("PACKET_SIZE_INVALID")
             continue
         data = await UART.async_read(size)
