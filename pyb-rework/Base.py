@@ -18,9 +18,12 @@ from adafruit_fona.fona_3g import FONA3G
 import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
 import os
+from microcontroller import watchdog
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
+GSM_ENABLE_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.A0)
+GSM_ENABLE_PIN.switch_to_output(value=False)
 
 def debug(
     *values: object,
@@ -28,6 +31,9 @@ def debug(
     
     if DEBUG["LOGGING"]["BASE"]:
         print(*values)
+
+def enable_fona():
+    GSM_ENABLE_PIN.value = True
 
 #this is a global variable so i can still get the data even if the rover loop times out
 finished_rovers: dict[int, bool] = {}
@@ -55,6 +61,11 @@ async def clock_calibrator():
     while not GPS.update():
         pass
     RTC.datetime = GPS.timestamp_utc
+
+async def feed_watchdog():
+    while len(finished_rovers) < ROVER_COUNT:
+        watchdog.feed()
+        await asyncio.sleep(0)
 
 async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
@@ -108,7 +119,7 @@ if __name__ == "__main__":
     #end
     try:
         debug("Begin ASYNC...")
-        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), clock_calibrator()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), clock_calibrator(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
         debug("Finished ASYNC...")
     except asyncio.TimeoutError:
         debug("Timeout!")
@@ -119,7 +130,7 @@ if __name__ == "__main__":
     # loop.create_task(rtcm3_loop())
     # loop.run_forever()
     # debug("Finished ASYNC...")
-
+    enable_fona()
     fona = FONA(GSM_UART, GSM_RST_PIN, debug=True)
     debug("FONA VERSION:", fona.version)
 

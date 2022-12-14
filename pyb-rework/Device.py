@@ -36,8 +36,26 @@ I2C: busio.I2C = board.I2C()
 RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 '''RTC timer'''
 #Set alarm for 3 hrs from previous alarm
+
+def shutdown():
+    """Resets timer, causing shutdown of device
+    """
+    # SHUTDOWN SCRIPT USING RTC I2C STUFF
+    debug("SHUTDOWN_INITIATED")
+    RTC.alarm2_status = False
+    RTC.alarm1_status = False
+
 RTC.alarm1_interrupt = True
-RTC.alarm1 = (time.localtime(time.mktime(RTC.datetime)+300), "hourly")
+if RTC.alarm1_status:
+    dt_after_alarm = False
+    alarm_time = RTC.alarm1[0]
+    alarm_time.year = RTC.datetime.year
+    alarm_time.month = RTC.datetime.month
+    if time.mktime(alarm_time) > time.mktime(RTC.datetime):
+        #WATCHDOG_HAS_RESET
+        shutdown()
+
+    RTC.alarm1 = (time.localtime(time.mktime(RTC.datetime)+300), "hourly")
 
 '''GPS parser'''
 GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=DEBUG["LOGGING"]["GPS"])
@@ -99,14 +117,6 @@ def update_GPS():
     else:
         debug("NMEA_QUALITY_FAIL")
     return None
-
-def shutdown():
-    """Resets timer, causing shutdown of device
-    """
-    # SHUTDOWN SCRIPT USING RTC I2C STUFF
-    debug("SHUTDOWN_INITIATED")
-    RTC.alarm2_status = False
-    RTC.alarm1_status = False
 
 #ACTUAL MAIN CODE THAT RUNS ON IMPORT
 # Initialise the device

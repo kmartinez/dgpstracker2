@@ -10,6 +10,7 @@ from mpy_decimal import *
 from RadioMessages.GPSData import *
 from Drivers.Radio import FormatStrings
 import os
+from microcontroller import watchdog
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -58,6 +59,7 @@ async def rover_loop():
     global sent_data_start_pos
     while True:
         debug("WAITING_FOR_RTCM3")
+        watchdog.feed()
         try:
             packet = await radio.receive_packet()
         except radio.ChecksumError:

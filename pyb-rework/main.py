@@ -2,6 +2,8 @@ from config import *
 import os
 import Device
 import traceback
+from microcontroller import watchdog
+from watchdog import WatchDogMode
 
 def debug(
     *values: object,
@@ -10,6 +12,9 @@ def debug(
       print(*values)
 
 if __name__ == "__main__":
+   watchdog.timeout = 120
+   watchdog.mode = WatchDogMode.RESET
+   watchdog.feed()
    try:
       if "data_entries" not in os.listdir("/"):
          os.mkdir("/data_entries")
