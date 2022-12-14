@@ -77,7 +77,7 @@ async def rover_data_loop():
                 raise ValueError(f"Rover has ID, {packet.sender}, is not within bounds (>0)\n"
                                 + f"Please check the rover ID and the ROVER_COUNT in config")
             data = GPSData.from_json(packet.payload.decode('utf-8'))
-            with open("/data_entries/" + str(packet.sender) + "-" + data["timestamp"], "w") as file:
+            with open("/data_entries/" + str(packet.sender) + "-" + data["timestamp"].replace(":", "_"), "w") as file:
                 data['rover-id'] = packet.sender
                 file.write(json.dumps(data) + '\n')
                 debug("Sending ACK to rover", packet.sender)
@@ -145,7 +145,8 @@ if __name__ == "__main__":
             #TODO: RAM limit
 
     try:
-        response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
+        #response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
+        requests.post("http://google.com/glacsweb/api/ingest", json=http_payload)
         #TODO: check if response OK
         paths_sent = os.listdir("/data_entries/")
         for path in paths_sent:

@@ -10,7 +10,6 @@ from mpy_decimal import *
 from RadioMessages.GPSData import *
 from Drivers.Radio import FormatStrings
 import os
-import datetime
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -88,7 +87,7 @@ async def rover_loop():
                         float(GPS.horizontal_dilution),
                         int(GPS.satellites)
                         )
-                    with open("/data_entries/" + gps_data.timestamp.isoformat(), "w") as file:
+                    with open("/data_entries/" + gps_data.timestamp.isoformat().replace(":", "_"), "w") as file:
                         file.write(gps_data.to_json() + "\n")
                     accurate_reading_saved = True
                     
@@ -107,7 +106,8 @@ async def rover_loop():
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             #ACK received, which means the base received a data message
             #We can now safely delete said message from the blob
-            os.remove(os.listdir("/data_entries/")[0])
+            os.remove("/data_entries/" + os.listdir("/data_entries/")[0])
+            pass
             
         elif packet.type == PacketType.FIN and struct.unpack(FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             debug("FINISHED_SENDING_DATA")
