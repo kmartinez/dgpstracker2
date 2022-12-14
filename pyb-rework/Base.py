@@ -18,7 +18,7 @@ from adafruit_fona.adafruit_fona import FONA
 from adafruit_fona.fona_3g import FONA3G
 import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
-from Drivers import FileFuncs
+from Drivers.FileFuncs import *
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
@@ -77,7 +77,7 @@ async def rover_data_loop():
         elif packet.type == PacketType.NMEA:
             debug("NMEA_RECEIVED")
             debug("FROM_SENDER:", packet.sender)
-            if packet.sender < 0 or packet.sender > ROVER_COUNT:
+            if packet.sender < 0 or packet.sender > len(rover_data) - 1:
                 raise ValueError(f"Rover has ID, {packet.sender}, is not within the bounds {[0, ROVER_COUNT]}\n"
                                 + f"Please check the rover ID and the ROVER_COUNT in config")
             if not rover_data[packet.sender]:
@@ -114,47 +114,41 @@ if __name__ == "__main__":
     # loop.create_task(rtcm3_loop())
     # loop.run_forever()
     # debug("Finished ASYNC...")
+
+    fona = FONA(GSM_UART, GSM_RST_PIN, debug=True)
+    debug("FONA VERSION:", fona.version)
+
+    # Initialize cellular data network
+    network = network.CELLULAR(
+        fona, (SECRETS["apn"], SECRETS["apn_username"], SECRETS["apn_password"])
+    )
+
+    while not network.is_attached:
+        debug("Attaching to network...")
+        time.sleep(0.5)
+    debug("Attached!")
+
+    while not network.is_connected:
+        debug("Connecting to network...")
+        network.connect()
+        time.sleep(0.5)
+    debug("Network Connected!")
+
+    print("My Local IP address is:", fona.local_ip)
+
+    # Initialize a requests object with a socket and cellular interface
+    requests.set_socket(cellular_socket, fona)
+
+    payload = []
+    for k in rover_data:
+        for d in rover_data[k]:
+            v = d
+            v['rover_id'] = k
+            payload.append(v)
+
     try:
-        fona = FONA(GSM_UART, GSM_RST_PIN, debug=True)
-        debug("FONA VERSION:", fona.version)
-
-        # Initialize cellular data network
-        network = network.CELLULAR(
-            fona, (SECRETS["apn"], SECRETS["apn_username"], SECRETS["apn_password"])
-        )
-
-        while not network.is_attached:
-            debug("Attaching to network...")
-            time.sleep(0.5)
-        debug("Attached!")
-
-        while not network.is_connected:
-            debug("Connecting to network...")
-            network.connect()
-            time.sleep(0.5)
-        debug("Network Connected!")
-
-        print("My Local IP address is:", fona.local_ip)
-
-        # Initialize a requests object with a socket and cellular interface
-        requests.set_socket(cellular_socket, fona)
-
-        payload = []
-        for k in rover_data:
-            for d in rover_data[k]:
-                v = d
-                v['rover_id'] = k
-                FileFuncs.store_data(v,FileFuncs.UNSENT)
-
-        line_nums = []
-        data_arr = FileFuncs.read_data(FileFuncs.UNSENT)
-
-
-        
-        requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=args[0])
-        for args in data_arr:
-            FileFuncs.change_line_status(args[1],FileFuncs.SENT)
+        requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=payload)
     except:
-        FileFuncs.log("Couldnt send data @ " + str(RTC.datetime))
-    finally:
+        store_data(payload, UNSENT)
         shutdown()
+    shutdown()

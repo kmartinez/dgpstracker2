@@ -9,7 +9,7 @@ from Statistics import Util as util
 from mpy_decimal import *
 from RadioMessages.GPSData import *
 from Drivers.Radio import FormatStrings
-from Drivers import FileFuncs
+from Drivers.FileFuncs import *
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -40,37 +40,6 @@ def update_gps_with_rtcm3(rtcm3: bytes) -> str | None:
     """
     RTCM3_UART.write(rtcm3)
     return update_GPS()
-
-
-def file_Stuff(payload: GPSData):
-    # Save data and remove all previous data in SENDING mode
-    data_arr = FileFuncs.read_data(FileFuncs.SENDING)
-    for args in data_arr:
-        print(f"----- Deleting line: {args[1]} -----")
-        FileFuncs.del_line_in_data(args[1])
-    FileFuncs.store_data(payload.serialize().decode('utf-8'),FileFuncs.SENDING)
-
-    # Broadcast all unsent NMEA messages
-    serialised_payload = bytes()
-    line_nums = []
-    data_arr = FileFuncs.read_data(FileFuncs.UNSENT)
-    data_arr += FileFuncs.read_data(FileFuncs.SENDING)
-    for i in range(len(data_arr)):
-        args = data_arr[i]
-        data = args[0]
-        line_nums.append(args[1])
-
-        encoded_data = data.encode('utf-8')
-        if len(serialised_payload) + len(encoded_data) + 3 > radio.MAX_MSG_SIZE:
-            print("----- MSG TOO BIG -----")
-            break
-
-        if i > 0:
-            serialised_payload += FileFuncs.FILE_DELIMITER.encode('utf-8')
-        serialised_payload += encoded_data
-
-    return line_nums, serialised_payload
-
 
 async def rover_loop():
     """Main loop of each rover.
@@ -114,8 +83,16 @@ async def rover_loop():
                         int(GPS.satellites)
                         )
 
-                    line_nums, serialised_payload = file_Stuff(payload)
-                    print("Sending:", str(serialised_payload))
+                    # Serialise payload
+                    serialised_payload = payload.serialize()
+
+                    # Save data
+                    store_data(serialised_payload)
+
+                    # Broadcast all unsent NMEA messages
+                    while data := read_data(UNSENT):
+                        serialised_payload += FILE_DELIMITER + data
+                    
                     radio.broadcast_data(PacketType.NMEA, serialised_payload)
                     # Set RTC datetime to GPS time
                     RTC.datetime = GPS.timestamp_utc
@@ -123,33 +100,8 @@ async def rover_loop():
         # If incoming message is tagged as an ACK
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             print ("ACK received. Stopping...")
-            #for pos in line_nums:
-            #    FileFuncs.del_line_in_data(pos)
             break
 
 if __name__ == "__main__":
-    # try:
-    #     asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))
-    # except Exception as e:
-    #     print(str(e))
-    #     FileFuncs.log(str(e)+"\n")
-
-    # try:
-    #     # Convert all data awaiting sending to UNSENT format
-    #     data_arr = FileFuncs.read_data(FileFuncs.SENDING)
-    #     for args in data_arr:
-    #         FileFuncs.change_line_status(args[1],FileFuncs.UNSENT)
-    # except Exception as e:
-    #     print(str(e))
-    #     FileFuncs.log(str(e)+"\n")
-
-
-
     asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))
-
-    # Convert all data awaiting sending to UNSENT format
-    data_arr = FileFuncs.read_data(FileFuncs.SENDING)
-    #for args in data_arr:
-    #    FileFuncs.change_line_status(args[1],FileFuncs.UNSENT)
-
     shutdown()
