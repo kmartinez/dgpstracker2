@@ -18,7 +18,6 @@ from adafruit_fona.adafruit_fona import FONA
 from adafruit_fona.fona_3g import FONA3G
 import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
-from Drivers.FileFuncs import *
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
@@ -82,7 +81,7 @@ async def rover_data_loop():
                                 + f"Please check the rover ID and the ROVER_COUNT in config")
             if not rover_data[packet.sender]:
                 debug("Received NMEA from a new rover,", packet.sender)
-                rover_data[packet.sender] = GPSData.deserialize(packet.payload)
+                rover_data[packet.sender] = GPSData.deserialize(packet.payload) #TODO: validation maybe?
             
             if rover_data[packet.sender]:
                 debug("Sending ACK to rover", packet.sender)
@@ -141,14 +140,12 @@ if __name__ == "__main__":
 
     payload = []
     for k in rover_data:
-        for d in rover_data[k]:
-            v = d
-            v['rover_id'] = k
-            payload.append(v)
+        v = rover_data[k]
+        v['rover_id'] = k
+        payload.append(v)
 
     try:
         requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=payload)
     except:
-        store_data(payload, UNSENT)
         shutdown()
     shutdown()
