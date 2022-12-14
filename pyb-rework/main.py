@@ -1,4 +1,5 @@
 from config import *
+import os
 
 def debug(
     *values: object,
@@ -7,6 +8,8 @@ def debug(
       print(*values)
 
 if __name__ == "__main__":
+   if "data_entries" not in os.listdir("/"):
+      os.mkdir("/data_entries")
    #input()
    if DEVICE_ID == 0:
       debug("BASE_STATION_MODE")

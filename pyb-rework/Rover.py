@@ -10,6 +10,7 @@ from mpy_decimal import *
 from RadioMessages.GPSData import *
 from Drivers.Radio import FormatStrings
 import os
+import datetime
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -87,7 +88,7 @@ async def rover_loop():
                         float(GPS.horizontal_dilution),
                         int(GPS.satellites)
                         )
-                    with open("/unsaved_data_blob", "a") as file:
+                    with open("/data_entries/" + gps_data.timestamp.isoformat(), "w") as file:
                         file.write(gps_data.to_json() + "\n")
                     accurate_reading_saved = True
                     
@@ -95,22 +96,18 @@ async def rover_loop():
             #RTCM3 received and we have collected our data for this session
             #Send the oldest data point we have
             #If there aren't any, delete
-            with open("/unsaved_data_blob", "r") as file:
-                data_to_send = ""
-                while len(line := file.readline()) > 0:
-                    data_to_send = line
-                sent_data_start_pos = file.tell() - len(data_to_send)
-
-                if len(data_to_send) > 0:
+            remaining_paths = os.listdir("/data_entries/")
+            if (len(remaining_paths) > 0):
+                with open("/data_entries/" + remaining_paths[0], "r") as file:
+                    data_to_send = file.readline()
                     radio.broadcast_data(PacketType.NMEA, data_to_send.encode('utf-8'))
-                else:
-                    radio.broadcast_data(PacketType.FIN, struct.pack(FormatStrings.PACKET_DEVICE_ID, packet.sender))
+            else:
+                radio.broadcast_data(PacketType.FIN, struct.pack(FormatStrings.PACKET_DEVICE_ID, packet.sender))
 
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             #ACK received, which means the base received a data message
             #We can now safely delete said message from the blob
-            with open("/unsaved_data_blob", "w+") as file:
-                file.truncate(sent_data_start_pos)
+            os.remove(os.listdir("/data_entries/")[0])
             
         elif packet.type == PacketType.FIN and struct.unpack(FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             debug("FINISHED_SENDING_DATA")

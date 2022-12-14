@@ -1,7 +1,6 @@
 '''
 Base, inheriting from Device, is an object to represent base stations. This contains 
 '''
-
 import time
 from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
@@ -18,6 +17,7 @@ from adafruit_fona.adafruit_fona import FONA
 from adafruit_fona.fona_3g import FONA3G
 import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
+import os
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
@@ -30,7 +30,7 @@ def debug(
         print(*values)
 
 #this is a global variable so i can still get the data even if the rover loop times out
-finished_rovers: dict[int, bool]
+finished_rovers: dict[int, bool] = {}
 
 async def get_corrections():
     """Returns the corrections from the GPS as a bytearray
@@ -53,16 +53,16 @@ async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
     """
     debug("Beginning rtcm3_loop")
-    while len(finished_rovers.keys()) < ROVER_COUNT: #Finish running when rover data is done
-        gps_data = await get_corrections()
-        radio.broadcast_data(PacketType.RTCM3, gps_data)
+    while len(finished_rovers) < ROVER_COUNT: #Finish running when rover data is done
+        rtcm3_data = await get_corrections()
+        radio.broadcast_data(PacketType.RTCM3, rtcm3_data)
     debug("End RTCM3 Loop")
 
 async def rover_data_loop():
     """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
     """
     debug("BEGIN_ROVER_DATA_LOOP")
-    while len(finished_rovers.keys()) < ROVER_COUNT: #While there are any Nones in rover_data
+    while len(finished_rovers) < ROVER_COUNT: #While there are any Nones in rover_data
         try:
             packet = await radio.receive_packet()
             debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
@@ -76,13 +76,13 @@ async def rover_data_loop():
             if packet.sender < 0:
                 raise ValueError(f"Rover has ID, {packet.sender}, is not within bounds (>0)\n"
                                 + f"Please check the rover ID and the ROVER_COUNT in config")
-            with ("/unsent_data_blob", "a") as file:
-                data = GPSData.from_json(packet.payload.decode('utf-8'))
+            data = GPSData.from_json(packet.payload.decode('utf-8'))
+            with open("/data_entries/" + str(packet.sender) + "-" + data["timestamp"], "w") as file:
                 data['rover-id'] = packet.sender
                 file.write(json.dumps(data) + '\n')
-
                 debug("Sending ACK to rover", packet.sender)
                 radio.send_response(PacketType.ACK, packet.sender)
+
         elif packet.type == PacketType.FIN and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             finished_rovers[packet.sender] = True
             radio.send_response(PacketType.FIN, packet.sender)
@@ -138,14 +138,17 @@ if __name__ == "__main__":
     requests.set_socket(cellular_socket, fona)
 
     http_payload = []
-    with open("/unsaved_data_blob", "r") as file:
-        while len(line := file.readline()) > 0:
-            http_payload.append(json.loads(line)) #TODO: make sure this doesn't run out of RAM
+    data_paths = os.listdir("/data_entries/")
+    for path in data_paths:
+        with open("/data_entries/" + path, "r") as file:
+            http_payload.append(json.loads(file.readline()))
+            #TODO: RAM limit
 
     try:
         response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
         #TODO: check if response OK
-        with open("/unsaved_data_blob", "w") as file:
-            file.write("") #TODO: 
+        paths_sent = os.listdir("/data_entries/")
+        for path in paths_sent:
+            os.remove("/data_entries/" + path)
     finally:
         shutdown()
