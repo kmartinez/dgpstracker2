@@ -9,6 +9,7 @@ from Statistics import Util as util
 from mpy_decimal import *
 from RadioMessages.GPSData import *
 from Drivers.Radio import FormatStrings
+import os
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
@@ -28,6 +29,9 @@ def debug(
     
     if DEBUG["LOGGING"]["ROVER"]:
         print(*values)
+
+accurate_reading_saved: bool = False
+sent_data_start_pos: int = 999999999
 
 def update_gps_with_rtcm3(rtcm3: bytes) -> str | None:
     """Sends RTCM3 data to GPS then updates GPS object with any new serial data
@@ -50,6 +54,8 @@ async def rover_loop():
     # Receive packet
     # If RTCM3 received, get NMEA and send it
     # If ACK received, shutdown
+    global accurate_reading_saved
+    global sent_data_start_pos
     while True:
         debug("WAITING_FOR_RTCM3")
         try:
@@ -58,10 +64,10 @@ async def rover_loop():
             continue
         
         # If incoming message is tagged as RTCM3
-        if packet.type == PacketType.RTCM3:
+        if packet.type == PacketType.RTCM3 and not accurate_reading_saved:
             debug("RTCM3_SUCCESS, WAITING_FOR_NMEA")
             sentence = update_gps_with_rtcm3(packet.payload)
-            if sentence is not None:
+            if sentence is not None: #TODO: Make update_gps_with_rtcm3 return boolean
                 GPS_SAMPLES["lats"].append(GPS.latitude)
                 GPS_SAMPLES["longs"].append(GPS.longitude)
 
@@ -72,8 +78,7 @@ async def rover_loop():
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
                     debug("NMEA_SENDING")
-                    #TODO: Proper serialization maybe
-                    payload = GPSData(
+                    gps_data = GPSData(
                         datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),
                         util.mean(GPS_SAMPLES["longs"].circularBuffer),
@@ -82,11 +87,33 @@ async def rover_loop():
                         float(GPS.horizontal_dilution),
                         int(GPS.satellites)
                         )
-                    radio.broadcast_data(PacketType.NMEA, payload.serialize())
+                    with open("/unsaved_data_blob", "a") as file:
+                        file.write(gps_data.to_json() + "\n")
+                    accurate_reading_saved = True
+                    
+        elif packet.type == PacketType.RTCM3:
+            #RTCM3 received and we have collected our data for this session
+            #Send the oldest data point we have
+            #If there aren't any, delete
+            with open("/unsaved_data_blob", "r") as file:
+                data_to_send = ""
+                while len(line := file.readline()) > 0:
+                    data_to_send = line
+                sent_data_start_pos = file.tell() - len(data_to_send)
 
-        # If incoming message is tagged as an ACK
+                if len(data_to_send) > 0:
+                    radio.broadcast_data(PacketType.NMEA, data_to_send.encode('utf-8'))
+                else:
+                    radio.broadcast_data(PacketType.FIN, struct.pack(FormatStrings.PACKET_DEVICE_ID, packet.sender))
+
         elif packet.type == PacketType.ACK and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
-            print ("ACK received. Stopping...")
+            #ACK received, which means the base received a data message
+            #We can now safely delete said message from the blob
+            with open("/unsaved_data_blob", "w+") as file:
+                file.truncate(sent_data_start_pos)
+            
+        elif packet.type == PacketType.FIN and struct.unpack(FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
+            debug("FINISHED_SENDING_DATA")
             break
 
 if __name__ == "__main__":

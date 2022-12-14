@@ -25,6 +25,7 @@ class PacketType():
     RTCM3 = 5
     # RETRANSMIT = 6
     # FINISHED_TRANSMIT = 7
+    FIN = 8
 
 def debug(
     *values: object,
@@ -159,10 +160,12 @@ def broadcast_data(type: PacketType, payload: bytes):
     """
     broadcast_packet(RadioPacket(type, payload, DEVICE_ID))
 
-def send_ack(sender: int):
+def send_response(type: PacketType, sender: int):
     """Sends an ACK packet to a specified sender (0-255)
 
+    :param type: Type of response packet
+    :type type: PacketType
     :param sender: ID of device ACK is aimed for (original sender)
     :type sender: int
     """
-    broadcast_data(PacketType.ACK, struct.pack(FormatStrings.PACKET_DEVICE_ID, sender))
+    broadcast_data(type, struct.pack(FormatStrings.PACKET_DEVICE_ID, sender))

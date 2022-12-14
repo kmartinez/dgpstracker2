@@ -30,10 +30,7 @@ def debug(
         print(*values)
 
 #this is a global variable so i can still get the data even if the rover loop times out
-rover_data: dict[int, GPSData] = {}
-for i in range(1, ROVER_COUNT + 1): #ROVER_COUNT is 1 indexed because 0 is the base
-    debug("FILLING_NONE_DATA_FOR_ROVER:", i)
-    rover_data[i] = None
+finished_rovers: dict[int, bool]
 
 async def get_corrections():
     """Returns the corrections from the GPS as a bytearray
@@ -56,7 +53,7 @@ async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
     """
     debug("Beginning rtcm3_loop")
-    while None in rover_data.values(): #Finish running when rover data is done
+    while len(finished_rovers.keys()) < ROVER_COUNT: #Finish running when rover data is done
         gps_data = await get_corrections()
         radio.broadcast_data(PacketType.RTCM3, gps_data)
     debug("End RTCM3 Loop")
@@ -65,7 +62,7 @@ async def rover_data_loop():
     """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
     """
     debug("BEGIN_ROVER_DATA_LOOP")
-    while None in rover_data.values(): #While there are any Nones in rover_data
+    while len(finished_rovers.keys()) < ROVER_COUNT: #While there are any Nones in rover_data
         try:
             packet = await radio.receive_packet()
             debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
@@ -76,17 +73,19 @@ async def rover_data_loop():
         elif packet.type == PacketType.NMEA:
             debug("NMEA_RECEIVED")
             debug("FROM_SENDER:", packet.sender)
-            if packet.sender < 0 or packet.sender > len(rover_data) - 1:
-                raise ValueError(f"Rover has ID, {packet.sender}, is not within the bounds {[0, ROVER_COUNT]}\n"
+            if packet.sender < 0:
+                raise ValueError(f"Rover has ID, {packet.sender}, is not within bounds (>0)\n"
                                 + f"Please check the rover ID and the ROVER_COUNT in config")
-            if not rover_data[packet.sender]:
-                debug("Received NMEA from a new rover,", packet.sender)
-                rover_data[packet.sender] = GPSData.deserialize(packet.payload) #TODO: validation maybe?
-            
-            if rover_data[packet.sender]:
-                debug("Sending ACK to rover", packet.sender)
-                radio.send_ack(packet.sender)
+            with ("/unsent_data_blob", "a") as file:
+                data = GPSData.from_json(packet.payload.decode('utf-8'))
+                data['rover-id'] = packet.sender
+                file.write(json.dumps(data) + '\n')
 
+                debug("Sending ACK to rover", packet.sender)
+                radio.send_response(PacketType.ACK, packet.sender)
+        elif packet.type == PacketType.FIN and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
+            finished_rovers[packet.sender] = True
+            radio.send_response(PacketType.FIN, packet.sender)
     debug("ROVER_DATA_LOOP_FINISH")
                 
 
@@ -138,14 +137,15 @@ if __name__ == "__main__":
     # Initialize a requests object with a socket and cellular interface
     requests.set_socket(cellular_socket, fona)
 
-    payload = []
-    for k in rover_data:
-        v = rover_data[k]
-        v['rover_id'] = k
-        payload.append(v)
+    http_payload = []
+    with open("/unsaved_data_blob", "r") as file:
+        while len(line := file.readline()) > 0:
+            http_payload.append(json.loads(line)) #TODO: make sure this doesn't run out of RAM
 
     try:
-        requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=payload)
-    except:
+        response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
+        #TODO: check if response OK
+        with open("/unsaved_data_blob", "w") as file:
+            file.write("") #TODO: 
+    finally:
         shutdown()
-    shutdown()
