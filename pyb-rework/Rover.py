@@ -77,7 +77,8 @@ async def rover_loop():
                 debug("VAR_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
-                    debug("NMEA_SENDING")
+                    debug("GPS_DATA_WRITING_TO_FILE")
+                    RTC.datetime = GPS.timestamp_utc
                     gps_data = GPSData(
                         datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),

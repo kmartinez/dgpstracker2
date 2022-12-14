@@ -49,6 +49,13 @@ async def get_corrections():
     debug("RTCM3_RECEIVED")
     return bytes(data)
 
+async def clock_calibrator():
+    """Calibrates the clock from GPS time
+    """
+    while not GPS.update():
+        pass
+    RTC.datetime = GPS.timestamp_utc
+
 async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
     """
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     #end
     try:
         debug("Begin ASYNC...")
-        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(asyncio.create_task(rover_data_loop()), asyncio.create_task(rtcm3_loop())), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+        loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), clock_calibrator()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
         debug("Finished ASYNC...")
     except asyncio.TimeoutError:
         debug("Timeout!")
