@@ -7,8 +7,10 @@ from microcontroller import watchdog
 from watchdog import WatchDogMode
 import adafruit_logging as logging
 from time import localtime, mktime
+import rtc
 
 logger = logging.getLogger("MAIN_FILE")
+rtc.set_time_source(RTC_DEVICE)
 
 if __name__ == "__main__":
    if RTC_DEVICE.alarm1_status:
