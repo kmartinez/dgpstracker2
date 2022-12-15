@@ -1,5 +1,5 @@
 '''Alternative main file for setting the RTC's first alarm time.
-Use after setting up config.py'''
+Use after setting up config.py. Easiest method is to changed the datetime below and copy + paste the code into an active REPL'''
 import board
 import adafruit_ds3231
 import time

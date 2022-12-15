@@ -28,7 +28,7 @@ import busio
 logger = logging.getLogger("BASE")
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
-GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
+GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5)
 
 #this is a global variable so i can still get the data even if the rover loop times out
 finished_rovers: dict[int, bool] = {}
@@ -42,6 +42,8 @@ async def clock_calibrator():
         RTC_DEVICE.datetime = GPS_DEVICE.timestamp_utc
 
 async def feed_watchdog():
+    """Feeds the watchdog provided the watchdog is not diabled in config.py
+    """
     while len(finished_rovers) < ROVER_COUNT:
         if not DEBUG["WATCHDOG_DISABLE"]:
             watchdog.feed()
@@ -140,16 +142,19 @@ if __name__ == "__main__":
             try:
                 http_payload.append(json.loads(file.readline()))
             except:
-                os.remove("/data_entries/" + path)
+                logger.warning(f"Invalid saved data found at /data_entries/{path}")
+                #os.remove("/data_entries/" + path) #This could be dangerous - DON'T DO!
             #TODO: RAM limit
     logger.debug(f"HTTP_PAYLOAD: {http_payload}")
 
     try:
         logger.info("Sending HTTP request!")
         response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
-        print("STATUS CODE:", response.status_code, "\nREASON:", response.reason)
+        logger.info(f"STATUS CODE: {response.status_code}, REASON: {response.reason}")
         #requests.post("http://google.com/glacsweb/api/ingest", json=http_payload)
         #TODO: check if response OK
+
+        # If data ingested correcttly, move files sent from /data_entries/ to /sent_data/
         if str(response.status_code) == "200":
             paths_sent = os.listdir("/data_entries/")
             for path in paths_sent:
