@@ -2,61 +2,44 @@
 Base, inheriting from Device, is an object to represent base stations. This contains 
 '''
 import time
-from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
-import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
+from Drivers.PSU import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 # import Drivers.Radio as radio
 # from Drivers.Radio import PacketType
-import asyncio
 from config import *
-import digitalio
 from RadioMessages.GPSData import *
-import struct
+from Drivers.DGPS import GPS_DEVICE
+import Drivers.Radio as radio
+from Drivers.Radio import PacketType
 
 import adafruit_requests as requests
 from adafruit_fona.adafruit_fona import FONA
 from adafruit_fona.fona_3g import FONA3G
 import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
+
+import asyncio
+import digitalio
+import struct
 import os
 from microcontroller import watchdog
 import adafruit_logging as logging
+import busio
 
 logger = logging.getLogger("BASE")
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
-GSM_ENABLE_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.A0)
-GSM_ENABLE_PIN.switch_to_output(value=False)
-def enable_fona():
-    GSM_ENABLE_PIN.value = True
 
 #this is a global variable so i can still get the data even if the rover loop times out
 finished_rovers: dict[int, bool] = {}
 
-async def get_corrections():
-    """Returns the corrections from the GPS as a bytearray
-
-    :return: Bytes object of the 5 RTCM3 messages
-    :rtype: bytes()
-    """
-    # Read UART for newline terminated data - produces bytestr
-    logger.info("Retrieving RTCM3 from UART")
-    RTCM3_UART.reset_input_buffer()
-    await RTCM3_UART.aysnc_read_RTCM3_packet_forever() #Garbled maybe
-    data = bytearray()
-    for i in range(5):
-        d = await RTCM3_UART.aysnc_read_RTCM3_packet_forever()
-        data += d
-    logger.info("RTCM3 obtained from UART")
-    return bytes(data)
-
 async def clock_calibrator():
     """Calibrates the clock from GPS time
     """
-    while GPS.timestamp_utc == None:
-        while not GPS.update():
+    while GPS_DEVICE.timestamp_utc == None:
+        while not GPS_DEVICE.update():
             pass
-        RTC.datetime = GPS.timestamp_utc
+        RTC_DEVICE.datetime = GPS_DEVICE.timestamp_utc
 
 async def feed_watchdog():
     while len(finished_rovers) < ROVER_COUNT:
@@ -67,7 +50,7 @@ async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
     """
     while len(finished_rovers) < ROVER_COUNT: #Finish running when rover data is done
-        rtcm3_data = await get_corrections()
+        rtcm3_data = await GPS_DEVICE.get_corrections()
         radio.broadcast_data(PacketType.RTCM3, rtcm3_data)
 
 async def rover_data_loop():

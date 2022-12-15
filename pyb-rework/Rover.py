@@ -1,4 +1,4 @@
-from Device import *
+import Drivers.PSU as PSU
 import Drivers.Radio as radio
 from Drivers.Radio import PacketType
 import struct
@@ -12,6 +12,11 @@ from Drivers.Radio import FormatStrings
 import os
 from microcontroller import watchdog
 import adafruit_logging as logging
+import time
+import asyncio
+
+from Drivers.DGPS import GPS_DEVICE
+from Drivers.RTC import RTC_DEVICE
 
 logger = logging.getLogger("ROVER")
 
@@ -29,17 +34,6 @@ GPS_SAMPLES: dict[str, StatsBuffer] = {
 
 accurate_reading_saved: bool = False
 sent_data_start_pos: int = 999999999
-
-def update_gps_with_rtcm3(rtcm3: bytes) -> bool:
-    """Sends RTCM3 data to GPS then updates GPS object with any new serial data
-
-    :param rtcm3: RTCM3 bytes
-    :type rtcm3: bytes
-    :return: Last GPS Sentence or None if no update occured
-    :rtype: bool
-    """
-    RTCM3_UART.write(rtcm3)
-    return update_GPS()
 
 async def rover_loop():
     """Main loop of each rover.
@@ -64,9 +58,10 @@ async def rover_loop():
         # If incoming message is tagged as RTCM3
         if packet.type == PacketType.RTCM3 and not accurate_reading_saved:
             logger.info("RTCM3 data received and we have not finished obtaining a reading")
-            if update_gps_with_rtcm3(packet.payload):
-                GPS_SAMPLES["lats"].append(GPS.latitude)
-                GPS_SAMPLES["longs"].append(GPS.longitude)
+            GPS_DEVICE.rtk_calibrate(packet.payload)
+            if GPS_DEVICE.update_with_all_available():
+                GPS_SAMPLES["lats"].append(GPS_DEVICE.latitude)
+                GPS_SAMPLES["longs"].append(GPS_DEVICE.longitude)
 
                 #no do standard dev on 1 sample pls
                 if (len(GPS_SAMPLES["longs"].circularBuffer) < AVERAGING_SAMPLE_SIZE): continue
@@ -75,15 +70,15 @@ async def rover_loop():
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
                     logger.info("Accurate reading obtained! Writing data to file")
-                    RTC.datetime = GPS.timestamp_utc
+                    RTC_DEVICE.datetime = GPS_DEVICE.timestamp_utc
                     gps_data = GPSData(
-                        datetime.fromtimestamp(time.mktime(GPS.timestamp_utc)),
+                        datetime.fromtimestamp(time.mktime(GPS_DEVICE.timestamp_utc)),
                         util.mean(GPS_SAMPLES["lats"].circularBuffer),
                         util.mean(GPS_SAMPLES["longs"].circularBuffer),
-                        GPS.altitude_m,
-                        GPS.fix_quality,
-                        float(GPS.horizontal_dilution),
-                        int(GPS.satellites)
+                        GPS_DEVICE.altitude_m,
+                        GPS_DEVICE.fix_quality,
+                        float(GPS_DEVICE.horizontal_dilution),
+                        int(GPS_DEVICE.satellites)
                         )
                     with open("/data_entries/" + gps_data.timestamp.isoformat().replace(":", "_"), "w") as file:
                         file.write(gps_data.to_json() + "\n")
@@ -118,4 +113,4 @@ async def rover_loop():
 
 if __name__ == "__main__":
     asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))
-    shutdown()
+    PSU.shutdown()
