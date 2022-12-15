@@ -1,17 +1,24 @@
 from config import *
 import os
-import Device
+import Drivers.PSU as PSU
+from Drivers.RTC import RTC_DEVICE
 import traceback
 from microcontroller import watchdog
 from watchdog import WatchDogMode
+import adafruit_logging as logging
+from time import localtime, mktime
 
-def debug(
-    *values: object,
-) -> None:
-   if DEBUG["LOGGING"]["MAIN_FILE"]:
-      print(*values)
+logger = logging.getLogger("MAIN_FILE")
 
 if __name__ == "__main__":
+   if RTC_DEVICE.alarm1_status:
+      if RTC_DEVICE.alarm_is_in_future():
+         logger.critical("Abnormal reset detected!!! Shutting device down")
+         PSU.shutdown()
+      else:
+         RTC_DEVICE.alarm1 = (localtime(mktime(RTC_DEVICE.alarm1[0])+300), "monthly")
+   RTC_DEVICE.alarm1_interrupt = True
+
    if not DEBUG["WATCHDOG_DISABLE"]:
       watchdog.timeout = 16
       watchdog.mode = WatchDogMode.RESET
@@ -23,14 +30,12 @@ if __name__ == "__main__":
          os.mkdir("/sent_data")
       #input()
       if DEVICE_ID == 0:
-         debug("BASE_STATION_MODE")
+         logger.info("Device is a base station!")
          exec(open('./Base.py').read())
       else:
-         debug("ROVER_MODE")
+         logger.info("Device is a rover!")
          exec(open('./Rover.py').read())
    except BaseException as error:
-      with open("error_log.txt", 'a') as file:
-         traceback.print_exception(type(error), error, error.__traceback__, None, file, False)
-      traceback.print_exception(type(error), error, error.__traceback__, None, None, False)
+      logger.critical(traceback.format_exception(type(error), error, error.__traceback__, None, False))
    finally:
-      Device.shutdown()
+      PSU.shutdown()

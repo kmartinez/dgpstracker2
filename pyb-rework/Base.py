@@ -2,66 +2,44 @@
 Base, inheriting from Device, is an object to represent base stations. This contains 
 '''
 import time
-from Device import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
-import Device #USE THIS TO MODIFY VARIABLES (e.g. Device.device_ID = 1, not device_ID = 1)
+from Drivers.PSU import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 # import Drivers.Radio as radio
 # from Drivers.Radio import PacketType
-import asyncio
 from config import *
-import digitalio
 from RadioMessages.GPSData import *
-import struct
+from Drivers.DGPS import GPS_DEVICE
+import Drivers.Radio as radio
+from Drivers.Radio import PacketType
 
 import adafruit_requests as requests
 from adafruit_fona.adafruit_fona import FONA
 from adafruit_fona.fona_3g import FONA3G
 import adafruit_fona.adafruit_fona_network as network
 import adafruit_fona.adafruit_fona_socket as cellular_socket
+
+import asyncio
+import digitalio
+import struct
 import os
 from microcontroller import watchdog
+import adafruit_logging as logging
+import busio
+
+logger = logging.getLogger("BASE")
 
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
-GSM_ENABLE_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.A0)
-GSM_ENABLE_PIN.switch_to_output(value=True)
-
-def debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["LOGGING"]["BASE"]:
-        print(*values)
-
-def enable_fona():
-    GSM_ENABLE_PIN.value = True
 
 #this is a global variable so i can still get the data even if the rover loop times out
 finished_rovers: dict[int, bool] = {}
 
-async def get_corrections():
-    """Returns the corrections from the GPS as a bytearray
-
-    :return: Bytes object of the 5 RTCM3 messages
-    :rtype: bytes()
-    """
-    # Read UART for newline terminated data - produces bytestr
-    debug("GETTING_RTCM3")
-    RTCM3_UART.reset_input_buffer()
-    await RTCM3_UART.aysnc_read_RTCM3_packet_forever() #Garbled maybe
-    data = bytearray()
-    for i in range(5):
-        d = await RTCM3_UART.aysnc_read_RTCM3_packet_forever()
-        data += d
-    debug("RTCM3_RECEIVED")
-    return bytes(data)
-
 async def clock_calibrator():
     """Calibrates the clock from GPS time
     """
-    while GPS.timestamp_utc == None:
-        while not GPS.update():
+    while GPS_DEVICE.timestamp_utc == None:
+        while not GPS_DEVICE.update():
             pass
-        RTC.datetime = GPS.timestamp_utc
+        RTC_DEVICE.datetime = GPS_DEVICE.timestamp_utc
 
 async def feed_watchdog():
     while len(finished_rovers) < ROVER_COUNT:
@@ -71,41 +49,41 @@ async def feed_watchdog():
 async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
     """
-    debug("Beginning rtcm3_loop")
     while len(finished_rovers) < ROVER_COUNT: #Finish running when rover data is done
-        rtcm3_data = await get_corrections()
+        rtcm3_data = await GPS_DEVICE.get_corrections()
         radio.broadcast_data(PacketType.RTCM3, rtcm3_data)
-    debug("End RTCM3 Loop")
 
 async def rover_data_loop():
     """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
     """
-    debug("BEGIN_ROVER_DATA_LOOP")
     while len(finished_rovers) < ROVER_COUNT: #While there are any Nones in rover_data
         try:
+            logger.info("Waiting for a radio packet")
             packet = await radio.receive_packet()
-            debug("PACKET_RECEIVED_IN_ROVER_DATA_LOOP")
+            logger.info("Radio packet received from device", packet.sender)
         except radio.ChecksumError:
-            debug("ROVER_LOOP_PKT_CHECKSUM_FAIL")
-            packet = None
-        if packet is None: continue
-        elif packet.type == PacketType.NMEA:
-            debug("NMEA_RECEIVED")
-            debug("FROM_SENDER:", packet.sender)
-            if packet.sender < 0:
-                raise ValueError(f"Rover has ID, {packet.sender}, is not within bounds (>0)\n"
-                                + f"Please check the rover ID and the ROVER_COUNT in config")
+            logger.warning("Radio has received an invalid packet")
+            continue
+        if packet.sender < 0:
+            logger.warning("""Packet sender's ID is out of bounds!
+            Please check the sending device's ID in its config and change it!""")
+            continue
+
+        if packet.type == PacketType.NMEA:
+            logger.info("Received radio packet is GPS data",)
             data = GPSData.from_json(packet.payload.decode('utf-8'))
             with open("/data_entries/" + str(packet.sender) + "-" + data["timestamp"].replace(":", "_"), "w") as file:
-                data['rover_id'] = packet.sender
+                data['rover-id'] = packet.sender
+                logger.debug("WRITING_DATA_TO_FILE:", data)
                 file.write(json.dumps(data) + '\n')
-                debug("Sending ACK to rover", packet.sender)
-                radio.send_response(PacketType.ACK, packet.sender)
+            
+            radio.send_response(PacketType.ACK, packet.sender)
 
         elif packet.type == PacketType.FIN and struct.unpack(radio.FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             finished_rovers[packet.sender] = True
             radio.send_response(PacketType.FIN, packet.sender)
-    debug("ROVER_DATA_LOOP_FINISH")
+        logger.info("Received radio packet successfully processed")
+    logger.info("Loop for receiving rover data has ended")
                 
 
 if __name__ == "__main__":
@@ -119,41 +97,34 @@ if __name__ == "__main__":
     # Send ACK to rover
     #end
     try:
-        debug("Begin ASYNC...")
+        logger.info("Starting async tasks")
         loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), clock_calibrator(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
-        #loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
-
-        debug("Finished ASYNC...")
+        logger.info("Async tasks have finished running")
     except asyncio.TimeoutError:
-        debug("Timeout!")
+        logger.warning("Async tasks timed out! Continuing with any remaining data")
         pass #Don't care, we have data, just send what we got
 
-    # debug("Begin ASYNC...")
-    # loop.create_task(rover_data_loop())
-    # loop.create_task(rtcm3_loop())
-    # loop.run_forever()
-    # debug("Finished ASYNC...")
     enable_fona()
     fona = FONA(GSM_UART, GSM_RST_PIN, debug=True)
-    debug("FONA VERSION:", fona.version)
+    logger.info("FONA initialized")
+    logger.debug("FONA VERSION:", fona.version)
 
-    # Initialize cellular data network
     network = network.CELLULAR(
         fona, (SECRETS["apn"], SECRETS["apn_username"], SECRETS["apn_password"])
     )
 
     while not network.is_attached:
-        debug("Attaching to network...")
+        logger.info("Attaching to network...")
         time.sleep(0.5)
-    debug("Attached!")
+    logger.info("Attached!")
 
     while not network.is_connected:
-        debug("Connecting to network...")
+        logger.info("Connecting to network...")
         network.connect()
         time.sleep(0.5)
-    debug("Network Connected!")
+    logger.info("Network Connected!")
 
-    print("My Local IP address is:", fona.local_ip)
+    logger.info("My Local IP address is:", fona.local_ip)
 
     # Initialize a requests object with a socket and cellular interface
     requests.set_socket(cellular_socket, fona)
@@ -167,9 +138,10 @@ if __name__ == "__main__":
             except:
                 os.remove("/data_entries/" + path)
             #TODO: RAM limit
+    logger.debug("HTTP_PAYLOAD:", http_payload)
 
     try:
-        print(http_payload)
+        logger.info("Sending HTTP request!")
         response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
         print("STATUS CODE:", response.status_code, "\nREASON:", response.reason)
         #requests.post("http://google.com/glacsweb/api/ingest", json=http_payload)
@@ -179,8 +151,9 @@ if __name__ == "__main__":
             for path in paths_sent:
                 os.rename("/data_entries/" + path, "/sent_data/" + path)
         else:
-              with open("error_log.txt", 'a') as file:
+            with open("error_log.txt", 'a') as file:
                 file.write("\nSTATUS CODE:", response.status_code, "  REASON:", response.reason+"\n")
                 file.close()
+        logger.info("HTTP request successful! Removing all sent data")
     finally:
         shutdown()
