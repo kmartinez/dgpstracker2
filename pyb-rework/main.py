@@ -19,6 +19,8 @@ if __name__ == "__main__":
    try:
       if "data_entries" not in os.listdir("/"):
          os.mkdir("/data_entries")
+      if "sent_data" not in os.listdir("/"):
+         os.mkdir("/sent_data")
       #input()
       if DEVICE_ID == 0:
          debug("BASE_STATION_MODE")

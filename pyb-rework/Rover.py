@@ -34,6 +34,10 @@ def debug(
 accurate_reading_saved: bool = False
 sent_data_start_pos: int = 999999999
 
+async def feed_watchdog():
+    watchdog.feed()
+    await asyncio.sleep(0)
+
 def update_gps_with_rtcm3(rtcm3: bytes) -> bool:
     """Sends RTCM3 data to GPS then updates GPS object with any new serial data
 
@@ -116,5 +120,5 @@ async def rover_loop():
             break
 
 if __name__ == "__main__":
-    asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+    asyncio.run(asyncio.wait_for_ms(asyncio.gather(rover_loop(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
     shutdown()

@@ -23,7 +23,7 @@ from microcontroller import watchdog
 GSM_UART: busio.UART = busio.UART(board.A5, board.D6, baudrate=9600)
 GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5) #TODO: Find an actual pin for this
 GSM_ENABLE_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.A0)
-GSM_ENABLE_PIN.switch_to_output(value=False)
+GSM_ENABLE_PIN.switch_to_output(value=True)
 
 def debug(
     *values: object,
@@ -97,7 +97,7 @@ async def rover_data_loop():
                                 + f"Please check the rover ID and the ROVER_COUNT in config")
             data = GPSData.from_json(packet.payload.decode('utf-8'))
             with open("/data_entries/" + str(packet.sender) + "-" + data["timestamp"].replace(":", "_"), "w") as file:
-                data['rover-id'] = packet.sender
+                data['rover_id'] = packet.sender
                 file.write(json.dumps(data) + '\n')
                 debug("Sending ACK to rover", packet.sender)
                 radio.send_response(PacketType.ACK, packet.sender)
@@ -121,6 +121,8 @@ if __name__ == "__main__":
     try:
         debug("Begin ASYNC...")
         loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), clock_calibrator(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+        #loop.run_until_complete(asyncio.wait_for_ms(asyncio.gather(rover_data_loop(), rtcm3_loop(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+
         debug("Finished ASYNC...")
     except asyncio.TimeoutError:
         debug("Timeout!")
@@ -160,15 +162,25 @@ if __name__ == "__main__":
     data_paths = os.listdir("/data_entries/")
     for path in data_paths:
         with open("/data_entries/" + path, "r") as file:
-            http_payload.append(json.loads(file.readline()))
+            try:
+                http_payload.append(json.loads(file.readline()))
+            except:
+                os.remove("/data_entries/" + path)
             #TODO: RAM limit
 
     try:
+        print(http_payload)
         response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
+        print("STATUS CODE:", response.status_code, "\nREASON:", response.reason)
         #requests.post("http://google.com/glacsweb/api/ingest", json=http_payload)
         #TODO: check if response OK
-        paths_sent = os.listdir("/data_entries/")
-        for path in paths_sent:
-            os.remove("/data_entries/" + path)
+        if str(response.status_code) == "200":
+            paths_sent = os.listdir("/data_entries/")
+            for path in paths_sent:
+                os.rename("/data_entries/" + path, "/sent_data/" + path)
+        else:
+              with open("error_log.txt", 'a') as file:
+                file.write("\nSTATUS CODE:", response.status_code, "  REASON:", response.reason+"\n")
+                file.close()
     finally:
         shutdown()

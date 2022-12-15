@@ -10,7 +10,7 @@ I2C = board.I2C()
 RTC = adafruit_ds3231.DS3231(I2C)
 
 #Set first alarm date and time here (year and month are ignored)
-first_alarm_time = struct_time([2022,12,14,19,15,0,-1,-1,-1])
+first_alarm_time = struct_time([2022,12,15,16,20,0,-1,-1,-1])
 
 RTC.alarm1 = (first_alarm_time, "monthly")
 RTC.alarm1_status = False

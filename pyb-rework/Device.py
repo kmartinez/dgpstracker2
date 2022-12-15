@@ -72,10 +72,10 @@ if RTC.alarm1_status:
     alarm_time_tuple = list(alarm_time)
     if RTC.alarm1[1] == "monthly":
         alarm_time_tuple[0] = RTC.datetime.tm_year
-        alarm_time_tuple[1] = RTC.datetime.tm_month
+        alarm_time_tuple[1] = RTC.datetime.tm_mon
     elif RTC.alarm1[1] == "daily":
         alarm_time_tuple[0] = RTC.datetime.tm_year
-        alarm_time_tuple[1] = RTC.datetime.tm_month
+        alarm_time_tuple[1] = RTC.datetime.tm_mon
         alarm_time_tuple[2] = RTC.datetime.tm_mday
     elif RTC.alarm1[1] == "hourly":
         alarm_time_tuple[0] = RTC.datetime.tm_year
@@ -138,7 +138,7 @@ def update_GPS() -> bool:
 
 
     # If NMEA received back
-    if GPS.fix_quality == 4 or GPS.fix_quality == 5:
+    if GPS.fix_quality == 4:# or GPS.fix_quality == 5:
         debug("NMEA_QUALITY_SUCCESS")
         return True
     else:
