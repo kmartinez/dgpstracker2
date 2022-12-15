@@ -58,9 +58,10 @@ async def get_corrections():
 async def clock_calibrator():
     """Calibrates the clock from GPS time
     """
-    while not GPS.update():
-        pass
-    RTC.datetime = GPS.timestamp_utc
+    while GPS.timestamp_utc == None:
+        while not GPS.update():
+            pass
+        RTC.datetime = GPS.timestamp_utc
 
 async def feed_watchdog():
     while len(finished_rovers) < ROVER_COUNT:
@@ -163,8 +164,8 @@ if __name__ == "__main__":
             #TODO: RAM limit
 
     try:
-        #response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
-        requests.post("http://google.com/glacsweb/api/ingest", json=http_payload)
+        response = requests.post("http://iotgate.ecs.soton.ac.uk/glacsweb/api/ingest", json=http_payload)
+        #requests.post("http://google.com/glacsweb/api/ingest", json=http_payload)
         #TODO: check if response OK
         paths_sent = os.listdir("/data_entries/")
         for path in paths_sent:

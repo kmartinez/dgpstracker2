@@ -20,6 +20,24 @@ from Drivers.Radio import PacketType
 from config import *
 from mpy_decimal import *
 
+
+# REQUIRED FUNCTIONS FOR LATER DEFINITIONS
+def debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["LOGGING"]["DEVICE"]:
+        print(*values)
+
+def extended_debug(
+    *values: object,
+) -> None:
+    
+    if DEBUG["EXTENDED_LOGGING"]["GPS"]:
+        print(*values)
+
+
+# Gloabls
 GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048)
 '''GPS NMEA UART for communications'''
 
@@ -45,34 +63,43 @@ def shutdown():
     RTC.alarm2_status = False
     RTC.alarm1_status = False
 
+
+# Reset clock and handle watchdog wakeup state
 RTC.alarm1_interrupt = True
 if RTC.alarm1_status:
     dt_after_alarm = False
-    alarm_time = RTC.alarm1[0]
-    alarm_time.year = RTC.datetime.year
-    alarm_time.month = RTC.datetime.month
+    alarm_time: time.struct_time = RTC.alarm1[0]
+    alarm_time_tuple = list(alarm_time)
+    if RTC.alarm1[1] == "monthly":
+        alarm_time_tuple[0] = RTC.datetime.tm_year
+        alarm_time_tuple[1] = RTC.datetime.tm_month
+    elif RTC.alarm1[1] == "daily":
+        alarm_time_tuple[0] = RTC.datetime.tm_year
+        alarm_time_tuple[1] = RTC.datetime.tm_month
+        alarm_time_tuple[2] = RTC.datetime.tm_mday
+    elif RTC.alarm1[1] == "hourly":
+        alarm_time_tuple[0] = RTC.datetime.tm_year
+        alarm_time_tuple[1] = RTC.datetime.tm_mon
+        alarm_time_tuple[2] = RTC.datetime.tm_mday
+        alarm_time_tuple[3] = RTC.datetime.tm_hour
+    elif RTC.alarm1[1] == "minutely":
+        alarm_time_tuple[0] = RTC.datetime.tm_year
+        alarm_time_tuple[1] = RTC.datetime.tm_mon
+        alarm_time_tuple[2] = RTC.datetime.tm_mday
+        alarm_time_tuple[3] = RTC.datetime.tm_hour
+        alarm_time_tuple[4] = RTC.datetime.tm_min
+
+    alarm_time = time.struct_time(alarm_time_tuple)
+
     if time.mktime(alarm_time) > time.mktime(RTC.datetime):
         #WATCHDOG_HAS_RESET
         shutdown()
 
-    RTC.alarm1 = (time.localtime(time.mktime(RTC.datetime)+300), "hourly")
+    RTC.alarm1 = (time.localtime(time.mktime(RTC.alarm1[0])+300), "hourly")
 
 '''GPS parser'''
 GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=DEBUG["LOGGING"]["GPS"])
 
-def debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["LOGGING"]["DEVICE"]:
-        print(*values)
-
-def extended_debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["EXTENDED_LOGGING"]["GPS"]:
-        print(*values)
 
 def update_GPS():
     """Validates NMEA and checks for quality 4.
