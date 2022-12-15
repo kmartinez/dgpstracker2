@@ -12,9 +12,10 @@ def debug(
       print(*values)
 
 if __name__ == "__main__":
-   watchdog.timeout = 16
-   watchdog.mode = WatchDogMode.RESET
-   watchdog.feed()
+   if not DEBUG["WATCHDOG_DISABLE"]:
+      watchdog.timeout = 16
+      watchdog.mode = WatchDogMode.RESET
+      watchdog.feed()
    try:
       if "data_entries" not in os.listdir("/"):
          os.mkdir("/data_entries")

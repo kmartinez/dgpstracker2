@@ -22,7 +22,8 @@ DEBUG =  {
         "RADIO": False,
         "GPS_DATA": False
     },
-    "FAKE_DATA": False #Ignores actual GPS data and just uses fake static data instead
+    "FAKE_DATA": False, #Ignores actual GPS data and just uses fake static data instead
+    "WATCHDOG_DISABLE": True #Disables watchdog resets so you can debug things
 }
 
 SECRETS = { #I would put this on its own file untracked by git if you ever put any actual sensitive info here
