@@ -2,13 +2,9 @@ import json
 from adafruit_datetime import datetime
 from mpy_decimal import DecimalNumber
 from config import *
+import adafruit_logging as logging
 
-def extended_debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["EXTENDED_LOGGING"]["GPS_DATA"]:
-        print(*values)
+logger = logging.getLogger("GPS")
 
 class GPSData:
     timestamp: datetime
@@ -54,8 +50,7 @@ class GPSData:
         }
         output = json.dumps(data)
 
-        extended_debug("SERIALIZE_GPSDATA_JSON_DUMP_DICTIONARY:", json.dumps(data))
-        extended_debug("SERIALIZE_GPSDATA_BYTES_OUTPUT:", output)
+        logger.debug(f"SERIALIZE_GPSDATA_JSON_DUMP_DICTIONARY: {data}")
         return output
 
     def from_json(json_str: str) -> dict:
@@ -66,8 +61,9 @@ class GPSData:
         :return: Dict representing a GPSData object (ready to send over json)
         :rtype: dict
         """
+        logger.debug(f"INPUT_STRING: {json_str}")
+
         output = json.loads(json_str)
 
-        extended_debug("DESERIALIZE_GPSDATA_BYTES:", json_str)
-        extended_debug("DESERIALIZE_GPSDATA_DICT_OUTPUT:", output)
+        logger.debug(f"DESERIALIZE_GPSDATA_DICT_OUTPUT: {output}")
         return output

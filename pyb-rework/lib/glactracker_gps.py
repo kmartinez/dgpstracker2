@@ -97,8 +97,6 @@ def _parse_degrees(nmea_data: str) -> DecimalNumber:
     raw = [temp[0][0:-2], temp[0][-2:] + '.' + temp[1]]
     degrees = DecimalNumber(raw[0])  # the ddd
     minutes = DecimalNumber(raw[1]) / 60  # the mm.mm...
-    print("DEGREES:", degrees)
-    print("MINUTES:", minutes)
     return degrees + minutes
 
 
@@ -122,7 +120,6 @@ def _parse_str(nmea_data: str) -> str:
 
 def _read_degrees(data: List[DecimalNumber], index: int, neg: str) -> DecimalNumber:
     # This function loses precision with float32
-    print("READ_DEG_TYPE:", type(data[index]))
     if data[index + 1].lower() == neg:
         data[index] *= -1
     return data[index]
@@ -743,7 +740,6 @@ class GPS_GtopI2C(GPS):
             if not char:
                 continue
             self._internalbuffer.append(char[0])
-            # print(bytearray(self._internalbuffer))
         if self._internalbuffer and self._internalbuffer[-1] == 0x0A:
             ret = bytearray(self._internalbuffer)
             self._internalbuffer = []  # reset the buffer to empty

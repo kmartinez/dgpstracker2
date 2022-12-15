@@ -35,6 +35,12 @@ GPS_SAMPLES: dict[str, StatsBuffer] = {
 accurate_reading_saved: bool = False
 sent_data_start_pos: int = 999999999
 
+async def feed_watchdog():
+    while True:
+        if not DEBUG["WATCHDOG_DISABLE"]:
+            watchdog.feed()
+        await asyncio.sleep(0)
+
 async def rover_loop():
     """Main loop of each rover.
     Waits for radio message and checks its type.
@@ -48,7 +54,6 @@ async def rover_loop():
     global accurate_reading_saved
     global sent_data_start_pos
     while True:
-        watchdog.feed()
         try:
             logger.info("Waiting for a radio packet")
             packet = await radio.receive_packet()
@@ -65,8 +70,9 @@ async def rover_loop():
 
                 #no do standard dev on 1 sample pls
                 if (len(GPS_SAMPLES["longs"].circularBuffer) < AVERAGING_SAMPLE_SIZE): continue
-
-                logger.debug("VARIANCE_LONG:", util.var(GPS_SAMPLES["longs"].circularBuffer))
+                
+                debug_variance = util.var(GPS_SAMPLES["longs"].circularBuffer)
+                logger.debug(f"VARIANCE_LONG: {debug_variance}")
 
                 if util.var(GPS_SAMPLES["longs"].circularBuffer) < VAR_MAX and util.var(GPS_SAMPLES["lats"].circularBuffer) < VAR_MAX:
                     logger.info("Accurate reading obtained! Writing data to file")
@@ -104,13 +110,13 @@ async def rover_loop():
             #ACK received, which means the base received a data message
             #We can now safely delete said message from the blob
             logger.info("ACK received from base, deleting sent data")
-            os.remove("/data_entries/" + os.listdir("/data_entries/")[0])
-            pass
+            if len(os.listdir("/data_entries/")) > 0:
+                os.remove("/data_entries/" + os.listdir("/data_entries/")[0])
             
         elif packet.type == PacketType.FIN and struct.unpack(FormatStrings.PACKET_DEVICE_ID, packet.payload)[0] == DEVICE_ID:
             logger.info("Base has given OK to shutdown!")
             break
 
 if __name__ == "__main__":
-    asyncio.run(asyncio.wait_for_ms(rover_loop(), GLOBAL_FAILSAFE_TIMEOUT * 1000))
+    asyncio.run(asyncio.wait_for_ms(asyncio.gather(rover_loop(), feed_watchdog()), GLOBAL_FAILSAFE_TIMEOUT * 1000))
     PSU.shutdown()

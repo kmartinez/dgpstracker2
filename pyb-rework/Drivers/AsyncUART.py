@@ -1,7 +1,7 @@
 import busio
 import microcontroller
 import asyncio
-import time
+import binascii
 from config import *
 import adafruit_logging as logging
 
@@ -32,7 +32,7 @@ class AsyncUART(busio.UART):
             await asyncio.sleep(0)
         output = super().read(1)[0] #read returns a byte array so we return the first index
 
-        logger.debug("ASYNC_UART_GET_BYTE:", output)
+        logger.log(5, f"ASYNC_UART_GET_BYTE: {output}")
         return output
 
     async def async_read_forever(self, bytes_requested: int | None = None) -> bytes | None:
@@ -76,7 +76,11 @@ class AsyncUART(busio.UART):
             logger.debug("TIMEOUT_REACHED")
             if len(output) < 1: output = None
         
-        logger.debug("ASYNC_UART_READ_OUTPUT:", output)
+        if output is None:
+            logger.debug(f"ASYNC_UART_READ_OUTPUT: {output}")
+        else:
+            logger.debug(f"ASYNC_UART_READ_OUTPUT: {binascii.hexlify(output)}")
+        
         return output
 
     async def async_read_until_forever(self, bytes_to_match: bytes) -> bytes:
@@ -92,7 +96,7 @@ class AsyncUART(busio.UART):
         while output[-len(bytes_to_match):] != bytes_to_match:
             output.append(await self.__async_get_byte_forever())
         
-        logger.debug("ASYNC_UART_READ_UNTIL_OUTPUT:", output)
+        logger.debug(f"ASYNC_UART_READ_UNTIL_OUTPUT: {binascii.hexlify(bytes(output))}")
         return bytes(output)
 
     async def aysnc_read_RTCM3_packet_forever(self) -> bytes:
@@ -105,7 +109,7 @@ class AsyncUART(busio.UART):
         output = await self.async_read_until_forever(b'\xd3\x00')
         output = b'\xd3\x00' + output[:-2]
 
-        logger.debug("ASYNC_UART_READ_RTCM3_OUTPUT:", output)
+        logger.debug(f"ASYNC_UART_READ_RTCM3_OUTPUT: {binascii.hexlify(bytes(output))}")
         return bytes(output)
 
     async def async_readline_forever(self) -> bytes:
@@ -116,5 +120,5 @@ class AsyncUART(busio.UART):
         """
         output = await self.async_read_until_forever(b'\n')
 
-        logger.debug("ASYNC_UART_READLINE_OUTPUT:", output)
+        logger.debug(f"ASYNC_UART_READLINE_OUTPUT: {binascii.hexlify(output)}")
         return output

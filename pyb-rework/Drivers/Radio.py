@@ -49,7 +49,7 @@ class RadioPacket:
         :rtype: bytes
         """
         logger.debug(f"""SERIALIZE_PACKET:
-        PAYLOAD: {self.payload}
+        PAYLOAD: {binascii.hexlify(self.payload)}
         TYPE_INT: {self.type}
         SENDER_INT: {self.sender}""")
 
@@ -58,9 +58,9 @@ class RadioPacket:
         checksum = binascii.crc32(serialized)
         output = serialized + struct.pack(FormatStrings.PACKET_CHECKSUM, checksum)
 
-        logger.debug("SERIALIZED_PACKET_NO_CHECKSUM:", serialized)
-        logger.debug("SERIALIZE_PACKET_CHECKSUM_INT:", checksum)
-        logger.debug("FULL_SERIALIZED_PACKET:", output)
+        logger.debug(f"SERIALIZED_PACKET_NO_CHECKSUM: {binascii.hexlify(serialized)}")
+        logger.debug(f"SERIALIZE_PACKET_CHECKSUM_INT: {checksum}")
+        logger.debug(f"FULL_SERIALIZED_PACKET: {binascii.hexlify(output)}")
         return output
     
     def deserialize(data: bytes):
@@ -73,19 +73,19 @@ class RadioPacket:
         :return: Deserialized packet
         :rtype: RadioPacket
         """
-        logger.debug("DESERIALIZE_PACKET_RAW_BYTES:", data)
+        logger.debug(f"DESERIALIZE_PACKET_RAW_BYTES: {binascii.hexlify(data)}")
         checksum = struct.unpack(FormatStrings.PACKET_CHECKSUM, data[-4:])[0]
         payload = data[:-4]
-        logger.debug("DESERIALIZE_PACKET_CHECKSUM_INT:", checksum)
-        logger.debug("DESERIALIZE_PACKET_NO_CHECKSUM:", payload)
-        logger.debug("DESERIALIZE_PACKET_CALCULATED_CHECKSUM:", binascii.crc32(payload))
+        logger.debug(f"DESERIALIZE_PACKET_CHECKSUM_INT: {checksum}")
+        logger.debug(f"DESERIALIZE_PACKET_NO_CHECKSUM: {binascii.hexlify(payload)}")
+        logger.debug(f"DESERIALIZE_PACKET_CALCULATED_CHECKSUM: {binascii.crc32(payload)}")
         if binascii.crc32(payload) != checksum:
             raise ChecksumError
         
         header = payload[:2]
         payload = payload[2:]
-        logger.debug("DESERIALIZE_PACKET_HEADER_RAW:", header)
-        logger.debug("DESERIALIZE_PACKET_DATA:", payload)
+        logger.debug(f"DESERIALIZE_PACKET_HEADER_RAW: {binascii.hexlify(header)}")
+        logger.debug(f"DESERIALIZE_PACKET_DATA: {binascii.hexlify(payload)}")
 
 
         packetType, sender = struct.unpack(FormatStrings.PACKET_TYPE + FormatStrings.PACKET_DEVICE_ID, header)
@@ -109,7 +109,7 @@ async def receive_packet() -> RadioPacket:
         await UART.async_read_until_forever(bytes([0x80,0x80]))
         logger.info("Packet marker received")
         size = await UART.async_read_forever(4)
-        logger.debug("PACKET_SIZE:", size)
+        logger.debug(f"PACKET_SIZE: {binascii.hexlify(size)}")
         size = struct.unpack('I', size)[0]
         if size == 0 or size > 1000:
             logger.warning("Radio received invalid packet size!")

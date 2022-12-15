@@ -43,14 +43,15 @@ async def clock_calibrator():
 
 async def feed_watchdog():
     while len(finished_rovers) < ROVER_COUNT:
-        watchdog.feed()
+        if not DEBUG["WATCHDOG_DISABLE"]:
+            watchdog.feed()
         await asyncio.sleep(0)
 
 async def rtcm3_loop():
     """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
     """
     while len(finished_rovers) < ROVER_COUNT: #Finish running when rover data is done
-        rtcm3_data = await GPS_DEVICE.get_corrections()
+        rtcm3_data = await GPS_DEVICE.get_rtcm3_message()
         radio.broadcast_data(PacketType.RTCM3, rtcm3_data)
 
 async def rover_data_loop():
@@ -60,7 +61,7 @@ async def rover_data_loop():
         try:
             logger.info("Waiting for a radio packet")
             packet = await radio.receive_packet()
-            logger.info("Radio packet received from device", packet.sender)
+            logger.info(f"Radio packet received from device {packet.sender}")
         except radio.ChecksumError:
             logger.warning("Radio has received an invalid packet")
             continue
@@ -71,10 +72,13 @@ async def rover_data_loop():
 
         if packet.type == PacketType.NMEA:
             logger.info("Received radio packet is GPS data",)
+            if len(packet.payload) < 0:
+                logger.warning("Empty GPS data received!!!")
+                continue
             data = GPSData.from_json(packet.payload.decode('utf-8'))
             with open("/data_entries/" + str(packet.sender) + "-" + data["timestamp"].replace(":", "_"), "w") as file:
-                data['rover-id'] = packet.sender
-                logger.debug("WRITING_DATA_TO_FILE:", data)
+                data['rover_id'] = packet.sender
+                logger.debug(f"WRITING_DATA_TO_FILE: {data}")
                 file.write(json.dumps(data) + '\n')
             
             radio.send_response(PacketType.ACK, packet.sender)
@@ -107,7 +111,7 @@ if __name__ == "__main__":
     enable_fona()
     fona = FONA(GSM_UART, GSM_RST_PIN, debug=True)
     logger.info("FONA initialized")
-    logger.debug("FONA VERSION:", fona.version)
+    logger.debug(f"FONA VERSION: fona.version")
 
     network = network.CELLULAR(
         fona, (SECRETS["apn"], SECRETS["apn_username"], SECRETS["apn_password"])
@@ -124,7 +128,7 @@ if __name__ == "__main__":
         time.sleep(0.5)
     logger.info("Network Connected!")
 
-    logger.info("My Local IP address is:", fona.local_ip)
+    logger.info(f"My Local IP address is: {fona.local_ip}")
 
     # Initialize a requests object with a socket and cellular interface
     requests.set_socket(cellular_socket, fona)
@@ -138,7 +142,7 @@ if __name__ == "__main__":
             except:
                 os.remove("/data_entries/" + path)
             #TODO: RAM limit
-    logger.debug("HTTP_PAYLOAD:", http_payload)
+    logger.debug(f"HTTP_PAYLOAD: {http_payload}")
 
     try:
         logger.info("Sending HTTP request!")
@@ -150,10 +154,8 @@ if __name__ == "__main__":
             paths_sent = os.listdir("/data_entries/")
             for path in paths_sent:
                 os.rename("/data_entries/" + path, "/sent_data/" + path)
+            logger.info("HTTP request successful! Removing all sent data")
         else:
-            with open("error_log.txt", 'a') as file:
-                file.write("\nSTATUS CODE:", response.status_code, "  REASON:", response.reason+"\n")
-                file.close()
-        logger.info("HTTP request successful! Removing all sent data")
+            logger.warning(f"STATUS CODE: {response.status_code}, REASON: {response.reason}")
     finally:
         shutdown()

@@ -5,7 +5,8 @@ from config import *
 from mpy_decimal import DecimalNumber
 from time import localtime,time
 import board
-from AsyncUART import AsyncUART
+from Drivers.AsyncUART import AsyncUART
+import binascii
 
 logger = logging.getLogger("GPS")
 
@@ -15,6 +16,7 @@ class DGPS(glactracker_gps.GPS):
         self.rtcm_uart = rtcm_uart
     
     def rtk_calibrate(self, rtcm3_data: bytes):
+        logger.debug(f"CALIBRATING_RTCM3_BYTES: {binascii.hexlify(rtcm3_data)}")
         self.rtcm_uart.write(rtcm3_data)
 
     def to_dict(self):
@@ -47,7 +49,7 @@ class DGPS(glactracker_gps.GPS):
             self.horizontal_dilution = "0.01"
             self.satellites = "9"
         
-        logger.debug("GPS_DATA:", self.to_dict())
+        logger.debug(f"GPS_DATA: {self.to_dict()}")
 
         # If NMEA received back
         if self.fix_quality == 4 or self.fix_quality == 5:
@@ -57,7 +59,7 @@ class DGPS(glactracker_gps.GPS):
             logger.info("GPS quality is currently insufficient")
             return False
     
-    async def get_rtcm3_message():
+    async def get_rtcm3_message(self):
         """Returns the corrections from the GPS as a bytearray
 
         :return: Bytes object of the 5 RTCM3 messages
@@ -71,6 +73,7 @@ class DGPS(glactracker_gps.GPS):
         for i in range(5):
             d = await RTCM3_UART.aysnc_read_RTCM3_packet_forever()
             data += d
+        logger.debug(f"RTCM3_BYTES: {binascii.hexlify(bytes(data))}")
         logger.info("RTCM3 obtained from UART")
         return bytes(data)
 
