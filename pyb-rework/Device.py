@@ -19,23 +19,9 @@ import Drivers.Radio as radio
 from Drivers.Radio import PacketType
 from config import *
 from mpy_decimal import *
+import adafruit_logging as logging
 
-
-# REQUIRED FUNCTIONS FOR LATER DEFINITIONS
-def debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["LOGGING"]["DEVICE"]:
-        print(*values)
-
-def extended_debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["EXTENDED_LOGGING"]["GPS"]:
-        print(*values)
-
+logger = logging.getLogger("DEVICE")
 
 # Gloabls
 GPS_UART: busio.UART = busio.UART(board.A1, board.A2, baudrate=115200, receiver_buffer_size=2048)
@@ -58,8 +44,7 @@ RTC: adafruit_ds3231.DS3231 = adafruit_ds3231.DS3231(I2C)
 def shutdown():
     """Resets timer, causing shutdown of device
     """
-    # SHUTDOWN SCRIPT USING RTC I2C STUFF
-    debug("SHUTDOWN_INITIATED")
+    logger.info("Device shutting down!")
     RTC.alarm2_status = False
     RTC.alarm1_status = False
 
@@ -110,15 +95,15 @@ def update_GPS() -> bool:
     """
     # May need timeout
 
-    debug("GPS_UPDATE_STARTED")
-    extended_debug("GPS_BUFFER_SIZE_BEFORE_UPDATE:", GPS_UART.in_waiting)
+    logger.info("Updating GPS!")
+    logger.debug("GPS_BUFFER_SIZE_BEFORE_UPDATE:", GPS_UART.in_waiting)
     GPS.update() #Potentially garbage line so we continue anyway even if it doesn't actually work
 
     while GPS.update():
         pass #Performs as many GPS updates as there are NMEA strings available in UART
     if (DEBUG["FAKE_DATA"]):
         #Fake data
-        print("WARNING_FAKE_DATA_MODE_ON")
+        logger.warning("Fake data mode is on! No real GPS data will be used on this device!!!!")
         GPS.latitude = DecimalNumber("59.3")
         GPS.longitude = DecimalNumber("-1.2")
         GPS.altitude_m = 5002.3
@@ -127,22 +112,25 @@ def update_GPS() -> bool:
         GPS.hdop = "0.01"
         GPS.satellites = "9"
     
-    extended_debug("LAT:", GPS.latitude)
-    extended_debug("LONG:", GPS.longitude)
-    extended_debug("ALTITUDE:", GPS.altitude_m)
-    extended_debug("TIMESTAMP:", GPS.timestamp_utc)
-    extended_debug("QUALITY:", GPS.fix_quality)
-    extended_debug("HDOP_STR:",GPS.horizontal_dilution)
-    extended_debug("SATELLITES_STR:", GPS.satellites)
-    extended_debug("REMAINING_BUFFER_SIZE:", GPS_UART.in_waiting)
+    debug_data = {
+        "LAT": GPS.latitude,
+        "LONG": GPS.longitude,
+        "ALTITUDE": GPS.altitude_m,
+        "TIMESTAMP": GPS.timestamp_utc,
+        "QUALITY": GPS.fix_quality,
+        "HDOP_STR": GPS.horizontal_dilution,
+        "SATELLITES_STR": GPS.satellites,
+        "REMAINING_BUFFER_SIZE": GPS_UART.in_waiting
+    }
+    logger.debug(debug_data)
 
 
     # If NMEA received back
     if GPS.fix_quality == 4 or GPS.fix_quality == 5:
-        debug("NMEA_QUALITY_SUCCESS")
+        logger.info("GPS has a high quality fix!")
         return True
     else:
-        debug("NMEA_QUALITY_FAIL")
+        logger.info("GPS quality is currently insufficient")
     return False
 
 #ACTUAL MAIN CODE THAT RUNS ON IMPORT

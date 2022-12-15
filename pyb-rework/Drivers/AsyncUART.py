@@ -3,20 +3,9 @@ import microcontroller
 import asyncio
 import time
 from config import *
+import adafruit_logging as logging
 
-def debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["LOGGING"]["ASYNC_UART"]:
-        print(*values)
-
-def extended_debug(
-    *values: object,
-) -> None:
-    
-    if DEBUG["EXTENDED_LOGGING"]["ASYNC_UART"]:
-        print(*values)
+logger = logging.getLogger("ASYNC_UART")
 
 class AsyncUART(busio.UART):
     def __init__(
@@ -43,7 +32,7 @@ class AsyncUART(busio.UART):
             await asyncio.sleep(0)
         output = super().read(1)[0] #read returns a byte array so we return the first index
 
-        extended_debug("ASYNC_UART_GET_BYTE:", output)
+        logger.debug("ASYNC_UART_GET_BYTE:", output)
         return output
 
     async def async_read_forever(self, bytes_requested: int | None = None) -> bytes | None:
@@ -84,10 +73,10 @@ class AsyncUART(busio.UART):
             while len(output) < bytes_requested:
                 output.append(await asyncio.wait_for_ms(self.__async_get_byte_forever(), self.timeout * 1000))
         except asyncio.TimeoutError:
-            debug("TIMEOUT_REACHED")
+            logger.debug("TIMEOUT_REACHED")
             if len(output) < 1: output = None
         
-        debug("ASYNC_UART_READ_OUTPUT:", output)
+        logger.debug("ASYNC_UART_READ_OUTPUT:", output)
         return output
 
     async def async_read_until_forever(self, bytes_to_match: bytes) -> bytes:
@@ -103,7 +92,7 @@ class AsyncUART(busio.UART):
         while output[-len(bytes_to_match):] != bytes_to_match:
             output.append(await self.__async_get_byte_forever())
         
-        debug("ASYNC_UART_READ_UNTIL_OUTPUT:", output)
+        logger.debug("ASYNC_UART_READ_UNTIL_OUTPUT:", output)
         return bytes(output)
 
     async def aysnc_read_RTCM3_packet_forever(self) -> bytes:
@@ -116,7 +105,7 @@ class AsyncUART(busio.UART):
         output = await self.async_read_until_forever(b'\xd3\x00')
         output = b'\xd3\x00' + output[:-2]
 
-        debug("ASYNC_UART_READ_RTCM3_OUTPUT:", output)
+        logger.debug("ASYNC_UART_READ_RTCM3_OUTPUT:", output)
         return bytes(output)
 
     async def async_readline_forever(self) -> bytes:
@@ -127,5 +116,5 @@ class AsyncUART(busio.UART):
         """
         output = await self.async_read_until_forever(b'\n')
 
-        debug("ASYNC_UART_READLINE_OUTPUT:", output)
+        logger.debug("ASYNC_UART_READLINE_OUTPUT:", output)
         return output

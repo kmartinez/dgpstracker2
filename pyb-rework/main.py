@@ -4,12 +4,9 @@ import Device
 import traceback
 from microcontroller import watchdog
 from watchdog import WatchDogMode
+import adafruit_logging as logging
 
-def debug(
-    *values: object,
-) -> None:
-   if DEBUG["LOGGING"]["MAIN_FILE"]:
-      print(*values)
+logger = logging.getLogger("MAIN_FILE")
 
 if __name__ == "__main__":
    if not DEBUG["WATCHDOG_DISABLE"]:
@@ -21,14 +18,12 @@ if __name__ == "__main__":
          os.mkdir("/data_entries")
       #input()
       if DEVICE_ID == 0:
-         debug("BASE_STATION_MODE")
+         logger.info("Device is a base station!")
          exec(open('./Base.py').read())
       else:
-         debug("ROVER_MODE")
+         logger.info("Device is a rover!")
          exec(open('./Rover.py').read())
    except BaseException as error:
-      with open("error_log.txt", 'a') as file:
-         traceback.print_exception(type(error), error, error.__traceback__, None, file, False)
-      traceback.print_exception(type(error), error, error.__traceback__, None, None, False)
+      logger.critical(traceback.format_exception(type(error), error, error.__traceback__, None, False))
    finally:
       Device.shutdown()
