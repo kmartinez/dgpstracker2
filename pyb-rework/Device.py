@@ -101,12 +101,12 @@ if RTC.alarm1_status:
 GPS: glactracker_gps.GPS = glactracker_gps.GPS(GPS_UART, debug=DEBUG["LOGGING"]["GPS"])
 
 
-def update_GPS():
+def update_GPS() -> bool:
     """Validates NMEA and checks for quality 4.
      To access the data call `GPS.<ATTRIBUTE>`
 
-    :return: Retutrns raw data or `None`
-    :rtype: `GPS.nmea_sentence`
+    :return: Returns whether an accurate update has occurred
+    :rtype: bool
     """
     # May need timeout
 
@@ -140,10 +140,10 @@ def update_GPS():
     # If NMEA received back
     if GPS.fix_quality == 4 or GPS.fix_quality == 5:
         debug("NMEA_QUALITY_SUCCESS")
-        return GPS.nmea_sentence
+        return True
     else:
         debug("NMEA_QUALITY_FAIL")
-    return None
+    return False
 
 #ACTUAL MAIN CODE THAT RUNS ON IMPORT
 # Initialise the device

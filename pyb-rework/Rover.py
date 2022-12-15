@@ -34,13 +34,13 @@ def debug(
 accurate_reading_saved: bool = False
 sent_data_start_pos: int = 999999999
 
-def update_gps_with_rtcm3(rtcm3: bytes) -> str | None:
+def update_gps_with_rtcm3(rtcm3: bytes) -> bool:
     """Sends RTCM3 data to GPS then updates GPS object with any new serial data
 
     :param rtcm3: RTCM3 bytes
     :type rtcm3: bytes
     :return: Last GPS Sentence or None if no update occured
-    :rtype: str | None
+    :rtype: bool
     """
     RTCM3_UART.write(rtcm3)
     return update_GPS()
@@ -67,9 +67,8 @@ async def rover_loop():
         
         # If incoming message is tagged as RTCM3
         if packet.type == PacketType.RTCM3 and not accurate_reading_saved:
-            debug("RTCM3_SUCCESS, WAITING_FOR_NMEA")
-            sentence = update_gps_with_rtcm3(packet.payload)
-            if sentence is not None: #TODO: Make update_gps_with_rtcm3 return boolean
+            debug("RTCM3_RECEIVED, UPDATING_GPS")
+            if update_gps_with_rtcm3(packet.payload):
                 GPS_SAMPLES["lats"].append(GPS.latitude)
                 GPS_SAMPLES["longs"].append(GPS.longitude)
 
