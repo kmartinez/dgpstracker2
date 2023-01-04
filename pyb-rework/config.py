@@ -1,3 +1,6 @@
+"""Values used for configuring the individual devices that you're setting up
+"""
+
 import adafruit_logging as logging
 
 GLOBAL_FAILSAFE_TIMEOUT = 600

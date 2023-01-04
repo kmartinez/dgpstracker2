@@ -1,3 +1,6 @@
+"""All code relating to the GPS extensions and GPS module communications
+"""
+
 import glactracker_gps
 from busio import UART
 import adafruit_logging as logging
@@ -11,15 +14,27 @@ import binascii
 logger = logging.getLogger("GPS")
 
 class DGPS(glactracker_gps.GPS):
+    """Extended GPS class that allows use of Differential GPS information
+    """
     def __init__(self, uart: UART, rtcm_uart: AsyncUART, debug: bool = False) -> None:
         super().__init__(uart, debug)
         self.rtcm_uart = rtcm_uart
     
     def rtk_calibrate(self, rtcm3_data: bytes):
+        """Calibrates the GPS module using RTCM3 messages
+
+        :param rtcm3_data: RTCM3 messages to be sent
+        :type rtcm3_data: bytes
+        """
         logger.debug(f"CALIBRATING_RTCM3_BYTES: {binascii.hexlify(rtcm3_data)}")
         self.rtcm_uart.write(rtcm3_data)
 
     def to_dict(self):
+        """Returns a dictionary of relevant GPS attributes
+
+        :return: GPS info dictionary (can be converted to JSON)
+        :rtype: dict
+        """
         return {
             "LAT": self.latitude,
             "LONG": self.longitude,
@@ -32,6 +47,11 @@ class DGPS(glactracker_gps.GPS):
         }
     
     def update_with_all_available(self):
+        """Updates GPS from UART until it runs out of data to update with
+
+        :return: Update success state
+        :rtype: bool
+        """
         logger.info("Updating GPS!")
 
         device_updated: bool = self.update() #Potentially garbage line so we continue anyway even if it doesn't actually work
@@ -60,10 +80,10 @@ class DGPS(glactracker_gps.GPS):
             return False
     
     async def get_rtcm3_message(self):
-        """Returns the corrections from the GPS as a bytearray
+        """Gets RTCM3 correction messages from the GPS module on the provided RTCM3 UART
 
-        :return: Bytes object of the 5 RTCM3 messages
-        :rtype: bytes()
+        :return: Bytes object of the 5 RTCM3 messages (they are different messages but we don't know why exactly)
+        :rtype: bytes
         """
         # Read UART for newline terminated data - produces bytestr
         logger.info("Retrieving RTCM3 from UART")

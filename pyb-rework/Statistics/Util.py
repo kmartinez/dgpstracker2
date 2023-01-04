@@ -1,3 +1,7 @@
+"""Utility functions to calculate various statistical analysis information
+compatible with DecimalNumbers
+"""
+
 def mean(buffer):
         """Calculates the current mean
 

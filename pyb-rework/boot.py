@@ -1,3 +1,6 @@
+"""Required to write to the file system
+"""
+
 import board, digitalio, storage
 
 

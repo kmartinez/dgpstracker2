@@ -1,3 +1,7 @@
+"""Main code for all rover devices
+(Executed directly by main.py)
+"""
+
 import Drivers.PSU as PSU
 import Drivers.Radio as radio
 from Drivers.Radio import PacketType
@@ -36,6 +40,8 @@ accurate_reading_saved: bool = False
 sent_data_start_pos: int = 999999999
 
 async def feed_watchdog():
+    """Feeds the watchdog timer whenever available
+    """
     while True:
         if not DEBUG["WATCHDOG_DISABLE"]:
             watchdog.feed()

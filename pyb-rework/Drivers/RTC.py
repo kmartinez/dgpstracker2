@@ -1,3 +1,6 @@
+"""Contains code to extend the RTC module functionality
+"""
+
 import board
 import busio
 import adafruit_ds3231

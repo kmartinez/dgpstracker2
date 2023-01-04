@@ -1,3 +1,6 @@
+"""All code relating to our extended UART implementation with asynchronous waiting
+"""
+
 import busio
 import microcontroller
 import asyncio
@@ -8,6 +11,9 @@ import adafruit_logging as logging
 logger = logging.getLogger("ASYNC_UART")
 
 class AsyncUART(busio.UART):
+    """Extended UART class that includes async versions of some functions.
+    allows asynchronous waiting while data has not been received
+    """
     def __init__(
         self,
         tx: microcontroller.Pin,

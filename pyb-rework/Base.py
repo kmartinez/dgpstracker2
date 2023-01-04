@@ -1,6 +1,7 @@
-'''
-Base, inheriting from Device, is an object to represent base stations. This contains 
-'''
+"""Main code for base stations. This is directly executed by the main file
+if the device is a base station
+"""
+
 import time
 from Drivers.PSU import * #EVERYTHING FROM THIS IS READONLY (you can use write functions, but cannot actually modify a variable)
 # import Drivers.Radio as radio

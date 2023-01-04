@@ -1,3 +1,6 @@
+"""First proper code that is called by circuitpython on all devices
+"""
+
 from config import *
 import os
 import Drivers.PSU as PSU

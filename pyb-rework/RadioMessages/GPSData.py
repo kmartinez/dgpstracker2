@@ -1,3 +1,6 @@
+"""Helper module for dealing with GPS coordinate information
+"""
+
 import json
 from adafruit_datetime import datetime
 from mpy_decimal import DecimalNumber
@@ -7,6 +10,9 @@ import adafruit_logging as logging
 logger = logging.getLogger("GPS")
 
 class GPSData:
+    """Class representing all the data that the GPS can return
+    (in regards to coordinate information)
+    """
     timestamp: datetime
     latitude: str
     longitude: str

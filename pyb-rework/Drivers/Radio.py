@@ -1,3 +1,6 @@
+"""All code relating to the radio module itself
+"""
+
 # Consts
 import struct
 import binascii
@@ -11,9 +14,14 @@ logger = logging.getLogger("RADIO")
 UART: AsyncUART.AsyncUART = AsyncUART.AsyncUART(board.D11, board.D10, baudrate=9600, receiver_buffer_size=2048)
 
 class ChecksumError(Exception):
+    """Error representing a failure to verify a checksum of a packet
+    (Checksum either could not be verified for some reason or was just incorrect)
+    """
     pass
 
 class FormatStrings():
+    """pseudo-enum of the various format characters for different parts of packets
+    """
     PACKET_TYPE = 'b'
     PACKET_DEVICE_ID = 'b'
     PACKET_CHECKSUM = 'I'
@@ -21,6 +29,8 @@ class FormatStrings():
     PACKET_MARKER = 'B'
 
 class PacketType():
+    """pseudo-enum of different packet type numbers (used for serializing packets)
+    """
     RTS = 1
     CTS = 2
     ACK = 3

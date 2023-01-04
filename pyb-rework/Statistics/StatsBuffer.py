@@ -1,7 +1,12 @@
+"""Module to help with processing maths over a rolling sample period
+"""
+
 import ulab.numpy as np
 from mpy_decimal import *
 
 class StatsBuffer:
+    """Class to help with making a rolling average of information
+    """
     circularBuffer: list[DecimalNumber]
     max_length: int
 

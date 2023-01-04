@@ -1,3 +1,6 @@
+"""Contains all code relating to PSU controls (enabling devices, etc.)
+"""
+
 # Import packages
 from config import *
 from mpy_decimal import *
@@ -14,6 +17,8 @@ GSM_ENABLE_PIN.switch_to_output()
 GSM_ENABLE_PIN = False
 
 def enable_fona():
+    """Turns on the power for the connected adafruit FONA module
+    """
     GSM_ENABLE_PIN.value = True
 
 def shutdown():
