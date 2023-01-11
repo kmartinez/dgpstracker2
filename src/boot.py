@@ -1,4 +1,5 @@
-"""Required to write to the file system
+"""Executed before main module by CircuitPython.
+Configures on-board storage for read/write capabilities
 """
 
 import board, digitalio, storage

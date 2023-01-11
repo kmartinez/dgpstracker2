@@ -1,5 +1,5 @@
-"""Main code for base stations. This is directly executed by the main file
-if the device is a base station
+"""Main code for base stations.
+Creates a scheduler and adds all base station tasks to it
 """
 
 import time
@@ -35,7 +35,7 @@ GSM_RST_PIN: digitalio.DigitalInOut = digitalio.DigitalInOut(board.D5)
 finished_rovers: dict[int, bool] = {}
 
 async def clock_calibrator():
-    """Calibrates the clock from GPS time
+    """Task that waits until the GPS has a timestamp and then calibrates the RTC using GPS time
     """
     while GPS_DEVICE.timestamp_utc == None:
         while not GPS_DEVICE.update():
@@ -43,7 +43,8 @@ async def clock_calibrator():
         RTC_DEVICE.datetime = GPS_DEVICE.timestamp_utc
 
 async def feed_watchdog():
-    """Feeds the watchdog provided the watchdog is not diabled in config.py
+    """Upon being executed by a scheduler, this task will feed the watchdog then yield.
+    Added as a task to the asyncio scheduler by this module's main code.
     """
     while len(finished_rovers) < ROVER_COUNT:
         if not DEBUG["WATCHDOG_DISABLE"]:
@@ -51,14 +52,14 @@ async def feed_watchdog():
         await asyncio.sleep(0)
 
 async def rtcm3_loop():
-    """Runs continuously but in parallel. Attempts to send GPS uart readings every second (approx.)
+    """Task that continuously broadcasts available RTCM3 correction data.
     """
     while len(finished_rovers) < ROVER_COUNT: #Finish running when rover data is done
         rtcm3_data = await GPS_DEVICE.get_rtcm3_message()
         radio.broadcast_data(PacketType.RTCM3, rtcm3_data)
 
 async def rover_data_loop():
-    """Runs continuously but in parallel. Attempts to receive data from the rovers and proecess that data
+    """Task that continuously processes all incoming rover data until timeout or all rovers are finished.
     """
     while len(finished_rovers) < ROVER_COUNT: #While there are any Nones in rover_data
         try:

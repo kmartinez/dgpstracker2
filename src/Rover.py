@@ -26,8 +26,8 @@ logger = logging.getLogger("ROVER")
 
 DecimalNumber.set_scale(32)
 SD_MAX = DecimalNumber("0.0001")
+'''Maximum acceptible standard deviation [degrees lat/long]'''
 VAR_MAX = SD_MAX ** 2
-'''Maximum acceptible standard deviation [m]'''
 AVERAGING_SAMPLE_SIZE = 5
 '''number of samples to take a rolling standard deviation and average of'''
 
@@ -40,7 +40,8 @@ accurate_reading_saved: bool = False
 sent_data_start_pos: int = 999999999
 
 async def feed_watchdog():
-    """Feeds the watchdog timer whenever available
+    """Upon being executed by a scheduler, this task will feed the watchdog then yield.
+    Added as a task to the asyncio scheduler by this module's main code.
     """
     while True:
         if not DEBUG["WATCHDOG_DISABLE"]:
@@ -48,10 +49,11 @@ async def feed_watchdog():
         await asyncio.sleep(0)
 
 async def rover_loop():
-    """Main loop of each rover.
+    """Main functionality of the rover resides here.
     Waits for radio message and checks its type.
     If it's RTCM3, send back NMEA data.
-    If it's an ACK for us, shutdown the system because the base has our stuff
+    If it's an ACK for us, shutdown the system because the base has our stuff.
+    Added as a task to the asyncio scheduler upon startup
     """
     # Rover needs to:
     # Receive packet

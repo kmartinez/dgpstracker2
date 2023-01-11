@@ -1,4 +1,6 @@
-"""First proper code that is called by circuitpython on all devices
+"""This module is executed by circuitpython upon startup.
+It first checks if the module was reset abnormally, and then if so shuts down gracefully.
+Otherwise, the module determines if it is configured as a base or a rover, where it will then execute the respective module
 """
 
 from config import *
