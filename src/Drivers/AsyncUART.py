@@ -1,4 +1,4 @@
-"""All code relating to our extended UART implementation with asynchronous waiting
+"""Module that extends busio's UART with async/await functionality.
 """
 
 import busio
@@ -12,7 +12,7 @@ logger = logging.getLogger("ASYNC_UART")
 
 class AsyncUART(busio.UART):
     """Extended UART class that includes async versions of some functions.
-    allows asynchronous waiting while data has not been received
+    Allows asynchronous waiting while data has not been received
     """
     def __init__(
         self,
