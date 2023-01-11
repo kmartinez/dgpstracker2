@@ -42,8 +42,8 @@ class AsyncUART(busio.UART):
         return output
 
     async def async_read_forever(self, bytes_requested: int | None = None) -> bytes | None:
-        """Reads until it gets `bytes_requested` number of bytes.
-        Waits forever if `bytes_requested` is None, you have been warned.
+        """Reads until it gets ``bytes_requested`` number of bytes.
+        Waits forever if ``bytes_requested`` is None, you have been warned.
         Returns None if you request 0 bytes like a smartass.
         Does not actually read anything until there is enough bytes available.
 
@@ -64,7 +64,7 @@ class AsyncUART(busio.UART):
             return super().read(bytes_requested) #At this point this will be instant because all the bytes are there
     
     async def async_read(self, bytes_requested: int | None = None) -> bytes | None:
-        """Attempts to get `bytes_requested` bytes until it times out.
+        """Attempts to get ``bytes_requested`` bytes until it times out.
         On timeout will return any bytes that are available in UART, or None if there aren't any.
 
         :param bytes_requested: Number of bytes to attempt to read, defaults to None
@@ -107,7 +107,7 @@ class AsyncUART(busio.UART):
 
     async def aysnc_read_RTCM3_packet_forever(self) -> bytes:
         """Asynchronously reads an entire RTCM3 packet sequence.
-        There is no end marker for this so we read until the start of the next packet and prepend the packet marker (b'\\xd3\\x00').
+        There is no end marker for this so we read until the start of the next packet and prepend the packet marker (``b'\\xd3\\x00'``).
 
         :return: RTCM3 bytes
         :rtype: bytes
@@ -119,7 +119,7 @@ class AsyncUART(busio.UART):
         return bytes(output)
 
     async def async_readline_forever(self) -> bytes:
-        """Reads asynchronously until `\\n` (included in output).
+        """Reads asynchronously until ``\\n`` (included in output).
 
         :return: Line that was read
         :rtype: bytes
