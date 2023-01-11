@@ -6,18 +6,10 @@ import os
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'lib')))
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src')))
 
 # This is the expected signature of the handler for this event, cf doc
-def autodoc_skip_member_handler(app, what, name, obj, skip, options):
-    # Basic approach; you might want a regex instead
-    return True
-
-# Automatically called by sphinx at startup
-def setup(app):
-    # Connect the autodoc-skip-member event from apidoc to the callback
-    app.connect('autodoc-skip-member', autodoc_skip_member_handler)
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -41,3 +33,6 @@ exclude_patterns = []
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+
+# Autodoc config
+autodoc_mock_imports = ["adafruit_logging", "board", "busio", "digitalio", "adafruit_ds3231", "storage", "adafruit_datetime", "microcontroller", "glactracker_gps", "ulab", "watchdog", "adafruit_requests", "rtc", "adafruit_fona"]
