@@ -8,6 +8,8 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'lib')))
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'Drivers')))
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'Statistics')))
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'RadioMessages')))
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src')))
 
 # This is the expected signature of the handler for this event, cf doc
