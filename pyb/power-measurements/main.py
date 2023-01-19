@@ -22,6 +22,10 @@ aht = AHTx0(i2c)
 # mcp = MCP9808(i2c)
 ina219 = INA219(i2c)
 
+pin_io12 = digitalio.DigitalInOut(board.IO12)
+# pin_io12.pull =digitalio.Pull.UP
+pin_io12.direction = digitalio.Direction.INPUT
+
 # DEPRECATED Need to use measure current instead, though for some reason, vs code doesn't recognise the driver, or .mpy files or outdated?
 # def measure_voltage():
 #     """Measures the voltage reading coming from the FeatherS2 as it is regulated across the 
@@ -60,21 +64,25 @@ def measure_current():
         power = ina219.power  # power in watts
 
     
-
+        if current <= 0:
+            pin_io12.direction = digitalio.Direction.OUTPUT
+            # pin_io12.value = False
+            break
         # INA219 measure bus voltage on the load side. So PSU voltage = bus_voltage + shunt_voltage
-        print("=" * 40)
-        print("Voltage (VIN+) : {:6.3f}   V".format(bus_voltage + shunt_voltage))
-        print("Voltage (VIN-) : {:6.3f}   V".format(bus_voltage))
-        print("Shunt Voltage  : {:8.5f} V".format(shunt_voltage))
-        print("Shunt Current  : {:7.4f}  A".format(current / 1000))
-        print("Power Calc.    : {:8.5f} W".format(bus_voltage * (current / 1000)))
-        print("Power Register : {:6.3f}   W".format(power))
-        print("")
-        print("=" * 40)
-        print("\nMeasuring Temperature from AHT")
-        print("\nTemperature: %0.1f C" % aht.temperature)
-        print("\nHumidity: %0.1f %%" % aht.relative_humidity)
-        print("=" * 60)
+        else:
+            print("=" * 40)
+            print("Voltage (VIN+) : {:6.3f}   V".format(bus_voltage + shunt_voltage))
+            print("Voltage (VIN-) : {:6.3f}   V".format(bus_voltage))
+            print("Shunt Voltage  : {:8.5f} V".format(shunt_voltage))
+            print("Shunt Current  : {:7.4f}  A".format(current / 1000))
+            print("Power Calc.    : {:8.5f} W".format(bus_voltage * (current / 1000)))
+            print("Power Register : {:6.3f}   W".format(power))
+            print("")
+            print("=" * 40)
+            print("\nMeasuring Temperature from AHT")
+            print("\nTemperature: %0.1f C" % aht.temperature)
+            print("\nHumidity: %0.1f %%" % aht.relative_humidity)
+            print("=" * 60)
     
 
         # Check internal calculations haven't overflowed (doesn't detect ADC overflows)
@@ -102,10 +110,12 @@ def measure_temperature_and_humidity():
 
 def main():
     print("Testing New System\n")
-    pin_io12 = digitalio.DigitalInOut(board.IO12)
-    pin_io12.direction =digitalio.Direction.OUTPUT
+    
+    # pin_io12.direction =digitalio.Direction.OUTPUT
+    # pin_io12.pull = digitalio.Pull.UP
     # set a flag 
-    pin_io12.value = True
+    print(pin_io12.value)
+    # pin_io12.value = True
     while pin_io12.value:
         try:
             measure_current()
@@ -113,7 +123,7 @@ def main():
             # # measure_voltage()
             # # measure_temperature_and_humidity()
             
-            # time.sleep(1)
+            time.sleep(1)
         except OSError:
             print("retry reads")
 
