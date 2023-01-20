@@ -14,6 +14,7 @@ import analogio
 
 """External lib modules"""
 from adafruit_ahtx0 import AHTx0
+from adafruit_debouncer import Debouncer
 from adafruit_ina219 import INA219, ADCResolution, BusVoltageRange
 
 # Global variables  
@@ -24,10 +25,17 @@ ina219 = INA219(i2c)
 ina219_2 = INA219(i2c)
 
 # PIN DEFINITION
+""" Switch GPIO PIN"""
 pin_io12 = digitalio.DigitalInOut(board.IO12)
 # pin_io12.pull = digitalio.Pull.UP
 pin_io12.direction = digitalio.Direction.INPUT
 
+FILE_PATH = "Readings/incoming_data.txt"
+
+is_logging = False
+""" LED GPIO PIN """
+LED = digitalio.DigitalInOut(board.LED)
+LED.direction = digitalio.Direction.OUTPUT
 
 # Get wifi secrets
 try:
@@ -47,6 +55,16 @@ https = requests.Session(socket, ssl.create_default_context())
 url = "http://iotgate.ecs.soton.ac.uk/test/test.txt"
 URL_POST = "http://iotgate.ecs.soton.ac.uk/myapp"
 
+
+# Debouncer function
+def debouncable(pin):
+    switch_io = digitalio.DigitalInOut(pin)
+    switch_io.direction = digitalio.Direction.INPUT
+    switch_io.pull = digitalio.Pull.UP
+    return switch_io
+
+# External Button
+button_d12 = Debouncer(debouncable(board.D5))
 
 # TODO: read mearuments
 # - temperature & humidity
@@ -120,22 +138,125 @@ def measure_current():
 
         time.sleep(2)
 # - Counter/Timer since the start 
+
+
 # - Data Logger too
+# - replace button D12 with IO12
+def data_logger():
+    button_flag = True
+    logging = False
+
+    while True:
+        """ Filesystem main loop that effectively needs boot.py to be present to be able to write data into incoming data.txt
+            General Operation currently runs a simple timestamp - not accurate but acts as a template to be fixed
+            Currently relies on a push-button on pin D12 with an LED to interface with - flash once a second and it's working; 0.5s and it's not working
+            NB: To work properly, please make sure that boot.py is present on the board. It will force the board into read-only mode and can only be changed on the REPL.
+            To make changes to the code, please change the name of boot.py to something else like boost.py using os.rename on the REPL.
+            Final Notes: Any changes in your code requires you to reset the board so that it enters Read-Only mode, and vice-versa.
+        """
+        button_d12.update()
+        if button_d12.fell:
+            print("Pressed")
+            print("Writing to Filesystem")
+            # onboard_counter() # internal function callback doesn't work - need to find a solution around this
+            # count = 0 - redundant
+            try:
+                print("Ready to Log...")
+                while button_flag:
+                    button_d12.update()
+                    if button_d12.fell:
+                        print("Button Pressed")     
+                        print(button_d12.fell)
+                        button_flag = False
+                print("Logging...")
+                is_logging = True
+                with open(FILE_PATH, "w") as fp:
+                    fp.write("Timestamp\tLongitude\tLatitude\tFix Quality\n")
+                    # correct timestamp using RTC
+                    # timestamp = "{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec )
+                    # print("{}".format(timestamp))
+                    # print(timestamp)
+                    initial_time = time.monotonic()
+                    initial_t = initial_time
+                    latitude = 52.3951  # to be read from gps
+                    longitude = 1.3452  # to be read from gps
+                    quality_fix = 4     # to be read form gps
+                    while is_logging:
+                        sec_time = time.monotonic()
+                        if (sec_time - initial_time) >= 1:
+                            time_stamp = sec_time - initial_t   # may want to use datetime from RTC
+                            sec_time = 0
+                            initial_time = time.monotonic()
+                            #   Writes time-stamp   \t  Longitude   \t  Latitude    \t  Fix Quality
+                            # fp.write("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t"
+                            print( "{}".format(longitude) + "\t"
+                            +  "{}".format(latitude) + "\t"
+                            +  "{}".format(quality_fix) + "\n" )
+                            fp.flush()
+                            LED.value = not LED.value
+                            # print(time_stamp)
+                            # print("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t" 
+                            print("{}".format(longitude) + "\t" 
+                            + "{}".format(latitude) + "\t"
+                            + "{}".format(quality_fix) + "\n")
+                        button_d12.update()
+                        if button_d12.fell:
+                            is_logging = False
+                            print("Stopped Logging")
+                        
+            except OSError as e:  # Typically when the filesystem isn't writeable...
+                delay = 0.5  # ...blink the LED every half second.
+                if e.args[0] == 28:  # If the file system is full...
+                    delay = 0.25  # ...blink the LED faster!
+                while True:
+                    if is_logging:
+                        LED.value = not LED.value
+                        time.sleep(delay)
+            LED.value = True
+            time.sleep(0.5)
+        else:
+            LED.value = False
 
 
+
+# add try-catch on the request
 # deprecated, works if you include json=<insert-content-here>
-message = "Content-Sherif"
-json_data = [{"Date": "20/01/2023"},{"Field": "Glacsweb-test"}]
-print("Posting to server")
-message_post =https.post(url=URL_POST, json=message)
-print("POST Complete")
-print(message_post.content)
+""" Disabled posting data """
+# message = "Content-Sherif"
+# json_data = [{"Date": "20/01/2023"},{"Field": "Glacsweb-test"}]
+# print("Posting to server")
+# message_post =https.post(url=URL_POST, json=message)
+# print("POST Complete")
+# print(message_post.content)
 
-message_post.close()
+# message_post.close()
 
 
 def main():
-    pass
+    print("Testing New System\n")
+    pin_io12.pull = digitalio.Pull.UP
+    # set a flag 
+    print(pin_io12.value)
+    # pin_io12.direction =digitalio.Direction.OUTPUT
+
+    """ Check if PIN Valid """
+    if pin_io12.value:
+        print("Ready to Log data")
+        data_logger()
+    else:
+        print("PIN not active.")
+    # data_logger()
+    # pin_io12.value = True
+    # while pin_io12.value:
+    #     try:
+    #         measure_current()# - main
+    #         # measure_temperature()
+    #         # # measure_voltage()
+    #         # # measure_temperature_and_humidity()
+            
+    #         time.sleep(1)
+    #     except OSError:
+    #         print("retry reads")
 
 
 if __name__ == '__main__':
