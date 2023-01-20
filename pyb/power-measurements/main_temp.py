@@ -1,63 +1,53 @@
-# simple http get over wifi
-# adapted from https://circuitpython.readthedocs.io/projects/imageload/en/latest/examples.html?highlight=requests#requests-test
-
-"""WiFi modules"""
-import ssl
-import wifi
-import socketpool
-import adafruit_requests as requests
-"""Vanilla modules"""
-import time
-import board
+""" On-board Vanilla Modules """
 import digitalio
 import analogio
+import board 
+import time
 
-"""External lib modules"""
+""" HTTP Post Modules"""
+import wifi
+import ssl
+import socketpool
+import adafruit_requests as requests
+
+""" local modules """
+import v_bat
+
+""" external lib modules """
+# from adafruit_lc709203f import LC709203F - deprecated
 from adafruit_ahtx0 import AHTx0
+from adafruit_mcp9808 import MCP9808
 from adafruit_ina219 import INA219, ADCResolution, BusVoltageRange
 
-# Global variables  
-""" Make sure bootloader is updated to the latest version - current version is 7.3.3 """
-i2c = board.STEMMA_I2C()
+
+
+#TODO: identify current sensor to use
+#TODO: figure out how to measure VBAT
+#TODO: measure and log VBAT
+#TODO: Track measurements with a timer too (RTC)
+i2c = board.STEMMA_I2C() # TODO: make sure bootloader is updated to the latest version - current version is 7.3.3
+# i2c_mcp = board.STEMMA_I2C(18)   
+# lc7 = LC709203F(i2c)
 aht = AHTx0(i2c)
+# mcp = MCP9808(i2c)
 ina219 = INA219(i2c)
 ina219_2 = INA219(i2c)
 
-# PIN DEFINITION
 pin_io12 = digitalio.DigitalInOut(board.IO12)
-# pin_io12.pull = digitalio.Pull.UP
+# pin_io12.pull =digitalio.Pull.UP
 pin_io12.direction = digitalio.Direction.INPUT
 
+# DEPRECATED Need to use measure current instead, though for some reason, vs code doesn't recognise the driver, or .mpy files or outdated?
+# def measure_voltage():
+#     """Measures the voltage reading coming from the FeatherS2 as it is regulated across the 
+#        LC709203 module as it
+#     """
+#     print("Measuring Voltage\n")
+#     print("IC Version: ", hex(lc7.ic_version))
+#     print("Battery Voltage: %0.3f V" % (lc7.cell_voltage))
+#     print("Battery Percentage: %0.1f %% " % (lc7.cell_percent))
+#     print("Battery Pack Size: ", (lc7.pack_size))
 
-# Get wifi secrets
-try:
-    from secrets import secrets
-except ImportError:
-    print("WiFi secrets in secrets.py, add them there!")
-    raise
-
-wifi.radio.connect(secrets["ssid"], secrets["password"])
-
-print("My IP address is", wifi.radio.ipv4_address)
-
-socket = socketpool.SocketPool(wifi.radio)
-https = requests.Session(socket, ssl.create_default_context())
-
-# pylint: disable=line-too-long
-url = "http://iotgate.ecs.soton.ac.uk/test/test.txt"
-URL_POST = "http://iotgate.ecs.soton.ac.uk/myapp"
-
-
-# TODO: read mearuments
-# - temperature & humidity
-def measure_temperature_and_humidity():
-    print("Measuring Temperature from AHT")
-    while True:
-        print("\nTemperature: %0.1f C" % aht.temperature)
-        print("\nHumidity: %0.1f %%" % aht.relative_humidity)
-        time.sleep(2)
-
-# - current
 def measure_current():
     print("Measuring Current\n")
     # display some of the advanced field (just to test)
@@ -118,25 +108,63 @@ def measure_current():
             print("Internal Math Overflow Detected!")
             print("")
 
+    
+
         time.sleep(2)
-# - Counter/Timer since the start 
-# - Data Logger too
+
+# def measure_temperature():
+#     print("Measure Temperature from MCP")
+#     while True:
+#         print("\nTemperature: %0.3f C"% mcp.temperature)
+#         time.sleep(2)
+    
+def measure_temperature_and_humidity():
+    print("Measuring Temperature from AHT")
+    while True:
+        print("\nTemperature: %0.1f C" % aht.temperature)
+        print("\nHumidity: %0.1f %%" % aht.relative_humidity)
+        time.sleep(2)
 
 
-# deprecated, works if you include json=<insert-content-here>
-message = "Content-Sherif"
-json_data = [{"Date": "20/01/2023"},{"Field": "Glacsweb-test"}]
-print("Posting to server")
-message_post =https.post(url=URL_POST, json=message)
-print("POST Complete")
-print(message_post.content)
+#TODO: write to filesystem code?
 
-message_post.close()
+
+
+try:
+    from secrets import secrets
+except ImportError:
+    print("WiFi secrets in secrets.py, add them there!")
+    raise
+
+#TODO: Priority One: HTTP Post code iotgate.
+def connect():
+    """Connects to WIFI and Iotgate"""
+    wifi.radio.connect
+    pass
+
+def disconnect():
+    """Disconnects from WIFI and Iotgate"""
+    pass
 
 
 def main():
-    pass
-
+    print("Testing New System\n")
+    
+    # pin_io12.direction =digitalio.Direction.OUTPUT
+    # pin_io12.pull = digitalio.Pull.UP
+    # set a flag 
+    print(pin_io12.value)
+    # pin_io12.value = True
+    while pin_io12.value:
+        try:
+            measure_current()
+            # measure_temperature()
+            # # measure_voltage()
+            # # measure_temperature_and_humidity()
+            
+            time.sleep(1)
+        except OSError:
+            print("retry reads")
 
 if __name__ == '__main__':
     main()
