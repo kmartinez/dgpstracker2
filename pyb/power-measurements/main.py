@@ -132,6 +132,7 @@ def measure_current():
     ina219_2.shunt_adc_resolution = ADCResolution.ADCRES_12BIT_32S
     # optional : change voltage range to 16V
     ina219_2.bus_voltage_range = BusVoltageRange.RANGE_16V
+    ina219.set_calibration_16V_400mA
 
     
 
@@ -161,6 +162,7 @@ def measure_current():
             print("Power Calc.    : {:8.5f} W".format(bus_voltage * (current / 1000)))
             print("Power Register : {:6.3f}   W".format(power))
             print("Voltage: : {:6.3f}   V".format(voltage))
+            print("Load Voltage : {:6.3f} V".format(total_voltage))
             print("")
             print("=" * 40)
             print("\nMeasuring Temperature from AHT")
@@ -183,7 +185,6 @@ def measure_current():
 def data_logger():
     button_flag = True
     logging = False
-    b_volt, s_volt, curr, power, temperature, humidity = measure_current_and_vbat() # should be moved to line 220
 
     while True:
         """ Filesystem main loop that effectively needs boot.py to be present to be able to write data into incoming data.txt
@@ -218,6 +219,7 @@ def data_logger():
                     initial_time = time.monotonic()
                     initial_t = initial_time
 
+
                     # latitude = 52.3951  # to be read from gps
                     # longitude = 1.3452  # to be read from gps
                     # quality_fix = 4     # to be read form gps
@@ -228,8 +230,12 @@ def data_logger():
                             time_stamp = sec_time - initial_t   # may want to use datetime from RTC
                             sec_time = 0
                             initial_time = time.monotonic()
+                            b_volt, s_volt, curr, power, temperature, humidity = measure_current_and_vbat() # should be moved to line 220
                             #   Writes time-stamp   \t  Longitude   \t  Latitude    \t  Fix Quality
                             # fp.write("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t"
+                            fp.write("{}".format(time_stamp) + "\t"
+                            +  "{}".format(b_volt+s_volt) + "\t"
+                            +  "{}".format(temperature))
                             print( "{}".format(time_stamp) + "\t"
                             +  "{}".format(b_volt+s_volt) + "\t"
                             +  "{}".format(temperature) + "\n" )
@@ -237,8 +243,9 @@ def data_logger():
                             LED.value = not LED.value
                             # print(time_stamp)
                             # print("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t" 
-                            message = "{}".format(b_volt+s_volt) + "\t"
-                            +  "{}".format(temperature) + "\n" 
+                            # message = "{}".format(b_volt+s_volt)
+                            # +  "{}".format(temperature) + "\n" 
+                            message = ' VBat: {0}, Temperature: {1}'.format((b_volt+s_volt),temperature)
                             # json_data = [{"Date": "20/01/2023"},{"Field": "Glacsweb-test"}]
                             print("Posting to server")
                             message_post =https.post(url=URL_POST, json=message)
@@ -293,27 +300,27 @@ def main():
     # TODO: Edit function to log time, vbat and temperature
     # see if you can POST data once it's been written 
     # Check with print statement - once every 30s, then up to 1 minute, then finally 3 minutes
-    if pin_io12.value:
-        print("Ready to Log data")
-        data_logger()
-    else:
-        print("PIN not active.")
-
+    # if pin_io12.value:
+    #     print("Ready to Log data")
+    #     data_logger()
+    # else:
+    #     print("PIN not active.")
 
 
     # data_logger()
     # pin_io12.value = True
     """ Comment out - Just used for debugging"""
-    # while pin_io12.value:
-    #     try:
-    #         measure_current()# - main
-    #         # measure_temperature()
-    #         # # measure_voltage()
-    #         # # measure_temperature_and_humidity()
+    # pin_io12.value = True
+    while pin_io12.value:
+        try:
+            measure_current()# - main
+            # measure_temperature()
+            # # measure_voltage()
+            # # measure_temperature_and_humidity()
             
-    #         time.sleep(1)
-    #     except OSError:
-    #         print("retry reads")
+            time.sleep(1)
+        except OSError:
+            print("retry reads")
 
 
 if __name__ == '__main__':
