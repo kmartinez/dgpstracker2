@@ -249,7 +249,7 @@ def data_logger():
                             # print("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t" 
                             # message = "{}".format(b_volt+s_volt)
                             # +  "{}".format(temperature) + "\n" 
-                            message = ' VBat: {0}, Temperature: {1}'.format((b_volt+s_volt),temperature)
+                            message = ' V T, {0}, {1}'.format((b_volt+s_volt),temperature)
                             # json_data = [{"Date": "20/01/2023"},{"Field": "Glacsweb-test"}]
                             print("Posting to server")
                             message_post =https.post(url=URL_POST, json=message)
