@@ -24,6 +24,10 @@ aht = AHTx0(i2c)
 ina219 = INA219(i2c)
 ina219_2 = INA219(i2c)
 
+# Additional Readings from MCU apparently
+# VOLTAGE_DIFF = 2.2
+
+
 # PIN DEFINITION
 """ Switch GPIO PIN"""
 pin_io12 = digitalio.DigitalInOut(board.IO12)
@@ -94,7 +98,7 @@ def measure_current_and_vbat():
     # optional : change voltage range to 16V
     ina219.bus_voltage_range = BusVoltageRange.RANGE_16V
 
-    bus_voltage = ina219.bus_voltage  # voltage on V- (load side)
+    bus_voltage = ina219.bus_voltage # voltage on V- (load side)
     shunt_voltage = ina219.shunt_voltage  # voltage between V+ and V- across the shunt
     current = ina219.current  # current in mA
     power = ina219.power  # power in watts
@@ -142,9 +146,9 @@ def measure_current():
         shunt_voltage = ina219.shunt_voltage  # voltage between V+ and V- across the shunt
         current = ina219.current  # current in mA
         power = ina219.power  # power in watts
-        voltage = (power/(current))
+        # voltage = (power/(current))
         # total_voltage = (ina219_2.shunt_voltage + ina219_2.bus_voltage)
-        total_voltage = bus_voltage + shunt_voltage
+        # total_voltage = bus_voltage + shunt_voltage
         # load_voltage = ina219.
 
     
@@ -161,8 +165,8 @@ def measure_current():
             print("Shunt Current  : {:7.4f}  A".format(current / 1000))
             print("Power Calc.    : {:8.5f} W".format(bus_voltage * (current / 1000)))
             print("Power Register : {:6.3f}   W".format(power))
-            print("Voltage: : {:6.3f}   V".format(voltage))
-            print("Load Voltage : {:6.3f} V".format(total_voltage))
+            # print("Voltage: : {:6.3f}   V".format(voltage))
+            # print("Load Voltage : {:6.3f} V".format(total_voltage))
             print("")
             print("=" * 40)
             print("\nMeasuring Temperature from AHT")
@@ -235,7 +239,7 @@ def data_logger():
                             # fp.write("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t"
                             fp.write("{}".format(time_stamp) + "\t"
                             +  "{}".format(b_volt+s_volt) + "\t"
-                            +  "{}".format(temperature))
+                            +  "{}".format(temperature) + "\n")
                             print( "{}".format(time_stamp) + "\t"
                             +  "{}".format(b_volt+s_volt) + "\t"
                             +  "{}".format(temperature) + "\n" )
@@ -300,11 +304,11 @@ def main():
     # TODO: Edit function to log time, vbat and temperature
     # see if you can POST data once it's been written 
     # Check with print statement - once every 30s, then up to 1 minute, then finally 3 minutes
-    # if pin_io12.value:
-    #     print("Ready to Log data")
-    #     data_logger()
-    # else:
-    #     print("PIN not active.")
+    if pin_io12.value:
+        print("Ready to Log data")
+        data_logger()
+    else:
+        print("PIN not active.")
 
 
     # data_logger()
@@ -313,7 +317,7 @@ def main():
     # pin_io12.value = True
     while pin_io12.value:
         try:
-            measure_current()# - main
+            # measure_current()# - main
             # measure_temperature()
             # # measure_voltage()
             # # measure_temperature_and_humidity()
