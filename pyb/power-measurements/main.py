@@ -64,7 +64,7 @@ def debouncable(pin):
     return switch_io
 
 # External Button
-button_d12 = Debouncer(debouncable(board.D5))
+button_d5 = Debouncer(debouncable(board.D5))
 
 # TODO: read mearuments
 # - temperature & humidity
@@ -76,6 +76,41 @@ def measure_temperature_and_humidity():
         time.sleep(2)
 
 # - current
+
+def measure_current_and_vbat():
+    print("Measuring Current & VBat\n")
+    # display some of the advanced field (just to test)
+    print("Config register:")
+    print("  bus_voltage_range:    0x%1X" % ina219.bus_voltage_range)
+    print("  gain:                 0x%1X" % ina219.gain)
+    print("  bus_adc_resolution:   0x%1X" % ina219.bus_adc_resolution)
+    print("  shunt_adc_resolution: 0x%1X" % ina219.shunt_adc_resolution)
+    print("  mode:                 0x%1X" % ina219.mode)
+    print("")
+
+    # optional : change configuration to use 32 samples averaging for both bus voltage and shunt voltage
+    ina219.bus_adc_resolution = ADCResolution.ADCRES_12BIT_32S
+    ina219.shunt_adc_resolution = ADCResolution.ADCRES_12BIT_32S
+    # optional : change voltage range to 16V
+    ina219.bus_voltage_range = BusVoltageRange.RANGE_16V
+
+    bus_voltage = ina219.bus_voltage  # voltage on V- (load side)
+    shunt_voltage = ina219.shunt_voltage  # voltage between V+ and V- across the shunt
+    current = ina219.current  # current in mA
+    power = ina219.power  # power in watts
+    voltage = (power/(current)) 
+
+    temp = aht.temperature
+    humid = aht.relative_humidity
+
+    while True:
+        if current <= 0:
+            pin_io12.direction = digitalio.Direction.OUTPUT
+            # pin_io12.value = False
+            break
+        else:
+            return bus_voltage, shunt_voltage, current, power, temp, humid
+
 def measure_current():
     print("Measuring Current\n")
     # display some of the advanced field (just to test)
@@ -106,7 +141,10 @@ def measure_current():
         shunt_voltage = ina219.shunt_voltage  # voltage between V+ and V- across the shunt
         current = ina219.current  # current in mA
         power = ina219.power  # power in watts
-        total_voltage = (ina219_2.shunt_voltage + ina219_2.bus_voltage)
+        voltage = (power/(current))
+        # total_voltage = (ina219_2.shunt_voltage + ina219_2.bus_voltage)
+        total_voltage = bus_voltage + shunt_voltage
+        # load_voltage = ina219.
 
     
         if current <= 0:
@@ -122,7 +160,7 @@ def measure_current():
             print("Shunt Current  : {:7.4f}  A".format(current / 1000))
             print("Power Calc.    : {:8.5f} W".format(bus_voltage * (current / 1000)))
             print("Power Register : {:6.3f}   W".format(power))
-            print("Voltage: : {:6.3f}   V".format(total_voltage+bus_voltage))
+            print("Voltage: : {:6.3f}   V".format(voltage))
             print("")
             print("=" * 40)
             print("\nMeasuring Temperature from AHT")
@@ -145,6 +183,7 @@ def measure_current():
 def data_logger():
     button_flag = True
     logging = False
+    b_volt, s_volt, curr, power, temperature, humidity = measure_current_and_vbat() # should be moved to line 220
 
     while True:
         """ Filesystem main loop that effectively needs boot.py to be present to be able to write data into incoming data.txt
@@ -154,8 +193,8 @@ def data_logger():
             To make changes to the code, please change the name of boot.py to something else like boost.py using os.rename on the REPL.
             Final Notes: Any changes in your code requires you to reset the board so that it enters Read-Only mode, and vice-versa.
         """
-        button_d12.update()
-        if button_d12.fell:
+        button_d5.update()
+        if button_d5.fell:
             print("Pressed")
             print("Writing to Filesystem")
             # onboard_counter() # internal function callback doesn't work - need to find a solution around this
@@ -163,24 +202,26 @@ def data_logger():
             try:
                 print("Ready to Log...")
                 while button_flag:
-                    button_d12.update()
-                    if button_d12.fell:
+                    button_d5.update()
+                    if button_d5.fell:
                         print("Button Pressed")     
-                        print(button_d12.fell)
+                        print(button_d5.fell)
                         button_flag = False
                 print("Logging...")
                 is_logging = True
                 with open(FILE_PATH, "w") as fp:
-                    fp.write("Timestamp\tLongitude\tLatitude\tFix Quality\n")
+                    fp.write("Timestamp\tBatV\tTemperature\n")
                     # correct timestamp using RTC
                     # timestamp = "{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec )
                     # print("{}".format(timestamp))
                     # print(timestamp)
                     initial_time = time.monotonic()
                     initial_t = initial_time
-                    latitude = 52.3951  # to be read from gps
-                    longitude = 1.3452  # to be read from gps
-                    quality_fix = 4     # to be read form gps
+
+                    # latitude = 52.3951  # to be read from gps
+                    # longitude = 1.3452  # to be read from gps
+                    # quality_fix = 4     # to be read form gps
+
                     while is_logging:
                         sec_time = time.monotonic()
                         if (sec_time - initial_time) >= 1:
@@ -189,18 +230,27 @@ def data_logger():
                             initial_time = time.monotonic()
                             #   Writes time-stamp   \t  Longitude   \t  Latitude    \t  Fix Quality
                             # fp.write("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t"
-                            print( "{}".format(longitude) + "\t"
-                            +  "{}".format(latitude) + "\t"
-                            +  "{}".format(quality_fix) + "\n" )
+                            print( "{}".format(time_stamp) + "\t"
+                            +  "{}".format(b_volt+s_volt) + "\t"
+                            +  "{}".format(temperature) + "\n" )
                             fp.flush()
                             LED.value = not LED.value
                             # print(time_stamp)
                             # print("{}/{}/{} {:02}:{:02}:{:02}".format(ds3231.datetime.tm_year,ds3231.datetime.tm_mon, ds3231.datetime.tm_mday, ds3231.datetime.tm_hour, ds3231.datetime.tm_min, ds3231.datetime.tm_sec ) + "\t" 
-                            print("{}".format(longitude) + "\t" 
-                            + "{}".format(latitude) + "\t"
-                            + "{}".format(quality_fix) + "\n")
-                        button_d12.update()
-                        if button_d12.fell:
+                            message = "{}".format(b_volt+s_volt) + "\t"
+                            +  "{}".format(temperature) + "\n" 
+                            # json_data = [{"Date": "20/01/2023"},{"Field": "Glacsweb-test"}]
+                            print("Posting to server")
+                            message_post =https.post(url=URL_POST, json=message)
+                            # print("{}".format(longitude) + "\t" 
+                            # + "{}".format(latitude) + "\t"
+                            # + "{}".format(quality_fix) + "\n")
+                            print("POST Complete")
+                            print(message_post.content)
+
+                            message_post.close()
+                        button_d5.update()
+                        if button_d5.fell:
                             is_logging = False
                             print("Stopped Logging")
                         
@@ -213,7 +263,7 @@ def data_logger():
                         LED.value = not LED.value
                         time.sleep(delay)
             LED.value = True
-            time.sleep(0.5)
+            time.sleep(5)
         else:
             LED.value = False
 
@@ -240,13 +290,20 @@ def main():
     # pin_io12.direction =digitalio.Direction.OUTPUT
 
     """ Check if PIN Valid """
+    # TODO: Edit function to log time, vbat and temperature
+    # see if you can POST data once it's been written 
+    # Check with print statement - once every 30s, then up to 1 minute, then finally 3 minutes
     if pin_io12.value:
         print("Ready to Log data")
         data_logger()
     else:
         print("PIN not active.")
+
+
+
     # data_logger()
     # pin_io12.value = True
+    """ Comment out - Just used for debugging"""
     # while pin_io12.value:
     #     try:
     #         measure_current()# - main
