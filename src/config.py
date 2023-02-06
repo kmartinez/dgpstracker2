@@ -14,7 +14,7 @@ ROVER_COUNT = 1
 
 DEBUG =  {
     "FAKE_DATA": False, #Ignores actual GPS data and just uses fake static data instead
-    "WATCHDOG_DISABLE": False #Disables watchdog resets so you can debug things
+    "WATCHDOG_DISABLE": True #Disables watchdog resets so you can debug things
 }
 '''Debugging configuration. See actual module file for details'''
 
