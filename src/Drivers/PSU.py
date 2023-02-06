@@ -14,6 +14,11 @@ logger = logging.getLogger("DEVICE")
 # Gloabls
 GSM_ENABLE_PIN: DigitalInOut = DigitalInOut(board.A0)
 GSM_ENABLE_PIN.switch_to_output()
+
+GSM_KEY: DigitalInOut = DigitalInOut(board.D12)
+GSM_KEY.switch_to_output()
+
+GSM_KEY = False
 GSM_ENABLE_PIN = False
 
 def enable_fona():
